@@ -1,0 +1,94 @@
+import { createClient } from "@/utils/supabase/server";
+import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { signOut } from "@/app/(auth)/actions";
+import { Zap, LayoutDashboard, LogOut, Columns3, MessageSquare, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import DashboardContent from "@/components/DashboardContent";
+import Sidebar from "@/components/Sidebar";
+import Link from "next/link";
+
+export default async function DashboardPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: businesses } = await supabase
+    .from("businesses")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const business = businesses?.[0];
+
+  if (!business) {
+    redirect("/onboarding");
+  }
+
+  const { data: campaigns } = await supabase
+    .from("campaigns")
+    .select("id, name")
+    .eq("business_id", business.id)
+    .order("created_at", { ascending: false });
+
+  const { data: leads } = await supabase
+    .from("leads")
+    .select("*")
+    .eq("business_id", business.id)
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  const allLeads = leads?.map(l => ({
+    id: l.id,
+    name: l.name,
+    lat: l.lat || 0,
+    lng: l.lng || 0,
+    score: l.score || 0,
+    address: l.address || '',
+    phone: l.phone || '',
+    website: l.website || '',
+    status: l.status || 'new',
+    segment: l.segment || '',
+    rating: l.metadata?.rating || null,
+    reasoning: l.metadata?.reasoning || '',
+    metadata: {
+      reasoning: l.metadata?.reasoning || '',
+      search_query: l.metadata?.search_query || l.segment || '',
+      rating: l.metadata?.rating || null,
+    },
+  })) || [];
+
+  return (
+    <div className="flex h-screen bg-muted/30">
+      <Sidebar userEmail={user.email} />
+
+      {/* Main */}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-semibold">Dashboard</h1>
+            <Badge variant="outline" className="text-secondary border-secondary/30 bg-secondary/5 text-xs">
+              {business.name}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground">{user.email}</span>
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-secondary/30 to-primary/30 border border-secondary/30 flex items-center justify-center text-xs font-bold text-secondary">
+              {user.email?.[0].toUpperCase()}
+            </div>
+          </div>
+        </header>
+
+        <DashboardContent 
+          leads={allLeads} 
+          segment={business.segment || ''} 
+          campaigns={campaigns || []}
+        />
+      </main>
+    </div>
+  );
+}

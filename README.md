@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ProspectAI 🚀🤖
 
-## Getting Started
+**ProspectAI** is a premium, AI-powered lead discovery and outreach automation platform. It transforms how businesses find and approach customers by combining Google Maps data with GPT-4o intelligence to score leads and write personalized sales pitches.
 
-First, run the development server:
+## ✨ Principais Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Onboarding Inteligente:** Extração automática do perfil do negócio a partir de URLs ou documentos (PDF/TXT).
+- **Descoberta com IA:** Busca de estabelecimentos via Google Maps com geocodificação e filtragem avançada.
+- **Lead Scoring Dinâmico:** Cada lead recebe uma nota (0-100) baseada no **ICP (Ideal Customer Profile)** configurado.
+- **Gestão de Campanhas:** Agrupamento de leads por objetivo, canal (WhatsApp/Email) e status.
+- **Outreach com IA:** Geração de scripts de vendas personalizados e envio direto via integração WhatsApp.
+- **Pipeline Kanban:** Visualização clara do funil de vendas (Abertos, Contatados, Interessados, Fechados).
+- **Dashboard Interativo:** Mapa de calor de leads e estatísticas de performance em tempo real.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Stack Tecnológica
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Core:** Next.js (App Router, Server Actions, Turbopack)
+- **Banco de Dados:** Supabase (Auth, Postgres, RLS)
+- **IA:** OpenAI API (GPT-4o-mini)
+- **Maps:** Google Maps Places SDK & Geocoding API
+- **UI:** Tailwind CSS, shadcn/ui, Lucide Icons
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🚀 Como Iniciar
 
-## Learn More
+1. **Configuração de Env:**
+   - Preencha as chaves no `.env.local` (Supabase, OpenAI, Google Maps).
+2. **Setup do Banco:**
+   - Execute as migrações em `supabase/migrations`.
+   - **IMPORTANTE:** Rode o SQL `ALTER TABLE public.businesses ADD COLUMN IF NOT EXISTS website TEXT;` no seu painel Supabase.
+3. **Instalação:**
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+## 📂 Estrutura do Projeto
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app`: Rotas e lógica de páginas (Dashboard, Campanhas, Onboarding).
+- `src/components`: UI modular (Mapa, Kanban, Formulários).
+- `src/lib/ai`: Lógica de integração com modelos de linguagem.
+- `supabase/migrations`: SQL de estrutura do banco.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+Desenvolvido com ❤️ e IA para ProspectAI.
