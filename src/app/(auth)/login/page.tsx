@@ -1,69 +1,153 @@
+'use client'
+
 import Link from "next/link";
 import { Zap } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { login } from "@/app/(auth)/actions";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
-      <Card className="w-full max-w-md shadow-lg border-border/50 bg-background/80 backdrop-blur-sm">
-        <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="flex items-center gap-2 font-bold text-2xl text-primary mb-2">
-            <Zap className="h-8 w-8 fill-secondary text-secondary" />
-            <span>ProspectAI</span>
+    <div
+      className="min-h-screen flex items-center justify-center px-4 bg-mesh bg-noise relative"
+      style={{ background: "var(--background)" }}
+    >
+      {/* Background glow */}
+      <div
+        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(ellipse, rgba(0,229,255,0.06) 0%, transparent 70%)" }}
+      />
+
+      <div
+        className="relative w-full max-w-sm rounded-2xl p-8 z-10"
+        style={{
+          background: "var(--background-2)",
+          border: "1px solid var(--border)",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)",
+          animation: "scale-in 0.4s ease",
+        }}
+      >
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div
+            className="w-12 h-12 rounded-2xl flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, var(--primary), #0066FF)",
+              boxShadow: "0 0 30px var(--primary-glow)",
+            }}
+          >
+            <Zap className="h-6 w-6 text-[#080C14]" fill="currentColor" />
           </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Bem-vindo de volta</CardTitle>
-          <CardDescription>
-            Entre com seu e-mail para acessar sua conta
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form className="space-y-4" action={login}>
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" name="email" type="email" placeholder="nome@exemplo.com" required className="bg-background/50" />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Senha</Label>
-                <Link href="#" className="text-sm font-medium text-secondary hover:underline">
-                  Esqueceu a senha?
-                </Link>
-              </div>
-              <Input id="password" name="password" type="password" required className="bg-background/50" />
-            </div>
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white h-11">
-              Entrar
-            </Button>
-          </form>
-          
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">Ou continue com</span>
-            </div>
+          <div>
+            <h1 className="text-xl font-bold text-center" style={{ color: "var(--foreground)" }}>ProspectAI</h1>
+            <p className="text-sm text-center mt-1" style={{ color: "var(--foreground-muted)" }}>
+              Entre na sua conta
+            </p>
           </div>
-          
-          <Button variant="outline" type="button" className="w-full h-11 border-border/50 hover:bg-muted">
-             {/* Simple Icon placeholder since I don't want to install all lucide icons yet */}
-            <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-              <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-            </svg>
-            Google
-          </Button>
-        </CardContent>
-        <CardFooter className="flex flex-wrap items-center justify-center gap-1 text-sm text-muted-foreground border-t border-border/40 py-4">
-          Não tem uma conta?{" "}
-          <Link href="/signup" className="font-semibold text-secondary hover:underline underline-offset-4">
-            Cadastre-se
+        </div>
+
+        {/* Form */}
+        <form className="space-y-4" action={login}>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--foreground-muted)" }}>
+              E-mail
+            </label>
+            <input
+              name="email" type="email" placeholder="nome@empresa.com" required
+              className="w-full h-11 px-4 rounded-xl text-sm outline-none transition-all duration-200"
+              style={{
+                background: "var(--background-3)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+              }}
+              onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                e.target.style.borderColor = "var(--primary)";
+                e.target.style.boxShadow = "0 0 0 3px var(--primary-dim)";
+              }}
+              onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--foreground-muted)" }}>
+                Senha
+              </label>
+              <Link href="#" className="text-xs transition-colors" style={{ color: "var(--primary)" }}>
+                Esqueceu?
+              </Link>
+            </div>
+            <input
+              name="password" type="password" required
+              className="w-full h-11 px-4 rounded-xl text-sm outline-none transition-all duration-200"
+              style={{
+                background: "var(--background-3)",
+                border: "1px solid var(--border)",
+                color: "var(--foreground)",
+              }}
+              onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                e.target.style.borderColor = "var(--primary)";
+                e.target.style.boxShadow = "0 0 0 3px var(--primary-dim)";
+              }}
+              onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                e.target.style.borderColor = "var(--border)";
+                e.target.style.boxShadow = "none";
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full h-11 rounded-xl font-semibold text-sm transition-all duration-200 mt-2"
+            style={{
+              background: "linear-gradient(135deg, var(--primary), #0066FF)",
+              color: "var(--primary-fg)",
+              boxShadow: "0 4px 20px var(--primary-glow)",
+            }}
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.transform = "translateY(-1px)")}
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.transform = "translateY(0)")}
+          >
+            Entrar
+          </button>
+        </form>
+
+        {/* Divider */}
+        <div className="relative my-6 flex items-center">
+          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+          <span className="px-3 text-xs" style={{ color: "var(--foreground-dim)" }}>ou continue com</span>
+          <div className="flex-1 h-px" style={{ background: "var(--border)" }} />
+        </div>
+
+        {/* Google */}
+        <button
+          type="button"
+          className="w-full h-11 rounded-xl text-sm font-medium flex items-center justify-center gap-2.5 transition-all duration-200"
+          style={{
+            background: "var(--background-3)",
+            border: "1px solid var(--border)",
+            color: "var(--foreground)",
+          }}
+          onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.borderColor = "var(--border-hover)")}
+          onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.borderColor = "var(--border)")}
+        >
+          <svg width="16" height="16" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          Google
+        </button>
+
+        {/* Footer */}
+        <p className="text-center text-xs mt-6" style={{ color: "var(--foreground-dim)" }}>
+          Não tem conta?{" "}
+          <Link href="/signup" className="font-semibold transition-colors" style={{ color: "var(--primary)" }}>
+            Criar conta grátis
           </Link>
-        </CardFooter>
-      </Card>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
+const anthropic = new Anthropic({
+  apiKey: process.env.CLAUDE_API_KEY,
 });
 
 export async function POST(req: Request) {
@@ -46,17 +46,18 @@ export async function POST(req: Request) {
       - Sugira se o contato deve ser por WhatsApp, E-mail ou Visita, baseado no score.
     `;
 
-    // 3. Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: message }
-      ],
+    // 3. Call Claude
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
       max_tokens: 1000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: message }],
     });
 
-    const reply = response.choices[0].message.content || "Não consegui gerar uma resposta.";
+    const content = response.content[0];
+    const reply = content.type === "text"
+      ? content.text
+      : "Não consegui gerar uma resposta.";
 
     return NextResponse.json({ reply })
   } catch (error) {

@@ -33,19 +33,28 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
   return (
     <div className={containerClasses}>
       <form onSubmit={handleSubmit} className="relative">
-        <div className={`
-          bg-background/95 backdrop-blur-xl rounded-2xl shadow-2xl border transition-all duration-500
-          ${isPending 
-            ? 'border-secondary/60 shadow-secondary/20' 
-            : 'border-border/50 shadow-black/10'
-          }
-        `}>
+        <div
+          className="glass rounded-2xl shadow-2xl transition-all duration-500"
+          style={{
+            borderColor: isPending ? "rgba(0,229,255,0.3)" : "var(--border)",
+            border: isPending ? "1px solid rgba(0,229,255,0.3)" : "1px solid var(--border)",
+            boxShadow: isPending 
+              ? "0 8px 32px rgba(0,229,255,0.1), 0 0 0 1px rgba(0,229,255,0.1)" 
+              : "0 8px 32px rgba(0,0,0,0.3)",
+          }}
+        >
           {/* Header */}
           <div className="px-4 pt-3.5 pb-2 flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg transition-colors ${isPending ? 'bg-secondary/20' : 'bg-primary/10'}`}>
-              <Radar className={`h-4 w-4 transition-colors ${isPending ? 'text-secondary animate-pulse' : 'text-primary'}`} />
+            <div
+              className="p-1.5 rounded-lg transition-colors"
+              style={{ background: isPending ? "var(--primary-dim)" : "rgba(0,229,255,0.08)" }}
+            >
+              <Radar
+                className={`h-4 w-4 transition-colors ${isPending ? 'animate-pulse' : ''}`}
+                style={{ color: "var(--primary)" }}
+              />
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--foreground-muted)" }}>
               {campaignId ? 'Descobrir para esta Campanha' : 'Prospecção IA'}
             </span>
           </div>
@@ -53,42 +62,67 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
           {/* Input Row */}
           <div className="px-3 pb-3 flex flex-wrap md:flex-nowrap gap-2">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--foreground-dim)" }} />
               <input
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={`Ex: ${segment || 'Academias, Restaurantes...'}`}
                 disabled={isPending}
                 required
-                className="w-full h-10 pl-9 pr-3 rounded-xl text-sm bg-muted/40 border border-border/40 
-                         placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 
-                         focus:border-primary/50 transition-all disabled:opacity-50"
+                className="w-full h-10 pl-9 pr-3 rounded-xl text-sm outline-none transition-all disabled:opacity-50"
+                style={{
+                  background: "var(--background-3)",
+                  border: "1px solid var(--border)",
+                  color: "var(--foreground)",
+                }}
+                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.target.style.borderColor = "var(--primary)";
+                  e.target.style.boxShadow = "0 0 0 2px var(--primary-dim)";
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.target.style.borderColor = "var(--border)";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
             <div className="relative w-full md:w-36">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--foreground-dim)" }} />
               <input
                 value={region}
                 onChange={e => setRegion(e.target.value)}
                 placeholder="Cidade/UF"
                 disabled={isPending}
                 required
-                className="w-full h-10 pl-9 pr-3 rounded-xl text-sm bg-muted/40 border border-border/40 
-                         placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 
-                         focus:border-primary/50 transition-all disabled:opacity-50"
+                className="w-full h-10 pl-9 pr-3 rounded-xl text-sm outline-none transition-all disabled:opacity-50"
+                style={{
+                  background: "var(--background-3)",
+                  border: "1px solid var(--border)",
+                  color: "var(--foreground)",
+                }}
+                onFocus={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.target.style.borderColor = "var(--primary)";
+                  e.target.style.boxShadow = "0 0 0 2px var(--primary-dim)";
+                }}
+                onBlur={(e: React.FocusEvent<HTMLInputElement>) => {
+                  e.target.style.borderColor = "var(--border)";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
             <button
               type="submit"
               disabled={isPending}
-              className={`
-                h-10 px-4 rounded-xl font-semibold text-sm text-white flex items-center gap-2 
-                transition-all duration-300 shrink-0 disabled:cursor-wait w-full md:w-auto justify-center
-                ${isPending 
-                  ? 'bg-secondary shadow-lg shadow-secondary/30 scale-95' 
-                  : 'bg-primary hover:bg-primary/90 hover:scale-105 hover:shadow-lg hover:shadow-primary/20 active:scale-95'
-                }
-              `}
+              className="h-10 px-4 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all duration-300 shrink-0 disabled:cursor-wait w-full md:w-auto justify-center"
+              style={{
+                background: isPending 
+                  ? "var(--primary)" 
+                  : "linear-gradient(135deg, var(--primary), #0066FF)",
+                color: "var(--primary-fg)",
+                boxShadow: "0 4px 16px var(--primary-glow)",
+                transform: isPending ? "scale(0.95)" : "scale(1)",
+              }}
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => !isPending && (e.currentTarget.style.transform = "scale(1.05)")}
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => !isPending && (e.currentTarget.style.transform = "scale(1)")}
             >
               {isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -100,39 +134,61 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
           </div>
         </div>
 
-        {/* Loading overlay animation */}
+        {/* Enhanced Loading Overlay */}
         {isPending && (
-          <div className="mt-2 bg-background/95 backdrop-blur-xl rounded-xl border border-secondary/40 shadow-lg shadow-secondary/10 px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-300">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="h-9 w-9 rounded-full border-2 border-secondary/30 border-t-secondary animate-spin" />
-                <Sparkles className="h-4 w-4 text-secondary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div
+            className="mt-2 rounded-xl px-4 py-3 glass"
+            style={{ animation: "scale-in 0.2s ease", border: "1px solid rgba(0,229,255,0.15)" }}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="relative w-8 h-8">
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    border: "2px solid var(--border)",
+                    borderTopColor: "var(--primary)",
+                    animation: "spin 1s linear infinite",
+                  }}
+                />
+                <Sparkles className="absolute inset-0 m-auto h-3.5 w-3.5" style={{ color: "var(--primary)" }} />
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">
-                  Prospectando em {region || '...'}
+              <div>
+                <p className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+                  Prospectando em <span style={{ color: "var(--primary)" }}>{region}</span>
                 </p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="text-[11px] text-muted-foreground">Buscando</span>
-                  <span className="text-[11px] text-secondary font-medium">{query}</span>
-                  <span className="flex gap-0.5">
-                    <span className="h-1 w-1 rounded-full bg-secondary animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="h-1 w-1 rounded-full bg-secondary animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="h-1 w-1 rounded-full bg-secondary animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </span>
-                </div>
-                <div className="mt-2 h-1 w-full bg-muted/60 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-secondary/60 via-secondary to-secondary/60 rounded-full" 
-                       style={{ animation: 'loading-bar 2s ease-in-out infinite' }} />
-                </div>
+                <p className="text-xs" style={{ color: "var(--foreground-muted)" }}>
+                  Buscando <strong>{query}</strong>
+                </p>
               </div>
             </div>
-            <div className="flex gap-2 mt-2.5 text-[10px] text-muted-foreground">
-              <span className="flex items-center gap-1">📍 Geolocalizando</span>
-              <span>→</span>
-              <span className="flex items-center gap-1">🔍 Google Maps</span>
-              <span>→</span>
-              <span className="flex items-center gap-1">🤖 Qualificando IA</span>
+
+            {/* Progress bar */}
+            <div className="h-1 rounded-full overflow-hidden mb-3" style={{ background: "var(--border)" }}>
+              <div
+                className="h-full rounded-full"
+                style={{
+                  background: "linear-gradient(90deg, rgba(0,229,255,0.4), var(--primary), rgba(0,229,255,0.4))",
+                  animation: "loading-bar 2s ease-in-out infinite",
+                }}
+              />
+            </div>
+
+            {/* Steps with animated dots */}
+            <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--foreground-dim)" }}>
+              {["Geolocalizando", "Google Maps", "Qualificando IA"].map((step, i) => (
+                <span key={step} className="flex items-center gap-1">
+                  {i > 0 && <span style={{ color: "var(--border)" }}>→</span>}
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: "var(--primary)",
+                      animation: `dot-bounce 1.4s ${i * 0.2}s infinite`,
+                    }}
+                  />
+                  {step}
+                </span>
+              ))}
             </div>
           </div>
         )}

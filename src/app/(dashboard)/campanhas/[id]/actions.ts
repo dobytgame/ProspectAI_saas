@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from "@/utils/supabase/server";
-import { generateOutreachMessage } from "@/lib/ai/openai";
+import { generateOutreachMessage } from "@/lib/ai/claude";
 import { revalidatePath } from "next/cache";
 
 export async function generateAllAction(campaignId: string) {

@@ -43,9 +43,9 @@ function NetworkWeb() {
     canvas.width = W
     canvas.height = H
 
-    const NODES_COUNT = 180
-    const CONNECTION_DIST = 200
-    const MOUSE_ATTRACT = 250
+    const NODES_COUNT = 55
+    const CONNECTION_DIST = 140
+    const MOUSE_ATTRACT = 180
 
     type Node = {
       x: number; y: number; vx: number; vy: number
@@ -56,21 +56,19 @@ function NetworkWeb() {
 
     const LABELS = [
       'Restaurante','Clínica','Academia','Loja','Escritório',
-      'Salão','Hotel','Farmácia','Escola','Construtora',
-      'Mercado','Barbearia','Padaria','Petshop','Studio',
-      'Dentista','Advogado','Imobiliária','Mecânica','Bar',
+      'Salão','Hotel','Farmácia','Escola','Construtora'
     ]
 
     const nodes: Node[] = Array.from({ length: NODES_COUNT }, (_, i) => ({
       x: Math.random() * W,
       y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.35,
-      vy: (Math.random() - 0.5) * 0.35,
-      r: i < 5 ? 7 : i < 20 ? 4.5 : 2.5,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: i < 3 ? 7 : i < 12 ? 4.5 : 2.5,
       pulse: Math.random() * Math.PI * 2,
       pulseSpeed: 0.02 + Math.random() * 0.02,
-      type: i < 5 ? 'hub' : i < 20 ? 'lead' : 'node',
-      label: i < 20 ? LABELS[i % LABELS.length] : undefined,
+      type: i < 3 ? 'hub' : i < 12 ? 'lead' : 'node',
+      label: i < 10 ? LABELS[i] : undefined,
     }))
 
     // Cores
@@ -139,7 +137,7 @@ function NetworkWeb() {
           const dist = Math.sqrt(dx * dx + dy * dy)
           if (dist > CONNECTION_DIST) continue
 
-          const alpha = (1 - dist / CONNECTION_DIST) * 0.28
+          const alpha = (1 - dist / CONNECTION_DIST) * 0.35
           const isSpecial = a.type !== 'node' || b.type !== 'node'
 
           // Gradient line
@@ -212,8 +210,8 @@ function NetworkWeb() {
       }
 
       // Score indicators near hub nodes
-      nodes.slice(0, 5).forEach((n, i) => {
-        const scores = [94, 87, 91, 88, 96]
+      nodes.slice(0, 3).forEach((n, i) => {
+        const scores = [94, 87, 91]
         const score = scores[i]
         const scoreColor = score >= 90 ? C_PRIMARY : C_GREEN
         ctx.font = 'bold 11px Geist Mono, monospace'
@@ -237,7 +235,7 @@ function NetworkWeb() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full"
+      className="w-full h-full"
       style={{ display: 'block' }}
     />
   )
@@ -634,75 +632,57 @@ export default function LandingPage() {
         </section>
 
         {/* ═══════════════════════════════════════════════
-            3. TEIA DE CONEXÕES — FULL PAGE
+            3. TEIA DE CONEXÕES
         ═══════════════════════════════════════════════ */}
-        <section
-          className="relative w-full overflow-hidden"
-          id="rede"
-          style={{
-            height: '100vh',
-            background: '#080C14',
-          }}
-        >
-          {/* Canvas full-screen */}
-          <NetworkWeb />
+        <section className="py-6 px-6 relative" id="rede">
+          <div className="max-w-6xl mx-auto">
+            {/* Label */}
+            <div className="text-center mb-6">
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: '#00E5FF' }}>
+                Rede de Prospecção em Tempo Real
+              </p>
+              <p className="text-sm mt-1" style={{ color: '#3D4F6E' }}>
+                Passe o mouse para interagir com os leads
+              </p>
+            </div>
 
-          {/* Overlay gradient topo */}
-          <div
-            className="absolute inset-x-0 top-0 h-32 pointer-events-none"
-            style={{ background: 'linear-gradient(to bottom, #080C14, transparent)' }}
-          />
-
-          {/* Overlay gradient base */}
-          <div
-            className="absolute inset-x-0 bottom-0 h-32 pointer-events-none"
-            style={{ background: 'linear-gradient(to top, #080C14, transparent)' }}
-          />
-
-          {/* Título centralizado */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#00E5FF' }}>
-              Rede de Prospecção em Tempo Real
-            </p>
-            <h2
-              className="text-4xl md:text-6xl font-black tracking-tight text-center px-6"
+            {/* Canvas container */}
+            <div
+              className="relative w-full rounded-3xl overflow-hidden"
               style={{
-                background: 'linear-gradient(135deg, #E2EAF4 0%, #00E5FF 50%, #00FFA3 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                textShadow: 'none',
+                height: '420px',
+                background: 'linear-gradient(145deg, #0A1220, #080C14)',
+                border: '1px solid #1E2D45',
+                boxShadow: 'inset 0 0 80px rgba(0,229,255,0.03)',
               }}
             >
-              Leads conectados.<br />Resultados reais.
-            </h2>
-            <p className="mt-4 text-sm" style={{ color: '#3D4F6E' }}>
-              Passe o mouse para interagir com os leads
-            </p>
-          </div>
+              <NetworkWeb />
 
-          {/* Legenda overlay — canto inferior esquerdo */}
-          <div
-            className="absolute bottom-8 left-8 flex items-center gap-6 px-4 py-2.5 rounded-xl text-xs"
-            style={{ background: 'rgba(8,12,20,0.85)', border: '1px solid #1E2D45', backdropFilter: 'blur(12px)' }}
-          >
-            {[
-              { color: '#00E5FF', label: 'Hub de IA' },
-              { color: '#00FFA3', label: 'Lead qualificado' },
-              { color: '#6B7FA8', label: 'Estabelecimento' },
-            ].map(({ color, label }) => (
-              <div key={label} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
-                <span style={{ color: '#6B7FA8' }}>{label}</span>
+              {/* Legenda overlay */}
+              <div
+                className="absolute bottom-5 left-5 flex items-center gap-6 px-4 py-2.5 rounded-xl text-xs"
+                style={{ background: 'rgba(8,12,20,0.85)', border: '1px solid #1E2D45', backdropFilter: 'blur(12px)' }}
+              >
+                {[
+                  { color: '#00E5FF', label: 'Hub de IA' },
+                  { color: '#00FFA3', label: 'Lead qualificado' },
+                  { color: '#6B7FA8', label: 'Estabelecimento' },
+                ].map(({ color, label }) => (
+                  <div key={label} className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
+                    <span style={{ color: '#6B7FA8' }}>{label}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          {/* Score badge — canto superior direito */}
-          <div
-            className="absolute top-8 right-8 px-3 py-2 rounded-xl text-xs font-bold"
-            style={{ background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)', color: '#00E5FF' }}
-          >
-            <span className="text-lg font-black">247</span> leads ativos agora
+              {/* Score badge overlay */}
+              <div
+                className="absolute top-5 right-5 px-3 py-2 rounded-xl text-xs font-bold"
+                style={{ background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)', color: '#00E5FF' }}
+              >
+                <span className="text-lg font-black">247</span> leads ativos agora
+              </div>
+            </div>
           </div>
         </section>
 

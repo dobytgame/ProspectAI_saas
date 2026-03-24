@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import LeadMap from '@/components/LeadMap'
 import LeadSidebar from '@/components/LeadSidebar'
 import SearchForm from '@/components/SearchForm'
+import { StatCard } from '@/components/ui/StatCard'
 import { Users, Target, TrendingUp } from 'lucide-react'
 
 interface Lead {
@@ -43,7 +44,6 @@ export default function DashboardContent({ leads, segment, campaigns }: Dashboar
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedScoreRange, setSelectedScoreRange] = useState<number>(0)
 
-  // Filtered leads (shared between map and sidebar)
   const filteredLeads = useMemo(() => {
     const range = SCORE_RANGES[selectedScoreRange]
     return leads.filter(l => {
@@ -55,7 +55,6 @@ export default function DashboardContent({ leads, segment, campaigns }: Dashboar
     }).sort((a, b) => (b.score || 0) - (a.score || 0))
   }, [leads, selectedCategory, selectedScoreRange])
 
-  // Stats
   const totalLeads = filteredLeads.length
   const qualifiedLeads = filteredLeads.filter(l => l.score >= 70).length
   const avgScore = totalLeads > 0 
@@ -64,52 +63,44 @@ export default function DashboardContent({ leads, segment, campaigns }: Dashboar
 
   return (
     <div className="flex-1 overflow-auto p-6">
-      {/* Stats Row */}
+      {/* Animated Stats Row */}
       <div className="grid grid-cols-3 gap-4 mb-5">
-        <div className="bg-background p-5 rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Leads Encontrados</p>
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Users className="h-4 w-4 text-primary" />
-            </div>
-          </div>
-          <h3 className="text-3xl font-bold tracking-tight">{totalLeads}</h3>
-          {leads.length !== totalLeads && (
-            <p className="text-[10px] text-muted-foreground mt-1">de {leads.length} total</p>
-          )}
-        </div>
-        <div className="bg-background p-5 rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Qualificados</p>
-            <div className="p-2 rounded-lg bg-green-500/10">
-              <Target className="h-4 w-4 text-green-500" />
-            </div>
-          </div>
-          <h3 className="text-3xl font-bold tracking-tight text-green-600">{qualifiedLeads}</h3>
-          {totalLeads > 0 && (
-            <p className="text-[10px] text-muted-foreground mt-1">{Math.round(qualifiedLeads / totalLeads * 100)}% do total</p>
-          )}
-        </div>
-        <div className="bg-background p-5 rounded-2xl border border-border/50 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Score Médio</p>
-            <div className="p-2 rounded-lg bg-secondary/10">
-              <TrendingUp className="h-4 w-4 text-secondary" />
-            </div>
-          </div>
-          <h3 className={`text-3xl font-bold tracking-tight ${avgScore >= 70 ? 'text-green-600' : avgScore >= 40 ? 'text-amber-500' : 'text-red-400'}`}>
-            {avgScore}
-          </h3>
-          <p className="text-[10px] text-muted-foreground mt-1">
-            {avgScore >= 70 ? 'Excelente' : avgScore >= 40 ? 'Regular' : avgScore > 0 ? 'Precisa melhorar' : '—'}
-          </p>
-        </div>
+        <StatCard
+          label="Leads Encontrados"
+          value={totalLeads}
+          sub={leads.length !== totalLeads ? `de ${leads.length} total` : undefined}
+          color="var(--primary)"
+          icon={<Users className="h-4 w-4" />}
+          delay={0}
+        />
+        <StatCard
+          label="Qualificados"
+          value={qualifiedLeads}
+          sub={totalLeads > 0 ? `${Math.round(qualifiedLeads / totalLeads * 100)}% do total` : undefined}
+          color="var(--green)"
+          icon={<Target className="h-4 w-4" />}
+          delay={80}
+        />
+        <StatCard
+          label="Score Médio"
+          value={avgScore}
+          sub={avgScore >= 70 ? "Excelente" : avgScore >= 40 ? "Regular" : "—"}
+          color={avgScore >= 70 ? "var(--green)" : avgScore >= 40 ? "var(--yellow)" : "var(--red)"}
+          icon={<TrendingUp className="h-4 w-4" />}
+          delay={160}
+        />
       </div>
 
       {/* Main Content: Map + Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 h-[calc(100vh-15rem)]">
         {/* Map */}
-        <div className="lg:col-span-3 bg-background rounded-2xl border border-border/50 shadow-sm overflow-hidden relative">
+        <div
+          className="lg:col-span-3 rounded-2xl overflow-hidden relative"
+          style={{
+            background: "var(--background-2)",
+            border: "1px solid var(--border)",
+          }}
+        >
           <SearchForm segment={segment} />
           <LeadMap leads={filteredLeads.map(l => ({
             id: l.id,

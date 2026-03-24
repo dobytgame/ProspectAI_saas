@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from "@/utils/supabase/server";
-import { extractBusinessProfile } from "@/lib/ai/openai";
+import { extractBusinessProfile, trainAgent } from "@/lib/ai/claude";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import axios from "axios";
@@ -17,6 +17,10 @@ export async function onboardBusiness(formData: FormData) {
 
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
+  const services = formData.get("services") as string;
+  const targetAudience = formData.get("target_audience") as string;
+  const differentials = formData.get("differentials") as string;
+  const tone = formData.get("tone") as string || "Profissional";
   const websiteUrl = formData.get("website_url") as string;
   const file = formData.get("file") as File;
 
@@ -28,7 +32,6 @@ export async function onboardBusiness(formData: FormData) {
       try {
         const response = await axios.get(websiteUrl, { timeout: 5000 });
         const html = response.data;
-        // Simple extraction: remove tags
         const text = html.replace(/<[^>]*>?/gm, ' ').replace(/\s+/g, ' ').substring(0, 5000);
         extraContext += `\nCONTEÚDO DO WEBSITE:\n${text}\n`;
       } catch (err) {
@@ -53,11 +56,27 @@ export async function onboardBusiness(formData: FormData) {
       }
     }
 
-    // 3. Extract profile with Claude incorporating all context
-    const fullPrompt = `${description}\n${extraContext}`;
-    const aiProfile = await extractBusinessProfile(fullPrompt);
+    // 3. Train agent with structured data (Sprint 3) or fallback to basic extraction
+    let aiProfile;
 
-    // 2. Save business profile
+    if (services || targetAudience || differentials) {
+      // Sprint 3: trainAgent com dados estruturados
+      aiProfile = await trainAgent({
+        name,
+        description: description || "",
+        services: services || "",
+        targetAudience: targetAudience || "",
+        differentials: differentials || "",
+        tone,
+        extraContext: extraContext || undefined,
+      });
+    } else {
+      // Fallback: extractBusinessProfile com prompt simples
+      const fullPrompt = `${description}\n${extraContext}`;
+      aiProfile = await extractBusinessProfile(fullPrompt);
+    }
+
+    // 4. Save business profile
     const { data: business, error: businessError } = await supabase
       .from("businesses")
       .upsert({
@@ -66,24 +85,48 @@ export async function onboardBusiness(formData: FormData) {
         segment: aiProfile.niche,
         icp: aiProfile.icp,
         tone: aiProfile.suggested_tone,
+        website: websiteUrl || null,
       }, { onConflict: 'user_id' })
       .select()
       .single();
 
     if (businessError) throw businessError;
 
-    // 3. Create initial Agent for this business
-    const { error: agentError } = await supabase
-      .from("agents")
-      .insert({
-        business_id: business.id,
-        config: {
-          base_prompt: `Você é um assessor comercial da ${name}. Seu objetivo é prospectar clientes do nicho ${aiProfile.niche}.`,
-          tone: aiProfile.suggested_tone,
-        }
-      });
+    // 5. Create/Update Agent for this business
+    const agentConfig: any = {
+      base_prompt: `Você é um assessor comercial da ${name}. Seu objetivo é prospectar clientes do nicho ${aiProfile.niche}.`,
+      tone: aiProfile.suggested_tone,
+    };
 
-    if (agentError) throw agentError;
+    // Incluir scoring_criteria e approach_angles se disponíveis (Sprint 3)
+    if (aiProfile.scoring_criteria) {
+      agentConfig.scoring_criteria = aiProfile.scoring_criteria;
+    }
+    if (aiProfile.approach_angles) {
+      agentConfig.approach_angles = aiProfile.approach_angles;
+    }
+
+    // Upsert por business_id para evitar duplicatas
+    const { data: existingAgent } = await supabase
+      .from("agents")
+      .select("id")
+      .eq("business_id", business.id)
+      .single();
+
+    if (existingAgent) {
+      await supabase
+        .from("agents")
+        .update({ config: agentConfig })
+        .eq("id", existingAgent.id);
+    } else {
+      const { error: agentError } = await supabase
+        .from("agents")
+        .insert({
+          business_id: business.id,
+          config: agentConfig,
+        });
+      if (agentError) throw agentError;
+    }
 
     revalidatePath("/dashboard");
   } catch (error) {

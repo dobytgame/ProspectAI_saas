@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { searchPlaces, getGeocode, getPlaceDetails } from "@/lib/maps/places";
-import { scoreLead } from "@/lib/ai/openai";
+import { scoreLead } from "@/lib/ai/claude";
 import { revalidatePath } from "next/cache";
 
 export async function searchLeadsAction(query: string, region: string, campaignId?: string) {
@@ -40,9 +40,11 @@ export async function searchLeadsAction(query: string, region: string, campaignI
   // 3. Search Places
   const places = await searchPlaces(query, `${geo.lat},${geo.lng}`);
 
-  // 4. Enrich with Place Details (phone, website) — batch first 10
+  // 4. Enrich with Place Details (phone, website) — all leads with rate limiting
   const enrichedPlaces = await Promise.all(
-    places.slice(0, 15).map(async (place: any) => {
+    places.map(async (place: any, index: number) => {
+      // Delay progressivo para respeitar rate limits da Places API
+      await new Promise(resolve => setTimeout(resolve, index * 100));
       try {
         const details = await getPlaceDetails(place.place_id);
         return {
@@ -78,24 +80,26 @@ export async function searchLeadsAction(query: string, region: string, campaignI
     }
   }));
 
-  const { error: leadsError } = await supabase
+  const { data: insertedLeads, error: leadsError } = await supabase
     .from("leads")
-    .insert(leadsToInsert);
+    .insert(leadsToInsert)
+    .select("id");
 
-  // 6. Score all leads with AI
-  const leadsToScore = leadsError ? [] : leadsToInsert;
-  
-  for (const lead of leadsToScore) {
-    const analysis = await scoreLead(lead, business.icp);
-    
-    await supabase
-      .from("leads")
-      .update({ 
-        score: analysis.score,
-        metadata: { ...lead.metadata, reasoning: analysis.reasoning }
-      })
-      .eq("name", lead.name)
-      .eq("job_id", job.id);
+  // 6. Score all leads with AI — using ID for safe updates
+  if (!leadsError && insertedLeads) {
+    for (let i = 0; i < insertedLeads.length; i++) {
+      const lead = leadsToInsert[i];
+      const insertedLead = insertedLeads[i];
+      const analysis = await scoreLead(lead, business.icp);
+      
+      await supabase
+        .from("leads")
+        .update({ 
+          score: analysis.score,
+          metadata: { ...lead.metadata, reasoning: analysis.reasoning }
+        })
+        .eq("id", insertedLead.id);
+    }
   }
 
   // 7. Update Job status
