@@ -23,8 +23,9 @@ import {
   ArrowRight, MapPin, Zap, MessageSquare, BarChart3,
   CheckCircle2, Star, ChevronDown, Users, Target,
   TrendingUp, Brain, Radar, Send, Phone, Globe,
-  Sparkles, Shield, Clock, Building2,
+  Sparkles, Shield, Clock, Building2, LayoutDashboard
 } from 'lucide-react'
+import { createClient } from '@/utils/supabase/client'
 
 // ── TEIA DE CONEXÕES ────────────────────────────────────────
 function NetworkWeb() {
@@ -417,8 +418,14 @@ export default function LandingPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+    })
+
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll)
     return () => window.removeEventListener('scroll', onScroll)
@@ -484,36 +491,62 @@ export default function LandingPage() {
 
           {/* CTA Header */}
           <div className="flex items-center gap-3">
-            <Link href="/login">
-              <button
-                className="text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                style={{ color: '#6B7FA8' }}
-                onMouseEnter={e => ((e.target as HTMLElement).style.color = '#E2EAF4')}
-                onMouseLeave={e => ((e.target as HTMLElement).style.color = '#6B7FA8')}
-              >
-                Entrar
-              </button>
-            </Link>
-            <Link href="/signup">
-              <button
-                className="px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200"
-                style={{
-                  background: 'linear-gradient(135deg, #00E5FF, #0066FF)',
-                  color: '#080C14',
-                  boxShadow: '0 4px 16px rgba(0,229,255,0.25)',
-                }}
-                onMouseEnter={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(0,229,255,0.4)'
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
-                }}
-                onMouseLeave={e => {
-                  (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,229,255,0.25)'
-                  ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
-                }}
-              >
-                Começar grátis
-              </button>
-            </Link>
+            {user ? (
+              <Link href="/dashboard">
+                <button
+                  className="group flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200"
+                  style={{
+                    background: 'linear-gradient(135deg, #00E5FF, #0066FF)',
+                    color: '#080C14',
+                    boxShadow: '0 4px 16px rgba(0,229,255,0.25)',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(0,229,255,0.4)'
+                    ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,229,255,0.25)'
+                    ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+                  }}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Acessar Painel
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <button
+                    className="text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                    style={{ color: '#6B7FA8' }}
+                    onMouseEnter={e => ((e.target as HTMLElement).style.color = '#E2EAF4')}
+                    onMouseLeave={e => ((e.target as HTMLElement).style.color = '#6B7FA8')}
+                  >
+                    Entrar
+                  </button>
+                </Link>
+                <Link href="/signup">
+                  <button
+                    className="px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200"
+                    style={{
+                      background: 'linear-gradient(135deg, #00E5FF, #0066FF)',
+                      color: '#080C14',
+                      boxShadow: '0 4px 16px rgba(0,229,255,0.25)',
+                    }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 6px 24px rgba(0,229,255,0.4)'
+                      ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,229,255,0.25)'
+                      ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+                    }}
+                  >
+                    Começar grátis
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -1240,15 +1273,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             {/* Logo */}
             <div className="flex items-center gap-2.5">
-              <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #00E5FF, #0066FF)' }}
-              >
-                <Zap className="h-3.5 w-3.5 text-[#080C14]" fill="currentColor" />
-              </div>
-              <span className="font-black" style={{ color: '#E2EAF4' }}>
-                Prospect<span style={{ color: '#00E5FF' }}>AI</span>
-              </span>
+              <img src="/capturo.png" alt="Capturo Logo" className="h-7 w-auto object-contain" />
             </div>
 
             {/* Links */}
