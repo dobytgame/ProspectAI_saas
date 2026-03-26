@@ -20,6 +20,7 @@ const TONE_OPTIONS = [
 export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedTone, setSelectedTone] = useState("Profissional");
+  const [selectedPlan, setSelectedPlan] = useState("free");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12 lg:py-24">
@@ -186,6 +187,36 @@ export default function OnboardingPage() {
                         <span className="text-[10px] text-muted-foreground leading-tight">{option.desc}</span>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* Seletor de Plano */}
+                <div className="border-t border-border/40 pt-6 space-y-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Escolha seu Plano</span>
+                  </div>
+                  <input type="hidden" name="plan" value={selectedPlan} />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlan("free")}
+                      className={`flex flex-col p-4 rounded-xl border-2 transition-all text-left ${selectedPlan === 'free' ? 'border-primary bg-primary/5' : 'border-border/40 bg-background/30'}`}
+                    >
+                      <span className="font-bold text-lg">Grátis</span>
+                      <span className="text-xs text-muted-foreground mt-1">100 leads, 3 campanhas</span>
+                      <span className="text-primary font-bold mt-2">R$ 0/mês</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlan("pro")}
+                      className={`flex flex-col p-4 rounded-xl border-2 transition-all text-left relative overflow-hidden ${selectedPlan === 'pro' ? 'border-primary bg-primary/5' : 'border-border/40 bg-background/30'}`}
+                    >
+                      <div className="absolute top-0 right-0 bg-primary text-[8px] font-bold px-2 py-0.5 text-white uppercase tracking-tighter">Recomendado</div>
+                      <span className="font-bold text-lg">Pro</span>
+                      <span className="text-xs text-muted-foreground mt-1">2.000 leads, campanhas ilimitadas</span>
+                      <span className="text-primary font-bold mt-2">R$ 97/mês</span>
+                    </button>
                   </div>
                 </div>
               </div>

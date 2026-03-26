@@ -8,50 +8,61 @@ const anthropic = new Anthropic({
 
 export async function POST(req: Request) {
   try {
-    const { message, leadId } = await req.json()
+    const { message, leadId, history = [] } = await req.json()
     const supabase = await createClient()
 
     // 1. Get Lead and Business details
     const { data: lead } = await supabase
       .from("leads")
-      .select("*, businesses(*, agents(*))")
+      .select("*, business:businesses(*, agents(config))")
       .eq("id", leadId)
       .single()
 
     if (!lead) return NextResponse.json({ reply: "Lead não encontrado." })
 
-    const business = lead.businesses
-    const agent = business.agents?.[0]
+    const business = lead.business
+    const agentConfig = business?.agents?.[0]?.config || {}
 
     // 2. Prepare Context
     const systemPrompt = `
-      Você é o Agente ProspectAI, um assessor comercial altamente experiente.
+      Você é o Agente Capturo, um assessor comercial altamente experiente.
       Seu objetivo é ajudar o usuário a prospectar a empresa: ${lead.name}.
       
       CONTEXTO DO SEU TRABALHO:
       - Empresa do Usuário: ${business.name}
       - Nicho: ${business.segment}
       - Tom de Voz: ${business.tone}
-      - ICP: ${JSON.stringify(business.icp)}
+      - Persona de Vendas: ${JSON.stringify(agentConfig.sales_persona || {})}
+      - ICP Completo: ${JSON.stringify(agentConfig.icp || {})}
+      - Objeções Mapeadas: ${JSON.stringify(agentConfig.objection_handling || {})}
       
       DADOS DO LEAD:
       - Nome: ${lead.name}
       - Endereço: ${lead.address}
       - Score de Qualificação: ${lead.score}/100
       - Razão da Nota: ${lead.metadata?.reasoning}
+      - Avaliação: ${lead.metadata?.rating || 'N/A'} estrelas
       
       INSTRUÇÕES:
       - Seja consultivo, direto e profissional conforme o tom de voz.
       - Ajude o usuário a criar o script perfeito para o primeiro contato.
-      - Sugira se o contato deve ser por WhatsApp, E-mail ou Visita, baseado no score.
+      - Sugira abordagens baseadas nos gatilhos de compra e pontos fracos (pain points).
     `;
 
     // 3. Call Claude
+    const messages = [
+      ...history.slice(-10).map((h: any) => ({
+        role: h.role === 'assistant' ? 'assistant' : 'user',
+        content: h.content
+      })),
+      { role: "user", content: message }
+    ];
+
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-5",
       max_tokens: 1000,
       system: systemPrompt,
-      messages: [{ role: "user", content: message }],
+      messages: messages as any,
     });
 
     const content = response.content[0];

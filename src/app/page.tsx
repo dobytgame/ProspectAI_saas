@@ -1,7 +1,7 @@
 'use client'
 
 // ─────────────────────────────────────────────────────────────
-//  ProspectAI — Landing Page Completa
+//  Capturo — Landing Page Completa
 //  Substitui: src/app/page.tsx
 //
 //  Seções:
@@ -457,17 +457,9 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #00E5FF, #0066FF)' }}
-            >
-              <Zap className="h-4 w-4 text-[#080C14]" fill="currentColor" />
-            </div>
-            <span className="font-black text-lg tracking-tight" style={{ color: '#E2EAF4' }}>
-              Prospect<span style={{ color: '#00E5FF' }}>AI</span>
-            </span>
-          </div>
+          <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-105">
+            <img src="/capturo.png" alt="Capturo Logo" className="h-9 w-auto object-contain" />
+          </Link>
 
           {/* Nav */}
           <nav className="hidden md:flex items-center gap-8">
@@ -575,7 +567,7 @@ export default function LandingPage() {
               className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
               style={{ color: '#6B7FA8', animation: 'fadeIn 0.8s ease 0.2s both' }}
             >
-              O ProspectAI descobre estabelecimentos no Google Maps, qualifica cada um com IA,
+              O Capturo descobre estabelecimentos no Google Maps, qualifica cada um com IA,
               gera mensagens personalizadas e envia via WhatsApp — tudo no piloto automático.
             </p>
 
@@ -930,7 +922,7 @@ export default function LandingPage() {
               {[
                 {
                   name: 'Marcos Oliveira', role: 'Agência de Marketing, SP',
-                  text: 'Em 1 semana o ProspectAI gerou mais leads do que 3 meses de prospecção manual. A personalização das mensagens é absurda — ninguém percebe que é automático.',
+                  text: 'Em 1 semana o Capturo gerou mais leads do que 3 meses de prospecção manual. A personalização das mensagens é absurda — ninguém percebe que é automático.',
                   score: 5,
                 },
                 {
@@ -1092,7 +1084,7 @@ export default function LandingPage() {
                 },
                 {
                   q: 'O WhatsApp não vai ser bloqueado?',
-                  a: 'O ProspectAI usa a Evolution API com envio humanizado — delays variáveis entre mensagens e simulação de digitação. Além disso, cada mensagem é única e personalizada, o que reduz drasticamente o risco de banimento. Recomendamos usar um número dedicado à prospecção.',
+                  a: 'O Capturo usa a Evolution API com envio humanizado — delays variáveis entre mensagens e simulação de digitação. Além disso, cada mensagem é única e personalizada, o que reduz drasticamente o risco de banimento. Recomendamos usar um número dedicado à prospecção.',
                 },
                 {
                   q: 'Os dados do Google Maps são confiáveis?',
@@ -1108,7 +1100,7 @@ export default function LandingPage() {
                 },
                 {
                   q: 'Preciso saber programar para usar?',
-                  a: 'Não. O ProspectAI é uma plataforma no-code. Toda a configuração é feita através de uma interface visual. O setup das chaves de API (Google Maps e WhatsApp) leva cerca de 15 minutos e temos um guia passo a passo em português.',
+                  a: 'Não. O Capturo é uma plataforma no-code. Toda a configuração é feita através de uma interface visual. O setup das chaves de API (Google Maps e WhatsApp) leva cerca de 15 minutos e temos um guia passo a passo em português.',
                 },
                 {
                   q: 'Posso cancelar a qualquer momento?',
@@ -1160,7 +1152,7 @@ export default function LandingPage() {
                   <span style={{ color: '#00E5FF' }}>já está no mapa.</span>
                 </h2>
                 <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: '#6B7FA8' }}>
-                  Junte-se a centenas de profissionais que já substituíram a prospecção manual pelo ProspectAI.
+                  Junte-se a centenas de profissionais que já substituíram a prospecção manual pelo Capturo.
                   Grátis para começar.
                 </p>
 
@@ -1283,7 +1275,7 @@ export default function LandingPage() {
 
             {/* Copyright */}
             <p className="text-xs" style={{ color: '#3D4F6E' }}>
-              © 2026 ProspectAI — Feito com IA no Brasil 🇧🇷
+              © 2026 Capturo — Feito com IA no Brasil 🇧🇷
             </p>
           </div>
         </div>

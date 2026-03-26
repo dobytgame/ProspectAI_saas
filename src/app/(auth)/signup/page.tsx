@@ -11,10 +11,9 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
       <Card className="w-full max-w-md shadow-lg border-border/50 bg-background/80 backdrop-blur-sm">
         <CardHeader className="space-y-1 flex flex-col items-center">
-          <div className="flex items-center gap-2 font-bold text-2xl text-primary mb-2">
-            <Zap className="h-8 w-8 fill-secondary text-secondary" />
-            <span>ProspectAI</span>
-          </div>
+          <Link href="/" className="transition-transform hover:scale-105 mb-2">
+            <img src="/capturo.png" alt="Capturo Logo" className="h-10 w-auto object-contain" />
+          </Link>
           <CardTitle className="text-2xl font-bold tracking-tight">Crie sua conta</CardTitle>
           <CardDescription>
             Comece a prospectar de forma inteligente hoje mesmo

@@ -45,11 +45,14 @@ export default function LeadChat({ lead, onClose }: LeadChatProps) {
     setIsLoading(true)
 
     try {
-      // For now, simulating the AI call. In the next step, I'll add the server action.
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg, leadId: lead.id })
+        body: JSON.stringify({ 
+          message: userMsg, 
+          leadId: lead.id,
+          history: messages 
+        })
       })
       
       const data = await response.json()
@@ -69,7 +72,7 @@ export default function LeadChat({ lead, onClose }: LeadChatProps) {
             <Zap className="h-5 w-5 text-white fill-white" />
           </div>
           <div>
-            <CardTitle className="text-sm font-bold">Agente ProspectAI</CardTitle>
+            <CardTitle className="text-sm font-bold">Agente Capturo</CardTitle>
             <p className="text-[10px] text-white/70">Estratégia para: {lead.name}</p>
           </div>
         </div>

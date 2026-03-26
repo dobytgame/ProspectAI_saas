@@ -25,7 +25,7 @@ export default async function PipelinePage() {
 
   const { data: leads } = await supabase
     .from("leads")
-    .select("*")
+    .select("id, name, status, score, phone, website, address, segment, metadata, updated_at, campaign_id, campaigns(name)")
     .eq("business_id", business.id)
     .order("score", { ascending: false });
 
@@ -33,7 +33,15 @@ export default async function PipelinePage() {
     id: l.id,
     name: l.name,
     status: l.status || 'new',
-    score: l.score || 0
+    score: l.score || 0,
+    phone: l.phone,
+    website: l.website,
+    address: l.address,
+    segment: l.segment,
+    campaign_id: l.campaign_id,
+    campaign_name: (l.campaigns as any)?.name || 'Sem Campanha',
+    metadata: l.metadata,
+    updated_at: l.updated_at
   })) || [];
 
   return (
@@ -48,6 +56,10 @@ export default async function PipelinePage() {
             <Badge variant="outline" className="text-secondary border-secondary/30 bg-secondary/5">
               {business.name}
             </Badge>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {kanbanLeads.length} Total</span>
+            <span className="flex items-center gap-1 text-green-600"><Zap className="h-4 w-4" /> {kanbanLeads.filter((l: any) => l.status === 'closed').length} Fechados</span>
           </div>
         </header>
 

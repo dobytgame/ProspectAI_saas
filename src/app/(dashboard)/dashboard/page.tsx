@@ -42,6 +42,16 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .limit(200);
 
+  const { data: pipelineData } = await supabase.rpc('get_pipeline_stats', { p_business_id: business.id });
+
+  const { data: recentActivity } = await supabase
+    .from("leads")
+    .select("id, name, score, status, metadata, updated_at")
+    .eq("business_id", business.id)
+    .not('updated_at', 'is', null)
+    .order("updated_at", { ascending: false })
+    .limit(5);
+
   const allLeads = leads?.map(l => ({
     id: l.id,
     name: l.name,
@@ -87,6 +97,8 @@ export default async function DashboardPage() {
           leads={allLeads} 
           segment={business.segment || ''} 
           campaigns={campaigns || []}
+          pipelineStats={pipelineData || {}}
+          recentActivity={recentActivity || []}
         />
       </main>
     </div>

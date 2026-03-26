@@ -9,7 +9,7 @@ export async function generateAllAction(campaignId: string) {
   
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("*, business:businesses(*)")
+    .select("*, business:businesses(*, agents(config))")
     .eq("id", campaignId)
     .single();
 
@@ -24,7 +24,8 @@ export async function generateAllAction(campaignId: string) {
 
   for (const lead of leads) {
     if (lead.metadata?.generated_message) continue;
-    const message = await generateOutreachMessage(lead, campaign.business, campaign);
+    const agentConfig = campaign.business?.agents?.[0]?.config;
+    const message = await generateOutreachMessage(lead, campaign.business, campaign, agentConfig);
     await supabase
       .from("leads")
       .update({ 
@@ -44,13 +45,14 @@ export async function generateMessageAction(leadId: string, campaignId: string) 
 
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("*, business:businesses(*)")
+    .select("*, business:businesses(*, agents(config))")
     .eq("id", campaignId)
     .single();
 
   if (!campaign) return;
 
-  const message = await generateOutreachMessage(lead, campaign.business, campaign);
+  const agentConfig = campaign.business?.agents?.[0]?.config;
+  const message = await generateOutreachMessage(lead, campaign.business, campaign, agentConfig);
   await supabase
     .from("leads")
     .update({ 

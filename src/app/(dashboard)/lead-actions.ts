@@ -13,7 +13,7 @@ export async function searchLeadsAction(query: string, region: string, campaignI
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id, icp")
+    .select("id, icp, plan, agents(config)")
     .eq("user_id", user.id)
     .single();
 
@@ -37,8 +37,21 @@ export async function searchLeadsAction(query: string, region: string, campaignI
   const geo = await getGeocode(region);
   if (!geo) throw new Error("Não foi possível localizar a região informada.");
 
-  // 3. Search Places
+  // 3. Current Leads Count
+  const { count: leadsCount } = await supabase.from('leads').select('*', { count: 'exact', head: true }).eq('business_id', business.id);
+  const currentLeadsCount = leadsCount || 0;
+
+  // 4. Search Places
   const places = await searchPlaces(query, `${geo.lat},${geo.lng}`);
+  
+  // 5. Check Limits Let's assume places.length places will be added
+  const estimatedNewTotal = currentLeadsCount + places.length;
+  if (business.plan === 'free' && estimatedNewTotal > 100) {
+    throw new Error("LIMIT_REACHED_LEADS_FREE");
+  }
+  if (business.plan === 'pro' && estimatedNewTotal > 2000) {
+    throw new Error("LIMIT_REACHED_LEADS_PRO");
+  }
 
   // 4. Enrich with Place Details (phone, website) — all leads with rate limiting
   const enrichedPlaces = await Promise.all(
@@ -85,12 +98,15 @@ export async function searchLeadsAction(query: string, region: string, campaignI
     .insert(leadsToInsert)
     .select("id");
 
+  if (leadsError) return { error: leadsError.message };
+
   // 6. Score all leads with AI — using ID for safe updates
   if (!leadsError && insertedLeads) {
     for (let i = 0; i < insertedLeads.length; i++) {
       const lead = leadsToInsert[i];
       const insertedLead = insertedLeads[i];
-      const analysis = await scoreLead(lead, business.icp);
+      const agentConfig = business.agents?.[0]?.config || business.icp;
+      const analysis = await scoreLead(lead, agentConfig);
       
       await supabase
         .from("leads")
@@ -110,4 +126,6 @@ export async function searchLeadsAction(query: string, region: string, campaignI
   } else {
     revalidatePath("/dashboard");
   }
+
+  return { success: true };
 }

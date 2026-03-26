@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ProspectAI — Prospecção Inteligente",
+  title: "Capturo — Inteligência Comercial",
   description: "Plataforma de prospecção B2B com Inteligência Artificial",
+  icons: {
+    icon: '/icon-capturo.png',
+  }
 };
 
 export default function RootLayout({

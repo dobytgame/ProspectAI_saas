@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
   DragOverlay,
+  useDroppable,
   defaultDropAnimationSideEffects,
 } from '@dnd-kit/core'
 import {
@@ -22,14 +23,24 @@ import { CSS } from '@dnd-kit/utilities'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, GripVertical, MessageSquare } from 'lucide-react'
+import { MoreHorizontal, GripVertical, MessageSquare, Bot, Search, Filter } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import LeadChat from './LeadChat'
+import KanbanLeadSheet from './KanbanLeadSheet'
 
 interface Lead {
   id: string
   name: string
   status: string
   score?: number
+  phone?: string
+  website?: string
+  address?: string
+  segment?: string
+  metadata?: any
+  updated_at?: string
+  campaign_id?: string
+  campaign_name?: string
 }
 
 interface KanbanBoardProps {
@@ -49,6 +60,14 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeChatLead, setActiveChatLead] = useState<Lead | null>(null)
+  const [activeSheetLead, setActiveSheetLead] = useState<Lead | null>(null)
+  const [search, setSearch] = useState('')
+  const [filterTier, setFilterTier] = useState<string | null>(null)
+  const [filterCampaign, setFilterCampaign] = useState<string | null>(null)
+  const [filterSegment, setFilterSegment] = useState<string | null>(null)
+
+  const campaigns = Array.from(new Set(initialLeads.map(l => l.campaign_name).filter(Boolean)))
+  const segments = Array.from(new Set(initialLeads.map(l => l.segment).filter(Boolean)))
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -71,14 +90,13 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
     if (activeId === overId) return
 
     const activeLead = leads.find((l) => l.id === activeId)
-    const overStage = STAGES.find((s) => s.id === overId) || 
-                      leads.find((l) => l.id === overId)
+    const overLead = leads.find((l) => l.id === overId)
+    const overStageId = overLead ? overLead.status : overId
 
-    if (activeLead && overStage) {
-      const newStatus = overStage.id
-      if (activeLead.status !== newStatus && STAGES.some(s => s.id === newStatus)) {
+    if (activeLead && overStageId) {
+      if (activeLead.status !== overStageId && STAGES.some(s => s.id === overStageId)) {
         setLeads((prev) =>
-          prev.map((l) => (l.id === activeId ? { ...l, status: newStatus } : l))
+          prev.map((l) => (l.id === activeId ? { ...l, status: overStageId } : l))
         )
       }
     }
@@ -87,11 +105,32 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
   const handleDragEnd = (event: any) => {
     const { active, over } = event
     if (over && active.id !== over.id) {
-      const lead = leads.find(l => l.id === active.id)
-      if (lead) onStatusChange(lead.id, lead.status)
+      const overId = over.id
+      const overLead = leads.find(l => l.id === overId)
+      const overStageId = overLead ? overLead.status : overId
+      
+      const activeLead = leads.find(l => l.id === active.id)
+      
+      if (activeLead && activeLead.status !== overStageId) {
+        onStatusChange(activeLead.id, overStageId)
+        setLeads((prev) =>
+          prev.map((l) => (l.id === active.id ? { ...l, status: overStageId } : l))
+        )
+      }
     }
     setActiveId(null)
   }
+
+  const filteredLeads = leads.filter(l => {
+    const matchesSearch = l.name.toLowerCase().includes(search.toLowerCase()) || 
+                          l.segment?.toLowerCase().includes(search.toLowerCase()) ||
+                          l.address?.toLowerCase().includes(search.toLowerCase());
+    const matchesTier = filterTier ? l.metadata?.tier === filterTier : true;
+    const matchesCampaign = filterCampaign ? l.campaign_name === filterCampaign : true;
+    const matchesSegment = filterSegment ? l.segment === filterSegment : true;
+    
+    return matchesSearch && matchesTier && matchesCampaign && matchesSegment;
+  })
 
   return (
     <DndContext
@@ -101,14 +140,65 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
+      <div className="flex items-center gap-4 mb-6">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por nome ou segmento..."
+            className="pl-9 bg-white"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Input
+            type="text"
+            placeholder="Tier..."
+            className="w-20 bg-white"
+            value={filterTier || ''}
+            onChange={(e) => setFilterTier(e.target.value.toUpperCase() || null)}
+            maxLength={2}
+          />
+          <select 
+            className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={filterCampaign || ''}
+            onChange={(e) => setFilterCampaign(e.target.value || null)}
+          >
+            <option value="">Todas Campanhas</option>
+            {campaigns.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <select 
+            className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={filterSegment || ''}
+            onChange={(e) => setFilterSegment(e.target.value || null)}
+          >
+            <option value="">Todos Segmentos</option>
+            {segments.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div className="flex gap-2">
+          {['A+', 'A', 'B', 'C'].map(tier => (
+            <Button
+              key={tier}
+              variant={filterTier === tier ? "secondary" : "outline"}
+              size="sm"
+              onClick={() => setFilterTier(filterTier === tier ? null : tier)}
+              className="h-9"
+            >
+              Tier {tier}
+            </Button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex gap-4 h-full overflow-x-auto pb-4">
         {STAGES.map((stage) => (
-          <div key={stage.id} className="min-w-[300px] flex flex-col h-full bg-muted/20 rounded-xl border border-border/40">
+          <DroppableColumn key={stage.id} stage={stage} leadsCount={filteredLeads.filter((l) => l.status === stage.id).length}>
             <div className="p-4 flex items-center justify-between">
               <h3 className="font-semibold text-sm flex items-center gap-2">
                 {stage.title}
                 <Badge variant="secondary" className="text-[10px] h-5">
-                  {leads.filter((l) => l.status === stage.id).length}
+                  {filteredLeads.filter((l) => l.status === stage.id).length}
                 </Badge>
               </h3>
               <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
@@ -117,23 +207,29 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
             <div className="flex-1 p-2 space-y-3">
               <SortableContext
                 id={stage.id}
-                items={leads.filter((l) => l.status === stage.id).map((l) => l.id)}
+                items={filteredLeads.filter((l) => l.status === stage.id).map((l) => l.id)}
                 strategy={verticalListSortingStrategy}
               >
-                {leads
+                {filteredLeads
                   .filter((l) => l.status === stage.id)
                   .map((lead) => (
-                    <SortableItem key={lead.id} lead={lead} onOpenChat={() => setActiveChatLead(lead)} />
+                    <SortableItem key={lead.id} lead={lead} onOpenChat={() => setActiveChatLead(lead)} onOpenSheet={() => setActiveSheetLead(lead)} />
                   ))}
               </SortableContext>
             </div>
-          </div>
+          </DroppableColumn>
         ))}
       </div>
       
       {activeChatLead && (
         <LeadChat lead={activeChatLead} onClose={() => setActiveChatLead(null)} />
       )}
+
+      <KanbanLeadSheet 
+        lead={activeSheetLead ? (leads.find(l => l.id === activeSheetLead.id) || activeSheetLead) : null} 
+        isOpen={!!activeSheetLead} 
+        onClose={() => setActiveSheetLead(null)} 
+      />
 
       <DragOverlay>
         {activeId ? (
@@ -146,7 +242,24 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
   )
 }
 
-function SortableItem({ lead, onOpenChat }: { lead: Lead, onOpenChat: () => void }) {
+function DroppableColumn({ stage, leadsCount, children }: { stage: any, leadsCount: number, children: React.ReactNode }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: stage.id,
+  })
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      className={`min-w-[300px] flex flex-col h-full rounded-xl border border-border/40 transition-colors ${
+        isOver ? 'bg-muted/40 border-primary/50' : 'bg-muted/20'
+      }`}
+    >
+      {children}
+    </div>
+  )
+}
+
+function SortableItem({ lead, onOpenChat, onOpenSheet }: { lead: Lead, onOpenChat: () => void, onOpenSheet: () => void }) {
   const {
     attributes,
     listeners,
@@ -164,39 +277,78 @@ function SortableItem({ lead, onOpenChat }: { lead: Lead, onOpenChat: () => void
 
   return (
     <div ref={setNodeRef} style={style}>
-      <LeadCard lead={lead} onOpenChat={onOpenChat} dndProps={{ ...attributes, ...listeners }} />
+      <LeadCard lead={lead} onOpenChat={onOpenChat} onOpenSheet={onOpenSheet} dndProps={{ ...attributes, ...listeners }} />
     </div>
   )
 }
 
-function LeadCard({ lead, isDragging, onOpenChat, dndProps }: { lead: Lead; isDragging?: boolean, onOpenChat?: () => void, dndProps?: any }) {
+function LeadCard({ lead, isDragging, onOpenChat, onOpenSheet, dndProps }: { lead: Lead; isDragging?: boolean, onOpenChat?: () => void, onOpenSheet?: () => void, dndProps?: any }) {
+  const timeSinceActivity = lead.updated_at 
+    ? Math.floor((new Date().getTime() - new Date(lead.updated_at).getTime()) / (1000 * 3600 * 24))
+    : 0;
+
   return (
-    <Card className={`group relative bg-background border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-xl border-primary ring-1 ring-primary' : ''}`}>
+    <Card 
+      className={`group relative bg-background border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${isDragging ? 'shadow-xl border-primary ring-1 ring-primary' : ''}`}
+      onClick={(e) => {
+        // Only open sheet if we are not clicking a button inside (handled by stopPropagation on buttons)
+        onOpenSheet?.();
+      }}
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <span className="text-sm font-medium leading-tight">{lead.name}</span>
-          <div {...dndProps} className="p-1 -m-1">
+          <div {...dndProps} className="p-1 -m-1 cursor-grab active:cursor-grabbing" onClick={(e) => e.stopPropagation()}>
             <GripVertical className="h-4 w-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
           </div>
         </div>
-        <div className="flex items-center justify-between">
+        
+        {lead.metadata?.tier && (
+          <Badge variant="outline" className="mb-2 text-[10px] font-bold border-secondary/20 text-secondary bg-secondary/5">
+            Tier {lead.metadata.tier}
+          </Badge>
+        )}
+        
+        {lead.metadata?.tags && lead.metadata.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {lead.metadata.tags.map((tag: string) => (
+              <Badge key={tag} className="text-[9px] bg-muted/50 text-muted-foreground font-medium border-border/40">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        
+        <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
-            <Badge className={`${(lead.score || 0) > 70 ? 'bg-green-500' : 'bg-amber-500'} text-white text-[10px] h-5 px-1.5`}>
+            <Badge className={`${(lead.score || 0) > 70 ? 'bg-green-500' : 'bg-amber-500'} text-white text-[10px] h-5 px-1.5 border-none shadow-sm`}>
               {lead.score || 0}
             </Badge>
+            {timeSinceActivity >= 0 && (
+              <span className="text-[10px] text-muted-foreground font-medium">
+                {timeSinceActivity === 0 ? 'Hoje' : `${timeSinceActivity}d atrás`}
+              </span>
+            )}
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="h-8 px-2 text-secondary hover:text-secondary hover:bg-secondary/10"
-            onClick={(e: React.MouseEvent) => {
-              e.stopPropagation();
-              onOpenChat?.();
-            }}
-          >
-            <MessageSquare className="h-4 w-4 mr-1" />
-            <span className="text-[10px] font-bold">Chat</span>
-          </Button>
+          <div className="flex items-center gap-1">
+            {lead.phone && (
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/55${lead.phone?.replace(/\D/g,'')}`, '_blank'); }}>
+                <MessageSquare className="h-3 w-3" />
+              </Button>
+            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 px-2 text-secondary hover:text-secondary hover:bg-secondary/10"
+              onClick={(e: React.MouseEvent) => {
+                e.stopPropagation();
+                onOpenChat?.();
+              }}
+            >
+              <Bot className="h-3 w-3 mr-1" />
+              <span className="text-[10px] font-bold">IA</span>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

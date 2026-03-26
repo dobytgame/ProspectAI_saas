@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capturo — Guia de Implementação para o Time de Dev</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080C14; --surf: #0D1420; --surf2: #111827;
+  --b: #1E2D45; --bh: #2D4060;
+  --cyan: #00E5FF; --cyanD: rgba(0,229,255,0.09); --cyanB: rgba(0,229,255,0.22);
+  --green: #00FFA3; --greenD: rgba(0,255,163,0.09);
+  --yellow: #FFD600; --yellowD: rgba(255,214,0,0.09);
+  --red: #FF4D6D; --redD: rgba(255,77,109,0.09);
+  --purple: #A855F7; --purpleD: rgba(168,85,247,0.09);
+  --orange: #FF8C42;
+  --text: #E2EAF4; --muted: #6B7FA8; --dim: #3D4F6E;
+  --code-bg: #050810; --code-text: #A8D8EA;
+  --display: 'Syne', sans-serif;
+  --body: 'DM Sans', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body { background: var(--bg); color: var(--text); font-family: var(--body); font-size: 14px; line-height: 1.6; }
+
+/* LAYOUT */
+.layout { display: flex; min-height: 100vh; }
+.sidebar-nav {
+  width: 220px; flex-shrink: 0; position: sticky; top: 0; height: 100vh;
+  background: var(--surf); border-right: 1px solid var(--b);
+  display: flex; flex-direction: column; padding: 24px 0; overflow-y: auto;
+}
+.main { flex: 1; max-width: 820px; padding: 48px 40px 100px; overflow-y: auto; }
+
+/* NAV */
+.nav-logo { padding: 0 20px 24px; border-bottom: 1px solid var(--b); margin-bottom: 16px; }
+.nav-logo-name { font-family: var(--display); font-size: 18px; font-weight: 800; }
+.nav-logo-name span { color: var(--cyan); }
+.nav-logo-sub { font-size: 10px; color: var(--dim); margin-top: 2px; }
+.nav-section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--dim); padding: 12px 20px 6px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px; padding: 7px 20px;
+  font-size: 12px; color: var(--muted); cursor: pointer;
+  border-left: 2px solid transparent; transition: all 0.15s; text-decoration: none;
+}
+.nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.nav-item.active { color: var(--cyan); border-left-color: var(--cyan); background: var(--cyanD); }
+.nav-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+/* SECTION */
+.section { margin-bottom: 64px; scroll-margin-top: 32px; }
+.eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+.section-title { font-family: var(--display); font-size: 24px; font-weight: 800; color: var(--text); margin-bottom: 6px; line-height: 1.2; }
+.section-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; line-height: 1.7; max-width: 640px; }
+.divider { height: 1px; background: linear-gradient(90deg, transparent, var(--b), transparent); margin: 56px 0; }
+
+/* CARDS */
+.card { background: var(--surf); border: 1px solid var(--b); border-radius: 14px; padding: 20px 22px; margin-bottom: 12px; }
+.card-accent-l { border-left: 3px solid; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+.b-cyan   { background: var(--cyanD);   color: var(--cyan);   border: 1px solid var(--cyanB); }
+.b-green  { background: var(--greenD);  color: var(--green);  border: 1px solid rgba(0,255,163,0.22); }
+.b-yellow { background: var(--yellowD); color: var(--yellow); border: 1px solid rgba(255,214,0,0.22); }
+.b-red    { background: var(--redD);    color: var(--red);    border: 1px solid rgba(255,77,109,0.22); }
+.b-purple { background: var(--purpleD); color: var(--purple); border: 1px solid rgba(168,85,247,0.22); }
+.b-gray   { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--b); }
+.b-orange { background: rgba(255,140,66,0.09); color: var(--orange); border: 1px solid rgba(255,140,66,0.22); }
+
+/* CODE BLOCKS */
+.code-block {
+  background: var(--code-bg); border: 1px solid var(--b);
+  border-radius: 12px; overflow: hidden; margin: 14px 0;
+  position: relative;
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--b);
+  background: rgba(255,255,255,0.02);
+}
+.code-filename { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.code-lang { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.code-copy {
+  font-size: 10px; padding: 3px 10px; border-radius: 6px;
+  background: var(--surf2); border: 1px solid var(--b);
+  color: var(--muted); cursor: pointer; font-family: var(--body);
+  transition: all 0.15s;
+}
+.code-copy:hover { border-color: var(--cyan); color: var(--cyan); }
+.code-copy.ok { color: var(--green); border-color: var(--green); }
+pre {
+  padding: 18px; overflow-x: auto; font-family: var(--mono);
+  font-size: 12px; line-height: 1.75; color: var(--code-text);
+  white-space: pre;
+}
+.kw   { color: #C792EA; }  /* keywords */
+.str  { color: #C3E88D; }  /* strings */
+.cmt  { color: #4A6072; font-style: italic; } /* comments */
+.fn   { color: #82AAFF; }  /* functions */
+.num  { color: #F78C6C; }  /* numbers */
+.var  { color: #EEFFFF; }  /* variables */
+.typ  { color: #FFCB6B; }  /* types */
+.hl   { background: rgba(0,229,255,0.07); display: block; margin: 0 -18px; padding: 0 18px; } /* highlight line */
+
+/* GRIDS */
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+
+/* TASK LIST */
+.task-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.task-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; padding: 10px 14px; background: var(--surf2); border-radius: 10px; border: 1px solid var(--b); }
+.task-check { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--b); flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; }
+.task-check.done { background: var(--greenD); border-color: rgba(0,255,163,0.4); color: var(--green); font-size: 10px; }
+.task-text { flex: 1; line-height: 1.5; }
+.task-text strong { color: var(--text); }
+.task-text span { color: var(--muted); }
+
+/* STEP */
+.step-row { display: flex; gap: 16px; margin-bottom: 24px; }
+.step-num {
+  width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 14px; font-weight: 800;
+}
+.step-content { flex: 1; }
+.step-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.step-sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* TABLE */
+.table-wrap { border: 1px solid var(--b); border-radius: 12px; overflow: hidden; margin: 14px 0; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--b); background: var(--surf2); }
+td { padding: 11px 14px; font-size: 12px; border-bottom: 1px solid rgba(30,45,69,0.5); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.015); }
+
+/* ALERT */
+.alert { display: flex; gap: 12px; padding: 14px 16px; border-radius: 12px; margin: 14px 0; }
+.alert-icon { font-size: 18px; flex-shrink: 0; }
+.alert-body { flex: 1; font-size: 12px; line-height: 1.6; }
+.alert-title { font-weight: 600; margin-bottom: 3px; }
+.alert-warn { background: rgba(255,214,0,0.06); border: 1px solid rgba(255,214,0,0.2); }
+.alert-warn .alert-title { color: var(--yellow); }
+.alert-info { background: var(--cyanD); border: 1px solid var(--cyanB); }
+.alert-info .alert-title { color: var(--cyan); }
+.alert-ok { background: var(--greenD); border: 1px solid rgba(0,255,163,0.22); }
+.alert-ok .alert-title { color: var(--green); }
+.alert-danger { background: var(--redD); border: 1px solid rgba(255,77,109,0.22); }
+.alert-danger .alert-title { color: var(--red); }
+
+/* IMPROVEMENT ROW */
+.imp-row { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid rgba(30,45,69,0.4); }
+.imp-row:last-child { border-bottom: none; padding-bottom: 0; }
+.imp-tag { width: 44px; height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; flex-shrink: 0; margin-top: 2px; }
+.tag-fix { background: var(--redD); color: var(--red); border: 1px solid rgba(255,77,109,0.22); }
+.tag-new { background: var(--cyanD); color: var(--cyan); border: 1px solid var(--cyanB); }
+.tag-imp { background: var(--yellowD); color: var(--yellow); border: 1px solid rgba(255,214,0,0.22); }
+.imp-content { flex: 1; }
+.imp-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+.imp-sub { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+/* PRIORITY BLOCK */
+.priority-block { border-radius: 14px; overflow: hidden; border: 1px solid var(--b); margin-bottom: 12px; }
+.priority-header { padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; }
+.priority-title { font-size: 13px; font-weight: 600; }
+.priority-body { padding: 0 18px 14px; }
+
+/* FOOTER */
+footer { margin-top: 80px; padding: 24px 0; border-top: 1px solid var(--b); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+footer p { font-size: 11px; color: var(--dim); }
+
+@media (max-width: 768px) {
+  .sidebar-nav { display: none; }
+  .main { padding: 32px 20px 60px; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- ══ SIDEBAR NAV ══════════════════════════════════ -->
+<nav class="sidebar-nav">
+  <div class="nav-logo">
+    <div class="nav-logo-name">captur<span>o</span></div>
+    <div class="nav-logo-sub">Dev Implementation Guide v1.0</div>
+  </div>
+
+  <div class="nav-section-label">Visão Geral</div>
+  <a class="nav-item active" href="#s0"><div class="nav-dot" style="background:var(--cyan)"></div>Estado atual</a>
+  <a class="nav-item" href="#s1"><div class="nav-dot" style="background:var(--cyan)"></div>Prioridades</a>
+
+  <div class="nav-section-label">IA — Prompts</div>
+  <a class="nav-item" href="#s2"><div class="nav-dot" style="background:var(--green)"></div>Análise do negócio</a>
+  <a class="nav-item" href="#s3"><div class="nav-dot" style="background:var(--green)"></div>Scoring de leads</a>
+  <a class="nav-item" href="#s4"><div class="nav-dot" style="background:var(--green)"></div>Geração de mensagem</a>
+  <a class="nav-item" href="#s5"><div class="nav-dot" style="background:var(--green)"></div>Chat do agente</a>
+
+  <div class="nav-section-label">Kanban</div>
+  <a class="nav-item" href="#s6"><div class="nav-dot" style="background:var(--yellow)"></div>Dados enriquecidos</a>
+  <a class="nav-item" href="#s7"><div class="nav-dot" style="background:var(--yellow)"></div>Quick actions</a>
+  <a class="nav-item" href="#s8"><div class="nav-dot" style="background:var(--yellow)"></div>Notas & histórico</a>
+  <a class="nav-item" href="#s9"><div class="nav-dot" style="background:var(--yellow)"></div>Filtros & busca</a>
+
+  <div class="nav-section-label">Dashboard</div>
+  <a class="nav-item" href="#s10"><div class="nav-dot" style="background:var(--purple)"></div>Analytics avançado</a>
+  <a class="nav-item" href="#s11"><div class="nav-dot" style="background:var(--purple)"></div>Funil de conversão</a>
+  <a class="nav-item" href="#s12"><div class="nav-dot" style="background:var(--purple)"></div>Atividade recente</a>
+
+  <div class="nav-section-label">Infraestrutura</div>
+  <a class="nav-item" href="#s13"><div class="nav-dot" style="background:var(--red)"></div>Migration SQL</a>
+  <a class="nav-item" href="#s14"><div class="nav-dot" style="background:var(--red)"></div>Bug fixes</a>
+  <a class="nav-item" href="#s15"><div class="nav-dot" style="background:var(--orange)"></div>Checklist final</a>
+</nav>
+
+<!-- ══ MAIN CONTENT ═════════════════════════════════ -->
+<main class="main">
+
+<!-- ── HEADER ─────────────────────────────────────── -->
+<div style="margin-bottom:48px;">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;">
+    <div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px;font-family:var(--mono);">capturo.com.br · Dev Guide</div>
+      <h1 style="font-family:var(--display);font-size:32px;font-weight:800;line-height:1.1;margin-bottom:8px;">
+        Guia de Implementação<br><span style="color:var(--cyan);">para o Time de Dev</span>
+      </h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;max-width:560px;">
+        Documento técnico baseado na análise completa do codebase atual. Cobre melhorias nos prompts de IA, novas funcionalidades do Kanban, refatoração do Dashboard e correções de bugs críticos.
+      </p>
+    </div>
+    <div style="text-align:right;flex-shrink:0;">
+      <div style="font-size:11px;color:var(--dim);">Versão 1.0</div>
+      <div style="font-size:11px;color:var(--dim);margin-top:2px;">Março 2026</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px;">
+        <span class="badge b-cyan">Next.js 16</span>
+        <span class="badge b-gray">Supabase</span>
+        <span class="badge b-gray">Claude claude-sonnet-4-5</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">📋</div>
+    <div class="alert-body">
+      <div class="alert-title">Como usar este documento</div>
+      Cada seção tem: <strong>contexto do problema</strong> (o que existe hoje), <strong>código completo para substituir</strong> e <strong>instruções de implementação</strong>. Copie os blocos de código diretamente para os arquivos indicados. Siga a ordem das seções.
+    </div>
+  </div>
+</div>
+
+<!-- ══ S0 — ESTADO ATUAL ═══════════════════════════ -->
+<section class="section" id="s0">
+  <div class="eyebrow">Estado atual do projeto</div>
+  <div class="section-title">O que foi analisado</div>
+  <div class="section-sub">Análise completa de 58 arquivos, 4 migrations SQL, todos os prompts de IA e componentes de UI.</div>
+
+  <div class="grid2" style="margin-bottom:16px;">
+    <div class="card" style="border-left:3px solid var(--green);">
+      <div class="card-title" style="color:var(--green);">✓ O que está bom</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+        <li style="font-size:12px;color:var(--muted);">✓ Migração para Claude claude-sonnet-4-5 feita</li>
+        <li style="font-size:12px;color:var(--muted);">✓ <code style="font-family:var(--mono);font-size:11px;">claude.ts</code> com 4 funções estruturadas</li>
+        <li style="font-size:12px;color:var(--muted);">✓ StatCard, ScoreBadge, Skeleton criados</li>
+        <li style="font-size:12px;color:var(--muted);">✓ Migration de campaigns aplicada</li>
+        <li style="font-size:12px;color:var(--muted);">✓ Scoring atualiza por ID (bug corrigido)</li>
+        <li style="font-size:12px;color:var(--muted);">✓ DashboardContent usando StatCard animado</li>
+        <li style="font-size:12px;color:var(--muted);">✓ globals.css dark-first com tokens</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:3px solid var(--red);">
+      <div class="card-title" style="color:var(--red);">✗ O que precisa melhorar</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+        <li style="font-size:12px;color:var(--muted);">✗ Prompt de análise do negócio muito raso</li>
+        <li style="font-size:12px;color:var(--muted);">✗ Prompt de mensagem genérico, sem contexto de vendedor</li>
+        <li style="font-size:12px;color:var(--muted);">✗ Chat do agente sem histórico de conversa</li>
+        <li style="font-size:12px;color:var(--muted);">✗ Kanban mostra só nome e score — sem dados úteis</li>
+        <li style="font-size:12px;color:var(--muted);">✗ Kanban sem notas, tags ou histórico de contato</li>
+        <li style="font-size:12px;color:var(--muted);">✗ Dashboard sem analytics de funil ou conversão</li>
+        <li style="font-size:12px;color:var(--muted);">✗ <code style="font-family:var(--mono);font-size:11px;">PDFParse</code> import incorreto (named vs default)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S1 — PRIORIDADES ════════════════════════════ -->
+<section class="section" id="s1">
+  <div class="eyebrow">Ordem de implementação</div>
+  <div class="section-title">Prioridades por impacto</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Item</th><th>Arquivo</th><th>Esforço</th><th>Impacto</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--red);font-weight:700;">1</td><td><strong style="color:var(--text);">Fix import PDFParse</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">onboarding/actions.ts</td><td><span class="badge b-green">15 min</span></td><td><span class="badge b-red">Crítico</span></td></tr>
+        <tr><td style="color:var(--red);font-weight:700;">2</td><td><strong style="color:var(--text);">Prompt: análise do negócio</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">lib/ai/claude.ts</td><td><span class="badge b-yellow">1h</span></td><td><span class="badge b-red">Alto</span></td></tr>
+        <tr><td style="color:var(--red);font-weight:700;">3</td><td><strong style="color:var(--text);">Prompt: geração de mensagem</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">lib/ai/claude.ts</td><td><span class="badge b-yellow">1h</span></td><td><span class="badge b-red">Alto</span></td></tr>
+        <tr><td style="color:var(--yellow);font-weight:700;">4</td><td><strong style="color:var(--text);">Chat do agente com histórico</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">api/chat/route.ts</td><td><span class="badge b-yellow">2h</span></td><td><span class="badge b-yellow">Alto</span></td></tr>
+        <tr><td style="color:var(--yellow);font-weight:700;">5</td><td><strong style="color:var(--text);">Kanban: dados enriquecidos</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">KanbanBoard.tsx + pipeline/page.tsx</td><td><span class="badge b-yellow">3h</span></td><td><span class="badge b-yellow">Alto</span></td></tr>
+        <tr><td style="color:var(--yellow);font-weight:700;">6</td><td><strong style="color:var(--text);">Kanban: notas e tags</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">KanbanBoard.tsx + migration SQL</td><td><span class="badge b-yellow">3h</span></td><td><span class="badge b-yellow">Médio</span></td></tr>
+        <tr><td style="color:var(--cyan);font-weight:700;">7</td><td><strong style="color:var(--text);">Dashboard: analytics de funil</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">dashboard/page.tsx + DashboardContent</td><td><span class="badge b-cyan">4h</span></td><td><span class="badge b-cyan">Médio</span></td></tr>
+        <tr><td style="color:var(--cyan);font-weight:700;">8</td><td><strong style="color:var(--text);">Dashboard: atividade recente</strong></td><td style="font-family:var(--mono);font-size:11px;color:var(--muted);">DashboardContent.tsx</td><td><span class="badge b-cyan">2h</span></td><td><span class="badge b-cyan">Médio</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S2 — PROMPT: ANÁLISE DO NEGÓCIO ════════════ -->
+<section class="section" id="s2">
+  <div class="eyebrow">IA — Prompts · Item 2</div>
+  <div class="section-title">Análise do Negócio — <span style="color:var(--cyan);">trainAgent()</span></div>
+  <div class="section-sub">
+    O prompt atual é básico demais: pede ICP, tom e nicho. Falta ensinar a IA a pensar como um vendedor expert que conhece profundamente o negócio. O novo prompt extrai muito mais contexto e cria um verdadeiro "DNA de vendas" para o agente.
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Problemas no prompt atual</div>
+    <div class="imp-row">
+      <div class="imp-tag tag-fix">FIX</div>
+      <div class="imp-content">
+        <div class="imp-title">Sem contexto de vendas — IA não sabe o que fazer com o ICP</div>
+        <div class="imp-sub">O prompt atual pede apenas "target_audience" e "pain_points" sem dizer para a IA <em>como usar</em> essas informações na prospecção. O agente resultante é genérico.</div>
+      </div>
+    </div>
+    <div class="imp-row">
+      <div class="imp-tag tag-fix">FIX</div>
+      <div class="imp-content">
+        <div class="imp-title">Falta: gatilhos de compra, objeções comuns, proposta de valor única</div>
+        <div class="imp-sub">Sem saber quando o cliente compra e por que não compra, o agente não consegue gerar mensagens persuasivas ou responder objeções.</div>
+      </div>
+    </div>
+    <div class="imp-row">
+      <div class="imp-tag tag-new">NEW</div>
+      <div class="imp-content">
+        <div class="imp-title">Adicionar: persona do vendedor + estilo de abordagem por segmento</div>
+        <div class="imp-sub">O agente precisa ter uma identidade de vendas clara. Quem ele é, como fala, o que nunca diz.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">Arquivo a modificar</div>
+      <code style="font-family:var(--mono);font-size:11px;">src/lib/ai/claude.ts</code> — substituir a função <code>trainAgent()</code> completa pelo código abaixo.
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/lib/ai/claude.ts — trainAgent()</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">/**
+ * TREINAMENTO DO AGENTE — Versão 2.0
+ * Cria um "DNA de vendas" completo: persona, ICP detalhado,
+ * gatilhos de compra, objeções, proposta de valor e scripts de abordagem.
+ */</span>
+<span class="kw">export async function</span> <span class="fn">trainAgent</span>(<span class="var">businessData</span>: {
+  name: string; description: string; services: string;
+  targetAudience: string; differentials: string;
+  tone: string; extraContext?: string;
+}) {
+  <span class="kw">const</span> <span class="var">systemPrompt</span> = <span class="str">`Você é um Diretor de Vendas sênior com 15 anos de experiência em B2B brasileiro.
+Sua especialidade é construir playbooks de vendas que geram resultados reais.
+Você pensa como um vendedor que precisa bater meta — não como um consultor teórico.
+Sua análise deve ser PRÁTICA, ESPECÍFICA e ACIONÁVEL.`</span>;
+
+  <span class="kw">const</span> <span class="var">userPrompt</span> = <span class="str">`Analise profundamente o negócio abaixo e crie o DNA de vendas completo do agente de prospecção.
+
+═══ DADOS DO NEGÓCIO ═══
+Empresa: ${businessData.name}
+Descrição: ${businessData.description}
+Serviços/Produtos: ${businessData.services}
+Público-alvo declarado: ${businessData.targetAudience}
+Diferenciais: ${businessData.differentials}
+Tom de comunicação: ${businessData.tone}
+${businessData.extraContext ? `Contexto adicional (website/doc):\n${businessData.extraContext}` : ''}
+
+═══ SUA MISSÃO ═══
+Crie um agente de prospecção que:
+1. Conhece profundamente QUEM compra e POR QUÊ compra
+2. Sabe identificar o momento certo de abordar
+3. Personaliza a mensagem por perfil de lead
+4. Antecipa e responde objeções antes de serem levantadas
+5. Tem uma identidade de comunicação forte e consistente
+
+Retorne EXCLUSIVAMENTE JSON válido (sem markdown, sem comentários):
+{
+  "icp": {
+    "target_audience": "descrição precisa de quem é o cliente ideal (cargo, porte, setor)",
+    "pain_points": ["dor 1 específica do nicho", "dor 2", "dor 3", "dor 4", "dor 5"],
+    "solution_value": "o que o cliente GANHA de concreto (resultado mensurável quando possível)",
+    "ideal_segments": ["segmento A com exemplo real", "segmento B", "segmento C"],
+    "buying_triggers": ["situação que faz o cliente buscar solução agora", "gatilho 2", "gatilho 3"],
+    "disqualifiers": ["sinal claro de que não é cliente ideal", "disqualifier 2"]
+  },
+  "sales_persona": {
+    "name": "nome do agente (ex: Agente ${businessData.name})",
+    "role": "cargo que o agente representa (ex: Consultor de Crescimento)",
+    "personality": "3 traços de personalidade que definem o estilo (ex: direto, consultivo, focado em ROI)",
+    "never_say": ["frase que nunca deve aparecer nas mensagens", "frase 2", "frase 3"],
+    "always_do": ["comportamento obrigatório na abordagem", "comportamento 2"]
+  },
+  "objection_handling": {
+    "nao_tenho_tempo": "resposta curta e direta para 'não tenho tempo'",
+    "ja_tenho_fornecedor": "resposta para 'já tenho quem faz isso'",
+    "muito_caro": "resposta para objeção de preço sem dar desconto",
+    "nao_preciso": "resposta para 'não preciso disso agora'"
+  },
+  "approach_angles": [
+    "ângulo 1: baseado na dor mais comum (ex: 'vi que vocês...')",
+    "ângulo 2: baseado em resultado/prova social do nicho",
+    "ângulo 3: baseado em timing/oportunidade do mercado",
+    "ângulo 4: baseado em curiosidade/dado surpreendente",
+    "ângulo 5: baseado em conexão geográfica ou setorial"
+  ],
+  "scoring_criteria": {
+    "must_have": ["critério eliminatório positivo 1", "critério 2", "critério 3"],
+    "nice_to_have": ["bônus de qualificação 1", "bônus 2"],
+    "red_flags": ["sinal de desqualificação 1", "sinal 2", "sinal 3"]
+  },
+  "suggested_tone": "tom de voz detalhado (ex: 'Direto e consultivo — como um amigo especialista, não como vendedor')",
+  "niche": "nome do nicho em 2-4 palavras"
+}`</span>;
+
+  <span class="kw">const</span> <span class="var">response</span> = <span class="kw">await</span> <span class="var">anthropic</span>.messages.<span class="fn">create</span>({
+    model: <span class="str">"claude-sonnet-4-5"</span>,
+    max_tokens: <span class="num">2000</span>,
+    system: <span class="var">systemPrompt</span>,
+    messages: [{ role: <span class="str">"user"</span>, content: <span class="var">userPrompt</span> }],
+  });
+
+  <span class="kw">const</span> <span class="var">content</span> = <span class="var">response</span>.content[<span class="num">0</span>];
+  <span class="kw">if</span> (<span class="var">content</span>.type === <span class="str">"text"</span>) {
+    <span class="kw">return</span> <span class="fn">parseClaudeJSON</span>(<span class="var">content</span>.text);
+  }
+  <span class="kw">throw new</span> Error(<span class="str">"Falha ao treinar agente."</span>);
+}</pre>
+  </div>
+
+  <div class="alert alert-ok">
+    <div class="alert-icon">✓</div>
+    <div class="alert-body">
+      <div class="alert-title">O que muda</div>
+      O agente agora tem persona de vendas, manejo de objeções e 5 ângulos de abordagem por segmento. Esses dados ficam salvos em <code style="font-family:var(--mono);font-size:11px;">agents.config</code> e são usados pelos prompts de mensagem e chat.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S3 — PROMPT: SCORING ═══════════════════════ -->
+<section class="section" id="s3">
+  <div class="eyebrow">IA — Prompts · Item 3</div>
+  <div class="section-title">Scoring de Leads — <span style="color:var(--cyan);">scoreLead()</span></div>
+  <div class="section-sub">O scoring atual não usa os novos campos do trainAgent (buying_triggers, red_flags). Atualizar para aproveitar todo o DNA de vendas.</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/lib/ai/claude.ts — scoreLead()</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">/**
+ * SCORING DE LEADS — Versão 2.0
+ * Usa o DNA completo do agente: icp + scoring_criteria + buying_triggers.
+ */</span>
+<span class="kw">export async function</span> <span class="fn">scoreLead</span>(<span class="var">leadData</span>: <span class="typ">any</span>, <span class="var">agentConfig</span>: <span class="typ">any</span>) {
+  <span class="kw">const</span> <span class="var">icp</span> = <span class="var">agentConfig</span>?.icp || <span class="var">agentConfig</span>;
+  <span class="kw">const</span> <span class="var">criteria</span> = <span class="var">agentConfig</span>?.scoring_criteria || {};
+  <span class="kw">const</span> <span class="var">triggers</span> = <span class="var">icp</span>?.buying_triggers || [];
+
+  <span class="kw">const</span> <span class="var">prompt</span> = <span class="str">`Você é um especialista em qualificação de leads B2B.
+Avalie o fit deste lead com o ICP do negócio e dê um score de 0 a 100.
+
+ICP DO NEGÓCIO:
+${JSON.stringify(icp, null, 2)}
+
+CRITÉRIOS DE SCORING:
+Must have (elimina se ausente): ${JSON.stringify(criteria.must_have || [])}
+Nice to have (aumenta score): ${JSON.stringify(criteria.nice_to_have || [])}
+Red flags (diminui score): ${JSON.stringify(criteria.red_flags || [])}
+Gatilhos de compra a detectar: ${JSON.stringify(triggers)}
+
+DADOS DO LEAD:
+- Nome: ${leadData.name}
+- Categorias Google: ${JSON.stringify(leadData.metadata?.types || [])}
+- Avaliação: ${leadData.metadata?.rating || 'N/A'}/5 (${leadData.metadata?.user_ratings_total || 0} avaliações)
+- Endereço: ${leadData.address}
+- Tem website: ${leadData.website ? 'Sim — ' + leadData.website : 'Não'}
+- Tem telefone: ${leadData.phone ? 'Sim' : 'Não'}
+
+ESCALA:
+- 86-100: Lead perfeito — todos os must_have, nenhum red_flag
+- 71-85: Bom fit — maioria dos critérios atendidos
+- 51-70: Potencial — fit parcial, vale tentar
+- 31-50: Baixo fit — alguns critérios incompatíveis
+- 0-30: Desqualificado — red_flag eliminatório presente
+
+Retorne APENAS JSON (sem markdown):
+{
+  "score": number,
+  "tier": "A+|A|B|C|D",
+  "reasoning": "explicação objetiva em 1 frase",
+  "fit_reasons": ["ponto positivo 1", "ponto 2"],
+  "concerns": ["preocupação 1"],
+  "recommended_angle": "qual dos ângulos de abordagem usar com este lead",
+  "priority": "high|medium|low"
+}`</span>;
+
+  <span class="kw">const</span> <span class="var">response</span> = <span class="kw">await</span> <span class="var">anthropic</span>.messages.<span class="fn">create</span>({
+    model: <span class="str">"claude-sonnet-4-5"</span>,
+    max_tokens: <span class="num">500</span>,
+    messages: [{ role: <span class="str">"user"</span>, content: <span class="var">prompt</span> }],
+  });
+
+  <span class="kw">const</span> <span class="var">content</span> = <span class="var">response</span>.content[<span class="num">0</span>];
+  <span class="kw">if</span> (<span class="var">content</span>.type === <span class="str">"text"</span>) {
+    <span class="kw">try</span> { <span class="kw">return</span> <span class="fn">parseClaudeJSON</span>(<span class="var">content</span>.text); }
+    <span class="kw">catch</span> { <span class="kw">return</span> { score: <span class="num">50</span>, tier: <span class="str">"C"</span>, reasoning: <span class="str">"Falha na análise."</span>, fit_reasons: [], concerns: [], priority: <span class="str">"medium"</span> }; }
+  }
+  <span class="kw">return</span> { score: <span class="num">0</span>, tier: <span class="str">"D"</span>, reasoning: <span class="str">"Erro de comunicação."</span>, fit_reasons: [], concerns: [], priority: <span class="str">"low"</span> };
+}
+</pre>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">Atualizar chamada em lead-actions.ts</div>
+      A função <code>scoreLead</code> agora recebe <code>agentConfig</code> ao invés de <code>businessICP</code>. Em <code>lead-actions.ts</code>, atualizar o select do Supabase para incluir o agent:
+      <br><br>
+      <code style="font-family:var(--mono);font-size:11px;background:var(--code-bg);padding:4px 8px;border-radius:6px;display:block;margin-top:6px;">.select("id, icp, agents(config)")</code>
+      <br>
+      E passar: <code style="font-family:var(--mono);font-size:11px;">scoreLead(lead, business.agents?.[0]?.config || business.icp)</code>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S4 — PROMPT: MENSAGEM ════════════════════════ -->
+<section class="section" id="s4">
+  <div class="eyebrow">IA — Prompts · Item 3</div>
+  <div class="section-title">Geração de Mensagem — <span style="color:var(--cyan);">generateOutreachMessage()</span></div>
+  <div class="section-sub">
+    O prompt atual tem boas regras mas não transforma o agente em um vendedor. Não usa os ângulos de abordagem, a persona de vendas nem o recommended_angle do scoring. A mensagem resultante é boa mas não é extraordinária.
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/lib/ai/claude.ts — generateOutreachMessage()</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">/**
+ * GERAÇÃO DE MENSAGEM — Versão 2.0
+ * Usa persona de vendas, ângulo recomendado pelo scoring e tom calibrado.
+ * Cada mensagem é única, específica e soa como escrita por um humano expert.
+ */</span>
+<span class="kw">export async function</span> <span class="fn">generateOutreachMessage</span>(
+  <span class="var">lead</span>: <span class="typ">any</span>, <span class="var">business</span>: <span class="typ">any</span>, <span class="var">campaign</span>: <span class="typ">any</span>, <span class="var">agentConfig</span>?: <span class="typ">any</span>
+) {
+  <span class="kw">const</span> <span class="var">isWhatsApp</span> = <span class="var">campaign</span>.channel === <span class="str">'whatsapp'</span>;
+  <span class="kw">const</span> <span class="var">persona</span> = <span class="var">agentConfig</span>?.sales_persona || {};
+  <span class="kw">const</span> <span class="var">angles</span> = <span class="var">agentConfig</span>?.approach_angles || [];
+  <span class="kw">const</span> <span class="var">recommendedAngle</span> = <span class="var">lead</span>.metadata?.recommended_angle || <span class="var">angles</span>[<span class="num">0</span>] || <span class="str">''</span>;
+  <span class="kw">const</span> <span class="var">objections</span> = <span class="var">agentConfig</span>?.objection_handling || {};
+  <span class="kw">const</span> <span class="var">neverSay</span> = <span class="var">persona</span>.never_say || [];
+
+  <span class="kw">const</span> <span class="var">systemPrompt</span> = <span class="str">`Você é ${persona.name || business.name}, ${persona.role || 'Consultor de Vendas'}.
+Sua personalidade: ${persona.personality || business.tone}.
+Você representa: ${business.name} — ${business.segment}.
+
+REGRAS DE OURO da sua comunicação:
+${neverSay.map((s: string, i: number) => `${i+1}. NUNCA diga: "${s}"`).join('\n')}
+- NUNCA mencione automação, robô ou IA
+- NUNCA use linguagem corporativa genérica
+- SEMPRE soe como uma pessoa real que pesquisou o lead
+- SEMPRE foque no resultado para o lead, não nas features do produto`</span>;
+
+  <span class="kw">const</span> <span class="var">userPrompt</span> = <span class="str">`Escreva UMA mensagem de primeiro contato para o lead abaixo.
+
+CONTEXTO DA CAMPANHA:
+Canal: ${campaign.channel.toUpperCase()}
+Objetivo: ${campaign.name} — ${campaign.description}
+
+DADOS DO LEAD (use para personalizar):
+- Empresa: ${lead.name}
+- Endereço: ${lead.address}
+- Avaliação Google: ${lead.metadata?.rating || 'N/A'} estrelas (${lead.metadata?.user_ratings_total || 0} avaliações)
+- Score de qualificação: ${lead.score}/100 (${lead.metadata?.tier || 'B'})
+- Por que é um bom fit: ${lead.metadata?.reasoning || ''}
+- Pontos fortes do lead: ${JSON.stringify(lead.metadata?.fit_reasons || [])}
+${lead.phone ? `- Telefone: ${lead.phone}` : ''}
+${lead.website ? `- Website: ${lead.website}` : ''}
+
+ÂNGULO DE ABORDAGEM RECOMENDADO:
+${recommendedAngle || 'Use o ângulo mais relevante para o perfil do lead'}
+
+PROPOSTA DE VALOR DO PRODUTO:
+${business.icp?.solution_value || ''}
+
+${isWhatsApp ? `FORMATO WHATSAPP:
+- Máximo 3 parágrafos CURTOS (cada um com no máximo 2 linhas)
+- Tom conversacional, direto, sem formalidades excessivas
+- Sem formatação markdown (sem **, sem -, sem listas)
+- Terminar com UMA pergunta aberta simples
+- Assinatura: ${persona.name || business.name}` : `FORMATO EMAIL:
+- Primeira linha: ASSUNTO: [assunto que gera curiosidade, máximo 50 chars]
+- 3-4 parágrafos bem estruturados
+- Abertura que não começa com "Olá" ou "Oi"
+- Parágrafo de valor claro com dado ou resultado específico
+- CTA claro e fácil de responder
+- Assinatura: ${persona.name || business.name} | ${business.name}`}
+
+IMPORTANTE: A primeira frase DEVE mencionar algo específico sobre o ${lead.name} ou sua localização.
+Escreva APENAS a mensagem. Sem explicações, sem comentários, sem notas.`</span>;
+
+  <span class="kw">const</span> <span class="var">response</span> = <span class="kw">await</span> <span class="var">anthropic</span>.messages.<span class="fn">create</span>({
+    model: <span class="str">"claude-sonnet-4-5"</span>,
+    max_tokens: <span class="num">800</span>,
+    system: <span class="var">systemPrompt</span>,
+    messages: [{ role: <span class="str">"user"</span>, content: <span class="var">userPrompt</span> }],
+  });
+
+  <span class="kw">const</span> <span class="var">content</span> = <span class="var">response</span>.content[<span class="num">0</span>];
+  <span class="kw">if</span> (<span class="var">content</span>.type === <span class="str">"text"</span>) <span class="kw">return</span> <span class="var">content</span>.text;
+  <span class="kw">throw new</span> Error(<span class="str">"Falha ao gerar mensagem."</span>);
+}
+</pre>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">Atualizar chamadas em campanhas/[id]/actions.ts</div>
+      Passar o agentConfig para a função. Adicionar ao select do Supabase:
+      <br><br>
+      <code style="font-family:var(--mono);font-size:11px;background:var(--code-bg);padding:4px 8px;border-radius:6px;display:block;margin-top:6px;">.select("*, business:businesses(*, agents(config))")</code>
+      <br>
+      E na chamada: <code style="font-family:var(--mono);font-size:11px;">generateOutreachMessage(lead, campaign.business, campaign, campaign.business.agents?.[0]?.config)</code>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S5 — CHAT DO AGENTE ═════════════════════════ -->
+<section class="section" id="s5">
+  <div class="eyebrow">IA — Prompts · Item 4</div>
+  <div class="section-title">Chat do Agente — <span style="color:var(--cyan);">api/chat/route.ts</span></div>
+  <div class="section-sub">
+    O chat atual não tem histórico de conversa (cada mensagem começa do zero), não usa a persona de vendas completa e não aproveita os ângulos de abordagem e objeções treinadas.
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/app/api/chat/route.ts — substituição completa</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="kw">import</span> { NextResponse } <span class="kw">from</span> <span class="str">'next/server'</span>
+<span class="kw">import</span> Anthropic <span class="kw">from</span> <span class="str">"@anthropic-ai/sdk"</span>;
+<span class="kw">import</span> { createClient } <span class="kw">from</span> <span class="str">"@/utils/supabase/server"</span>;
+
+<span class="kw">const</span> <span class="var">anthropic</span> = <span class="kw">new</span> Anthropic({ apiKey: process.env.CLAUDE_API_KEY });
+
+<span class="kw">export async function</span> <span class="fn">POST</span>(<span class="var">req</span>: Request) {
+  <span class="kw">try</span> {
+    <span class="kw">const</span> { message, leadId, history = [] } = <span class="kw">await</span> <span class="var">req</span>.<span class="fn">json</span>()
+    <span class="kw">const</span> <span class="var">supabase</span> = <span class="kw">await</span> <span class="fn">createClient</span>()
+
+    <span class="cmt">// Busca lead + business + agentConfig completo</span>
+    <span class="kw">const</span> { data: <span class="var">lead</span> } = <span class="kw">await</span> <span class="var">supabase</span>
+      .<span class="fn">from</span>(<span class="str">"leads"</span>)
+      .<span class="fn">select</span>(<span class="str">"*, businesses(*, agents(config))"</span>)
+      .<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>)
+      .<span class="fn">single</span>()
+
+    <span class="kw">if</span> (!<span class="var">lead</span>) <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ reply: <span class="str">"Lead não encontrado."</span> })
+
+    <span class="kw">const</span> <span class="var">business</span> = <span class="var">lead</span>.businesses
+    <span class="kw">const</span> <span class="var">agentConfig</span> = <span class="var">business</span>.agents?.[<span class="num">0</span>]?.config || {}
+    <span class="kw">const</span> <span class="var">persona</span> = <span class="var">agentConfig</span>.sales_persona || {}
+    <span class="kw">const</span> <span class="var">angles</span> = <span class="var">agentConfig</span>.approach_angles || []
+    <span class="kw">const</span> <span class="var">objections</span> = <span class="var">agentConfig</span>.objection_handling || {}
+    <span class="kw">const</span> <span class="var">icp</span> = <span class="var">agentConfig</span>.icp || <span class="var">business</span>.icp || {}
+
+    <span class="kw">const</span> <span class="var">systemPrompt</span> = <span class="str">`Você é ${persona.name || 'Agente ' + business.name}, ${persona.role || 'Assessor Comercial'}.
+Você representa ${business.name} — especialistas em ${business.segment}.
+Personalidade: ${persona.personality || business.tone || 'Consultivo e direto'}.
+
+SEU OBJETIVO:
+Ajudar o usuário a prospectar e fechar negócio com: ${lead.name}
+
+CONTEXTO DO LEAD:
+- Empresa: ${lead.name}
+- Endereço: ${lead.address}
+- Score de qualificação: ${lead.score}/100 (Tier ${lead.metadata?.tier || 'B'})
+- Análise da IA: ${lead.metadata?.reasoning || ''}
+- Pontos positivos: ${JSON.stringify(lead.metadata?.fit_reasons || [])}
+- Pontos de atenção: ${JSON.stringify(lead.metadata?.concerns || [])}
+${lead.phone ? `- Telefone: ${lead.phone}` : ''}
+${lead.website ? `- Website: ${lead.website}` : ''}
+
+CONTEXTO DO NEGÓCIO:
+- ICP: ${JSON.stringify(icp)}
+- Ângulos de abordagem disponíveis: ${JSON.stringify(angles)}
+- Manejo de objeções treinado: ${JSON.stringify(objections)}
+
+COMO VOCÊ DEVE AGIR:
+1. Sugira scripts de mensagem prontos para usar quando pedido
+2. Analise respostas do lead e oriente o próximo passo
+3. Antecipe objeções usando o manejo treinado
+4. Recomende o canal certo (WhatsApp/Email/visita) baseado no score
+5. Seja CONCISO — máximo 150 palavras por resposta
+6. Use bullets quando listar itens (máximo 4 itens)
+7. NUNCA revele que é um agente de IA ou automação`</span>;
+
+    <span class="cmt">// Histórico de conversa (enviado pelo client)</span>
+    <span class="kw">const</span> <span class="var">messages</span> = [
+      ...<span class="var">history</span>.<span class="fn">map</span>((<span class="var">h</span>: <span class="typ">any</span>) => ({ role: <span class="var">h</span>.role, content: <span class="var">h</span>.content })),
+      { role: <span class="str">"user"</span> <span class="kw">as const</span>, content: <span class="var">message</span> }
+    ];
+
+    <span class="kw">const</span> <span class="var">response</span> = <span class="kw">await</span> <span class="var">anthropic</span>.messages.<span class="fn">create</span>({
+      model: <span class="str">"claude-sonnet-4-5"</span>,
+      max_tokens: <span class="num">600</span>,
+      system: <span class="var">systemPrompt</span>,
+      messages: <span class="var">messages</span>,
+    });
+
+    <span class="kw">const</span> <span class="var">content</span> = <span class="var">response</span>.content[<span class="num">0</span>];
+    <span class="kw">const</span> <span class="var">reply</span> = <span class="var">content</span>.type === <span class="str">"text"</span> ? <span class="var">content</span>.text : <span class="str">"Erro interno."</span>;
+    <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ reply })
+
+  } <span class="kw">catch</span> (<span class="var">error</span>) {
+    console.<span class="fn">error</span>(<span class="str">"Chat error:"</span>, <span class="var">error</span>)
+    <span class="kw">return</span> NextResponse.<span class="fn">json</span>({ reply: <span class="str">"Erro ao processar."</span> }, { status: <span class="num">500</span> })
+  }
+}
+</pre>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">Atualizar LeadChat.tsx para enviar histórico</div>
+      No componente <code>LeadChat.tsx</code>, manter o array <code>messages</code> no state e enviá-lo no body do fetch:
+      <br><br>
+      <code style="font-family:var(--mono);font-size:11px;background:var(--code-bg);padding:4px 8px;border-radius:6px;display:block;margin-top:6px;">body: JSON.stringify({ message: userMsg, leadId: lead.id, history: messages.slice(0, -1) })</code>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S6 — KANBAN: DADOS ENRIQUECIDOS ════════════ -->
+<section class="section" id="s6">
+  <div class="eyebrow">Kanban · Item 5</div>
+  <div class="section-title">Cards com Dados Enriquecidos</div>
+  <div class="section-sub">
+    O card atual mostra apenas nome e score. Para o usuário tomar decisão de contato ele precisa ver: telefone, score tier, canal recomendado e tempo desde o último contato — sem precisar abrir o lead.
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">Arquivos a modificar</div>
+      1. <code>src/app/(dashboard)/pipeline/page.tsx</code> — enriquecer o select e o map dos leads<br>
+      2. <code>src/components/KanbanBoard.tsx</code> — atualizar interface Lead e LeadCard
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/app/(dashboard)/pipeline/page.tsx — select enriquecido</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// Substituir o select atual por este (mais dados para o Kanban)</span>
+<span class="kw">const</span> { data: <span class="var">leads</span> } = <span class="kw">await</span> <span class="var">supabase</span>
+  .<span class="fn">from</span>(<span class="str">"leads"</span>)
+  .<span class="fn">select</span>(<span class="str">"id, name, status, score, phone, website, address, segment, metadata, updated_at"</span>)
+  .<span class="fn">eq</span>(<span class="str">"business_id"</span>, <span class="var">business</span>.id)
+  .<span class="fn">order</span>(<span class="str">"score"</span>, { ascending: <span class="kw">false</span> });
+
+<span class="kw">const</span> <span class="var">kanbanLeads</span> = <span class="var">leads</span>?.<span class="fn">map</span>(<span class="var">l</span> => ({
+  id: <span class="var">l</span>.id,
+  name: <span class="var">l</span>.name,
+  status: <span class="var">l</span>.status || <span class="str">'new'</span>,
+  score: <span class="var">l</span>.score || <span class="num">0</span>,
+  phone: <span class="var">l</span>.phone || <span class="kw">null</span>,
+  website: <span class="var">l</span>.website || <span class="kw">null</span>,
+  address: <span class="var">l</span>.address || <span class="str">''</span>,
+  segment: <span class="var">l</span>.segment || <span class="str">''</span>,
+  tier: <span class="var">l</span>.metadata?.tier || <span class="str">'C'</span>,
+  reasoning: <span class="var">l</span>.metadata?.reasoning || <span class="str">''</span>,
+  recommended_angle: <span class="var">l</span>.metadata?.recommended_angle || <span class="str">''</span>,
+  notes: <span class="var">l</span>.metadata?.notes || <span class="str">''</span>,
+  tags: <span class="var">l</span>.metadata?.tags || [],
+  updated_at: <span class="var">l</span>.updated_at,
+})) || [];
+</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/components/KanbanBoard.tsx — Interface Lead e LeadCard atualizados</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// 1. Atualizar a interface Lead</span>
+<span class="kw">interface</span> Lead {
+  id: string; name: string; status: string; score: number;
+  phone?: string | null; website?: string | null;
+  address?: string; segment?: string; tier?: string;
+  reasoning?: string; recommended_angle?: string;
+  notes?: string; tags?: string[]; updated_at?: string;
+}
+
+<span class="cmt">// 2. Atualizar STAGE_COLORS para bordas coloridas por status</span>
+<span class="kw">const</span> STAGE_COLORS: Record&lt;string, string&gt; = {
+  new:         <span class="str">'#00E5FF'</span>,
+  contacted:   <span class="str">'#FFD600'</span>,
+  interested:  <span class="str">'#00FFA3'</span>,
+  negotiating: <span class="str">'#A855F7'</span>,
+  closed:      <span class="str">'#00FFA3'</span>,
+};
+
+<span class="cmt">// 3. Substituir o LeadCard completo</span>
+<span class="kw">function</span> <span class="fn">LeadCard</span>({ lead, isDragging, onOpenChat, dndProps }: {
+  lead: Lead; isDragging?: boolean; onOpenChat?: () => void; dndProps?: any;
+}) {
+  <span class="kw">const</span> <span class="var">tierColors</span>: Record&lt;string, string&gt; = {
+    <span class="str">'A+'</span>: <span class="str">'#00E5FF'</span>, <span class="str">'A'</span>: <span class="str">'#00FFA3'</span>, <span class="str">'B'</span>: <span class="str">'#FFD600'</span>, <span class="str">'C'</span>: <span class="str">'#FF8C42'</span>, <span class="str">'D'</span>: <span class="str">'#FF4D6D'</span>
+  };
+  <span class="kw">const</span> <span class="var">tierColor</span> = <span class="var">tierColors</span>[<span class="var">lead</span>.tier || <span class="str">'C'</span>] || <span class="str">'#6B7FA8'</span>;
+  <span class="kw">const</span> <span class="var">daysSince</span> = <span class="var">lead</span>.updated_at
+    ? Math.<span class="fn">floor</span>((Date.<span class="fn">now</span>() - <span class="kw">new</span> Date(<span class="var">lead</span>.updated_at).<span class="fn">getTime</span>()) / <span class="num">86400000</span>)
+    : <span class="num">0</span>;
+
+  <span class="kw">return</span> (
+    &lt;div
+      className={<span class="str">`group relative rounded-2xl p-4 transition-all duration-200 
+        cursor-grab active:cursor-grabbing
+        ${isDragging ? 'rotate-1 scale-102 shadow-2xl' : 'hover:-translate-y-0.5'}`</span>}
+      style={{
+        background: <span class="str">'var(--background-2)'</span>,
+        border: <span class="str">`1px solid ${isDragging ? tierColor : 'var(--border)'}`</span>,
+        boxShadow: isDragging ? <span class="str">`0 16px 40px rgba(0,0,0,0.5), 0 0 0 1px ${tierColor}30`</span> : <span class="str">'none'</span>,
+      }}
+    &gt;
+      {<span class="cmt">/* Linha colorida por tier no topo */</span>}
+      &lt;div style={{ position: <span class="str">'absolute'</span>, top: <span class="num">0</span>, left: <span class="str">'20%'</span>, right: <span class="str">'20%'</span>, height: <span class="str">'1px'</span>, background: tierColor, opacity: <span class="num">0.5</span>, borderRadius: <span class="str">'1px'</span> }} /&gt;
+
+      {<span class="cmt">/* Header: nome + grip + tier badge */</span>}
+      &lt;div className=<span class="str">"flex items-start justify-between gap-2 mb-3"</span>&gt;
+        &lt;div className=<span class="str">"flex-1 min-w-0"</span>&gt;
+          &lt;span className=<span class="str">"text-sm font-semibold leading-tight line-clamp-2"</span>
+            style={{ color: <span class="str">'var(--foreground)'</span> }}&gt;
+            {lead.name}
+          &lt;/span&gt;
+          {lead.segment &amp;&amp; (
+            &lt;span className=<span class="str">"text-[10px] block mt-0.5"</span> style={{ color: <span class="str">'var(--foreground-dim)'</span> }}&gt;
+              {lead.segment}
+            &lt;/span&gt;
+          )}
+        &lt;/div&gt;
+        &lt;div className=<span class="str">"flex items-center gap-1.5 shrink-0"</span>&gt;
+          &lt;span className=<span class="str">"text-[11px] font-black font-mono px-2 py-0.5 rounded-lg"</span>
+            style={{ background: <span class="str">`${tierColor}15`</span>, color: tierColor, border: <span class="str">`1px solid ${tierColor}30`</span> }}&gt;
+            {lead.score} <span class="kw">·</span> {lead.tier || <span class="str">'C'</span>}
+          &lt;/span&gt;
+          &lt;div {...dndProps}&gt;
+            &lt;GripVertical className=<span class="str">"h-4 w-4 opacity-20 group-hover:opacity-60 transition-opacity"</span>
+              style={{ color: <span class="str">'var(--foreground-muted)'</span> }} /&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      {<span class="cmt">/* Score bar */</span>}
+      &lt;div className=<span class="str">"h-0.5 rounded-full mb-3 overflow-hidden"</span> style={{ background: <span class="str">'var(--border)'</span> }}&gt;
+        &lt;div style={{ width: <span class="str">`${lead.score}%`</span>, height: <span class="str">'100%'</span>, background: tierColor, borderRadius: <span class="str">'2px'</span> }} /&gt;
+      &lt;/div&gt;
+
+      {<span class="cmt">/* Contatos rápidos */</span>}
+      &lt;div className=<span class="str">"flex items-center gap-2 mb-3"</span>&gt;
+        {lead.phone &amp;&amp; (
+          &lt;a href={<span class="str">`https://wa.me/${lead.phone.replace(/\D/g, '')}`</span>} target=<span class="str">"_blank"</span> rel=<span class="str">"noreferrer"</span>
+            onClick={<span class="var">e</span> =&gt; <span class="var">e</span>.<span class="fn">stopPropagation</span>()}
+            className=<span class="str">"flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"</span>
+            style={{ background: <span class="str">'rgba(0,255,163,0.1)'</span>, color: <span class="str">'#00FFA3'</span>, border: <span class="str">'1px solid rgba(0,255,163,0.2)'</span> }}&gt;
+            📱 WPP
+          &lt;/a&gt;
+        )}
+        {lead.website &amp;&amp; (
+          &lt;a href={lead.website} target=<span class="str">"_blank"</span> rel=<span class="str">"noreferrer"</span>
+            onClick={<span class="var">e</span> =&gt; <span class="var">e</span>.<span class="fn">stopPropagation</span>()}
+            className=<span class="str">"flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"</span>
+            style={{ background: <span class="str">'rgba(0,229,255,0.08)'</span>, color: <span class="str">'var(--primary)'</span>, border: <span class="str">'1px solid rgba(0,229,255,0.2)'</span> }}&gt;
+            🌐 Site
+          &lt;/a&gt;
+        )}
+        &lt;span className=<span class="str">"ml-auto text-[9px]"</span> style={{ color: <span class="str">'var(--foreground-dim)'</span> }}&gt;
+          {daysSince === <span class="num">0</span> ? <span class="str">'hoje'</span> : daysSince === <span class="num">1</span> ? <span class="str">'ontem'</span> : <span class="str">`${daysSince}d`</span>}
+        &lt;/span&gt;
+      &lt;/div&gt;
+
+      {<span class="cmt">/* Tags */</span>}
+      {lead.tags &amp;&amp; lead.tags.length &gt; <span class="num">0</span> &amp;&amp; (
+        &lt;div className=<span class="str">"flex flex-wrap gap-1 mb-3"</span>&gt;
+          {lead.tags.<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">3</span>).<span class="fn">map</span>(tag =&gt; (
+            &lt;span key={tag} className=<span class="str">"text-[9px] px-1.5 py-0.5 rounded-md"</span>
+              style={{ background: <span class="str">'rgba(168,85,247,0.1)'</span>, color: <span class="str">'#A855F7'</span>, border: <span class="str">'1px solid rgba(168,85,247,0.2)'</span> }}&gt;
+              {tag}
+            &lt;/span&gt;
+          ))}
+        &lt;/div&gt;
+      )}
+
+      {<span class="cmt">/* Footer: Chat IA */</span>}
+      &lt;div className=<span class="str">"flex items-center justify-between pt-2.5"</span>
+        style={{ borderTop: <span class="str">'1px solid rgba(30,45,69,0.5)'</span> }}&gt;
+        &lt;span className=<span class="str">"text-[10px] italic line-clamp-1 flex-1 mr-2"</span>
+          style={{ color: <span class="str">'var(--foreground-dim)'</span> }}&gt;
+          {lead.reasoning?.substring(<span class="num">0</span>, <span class="num">40</span>)}{lead.reasoning &amp;&amp; lead.reasoning.length &gt; <span class="num">40</span> ? <span class="str">'...'</span> : <span class="str">''</span>}
+        &lt;/span&gt;
+        &lt;button
+          onClick={<span class="var">e</span> =&gt; { <span class="var">e</span>.<span class="fn">stopPropagation</span>(); <span class="var">onOpenChat</span>?.(); }}
+          className=<span class="str">"flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition-all shrink-0"</span>
+          style={{ color: <span class="str">'var(--primary)'</span>, background: <span class="str">'var(--primary-dim)'</span>, border: <span class="str">'1px solid rgba(0,229,255,0.15)'</span> }}&gt;
+          &lt;MessageSquare className=<span class="str">"h-3 w-3"</span> /&gt; Chat IA
+        &lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S7 — KANBAN: QUICK ACTIONS ════════════════ -->
+<section class="section" id="s7">
+  <div class="eyebrow">Kanban · Item 6</div>
+  <div class="section-title">Quick Actions no Header do Kanban</div>
+  <div class="section-sub">Adicionar barra de ferramentas no topo do Pipeline com ações em lote e filtros rápidos.</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/app/(dashboard)/pipeline/page.tsx — header com stats e filtro</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// Adicionar no PipelinePage, antes do KanbanBoard</span>
+<span class="cmt">// Calcular stats por stage</span>
+<span class="kw">const</span> <span class="var">stageStats</span> = STAGES_DEF.<span class="fn">map</span>(<span class="var">s</span> => ({
+  ...s,
+  count: <span class="var">kanbanLeads</span>.<span class="fn">filter</span>(<span class="var">l</span> => <span class="var">l</span>.status === <span class="var">s</span>.id).length,
+  avgScore: <span class="var">kanbanLeads</span>
+    .<span class="fn">filter</span>(<span class="var">l</span> => <span class="var">l</span>.status === <span class="var">s</span>.id)
+    .<span class="fn">reduce</span>((<span class="var">acc</span>, <span class="var">l</span>) => <span class="var">acc</span> + (<span class="var">l</span>.score || <span class="num">0</span>), <span class="num">0</span>) /
+    Math.<span class="fn">max</span>(<span class="var">kanbanLeads</span>.<span class="fn">filter</span>(<span class="var">l</span> => <span class="var">l</span>.status === <span class="var">s</span>.id).length, <span class="num">1</span>),
+}));
+
+<span class="cmt">// No JSX, substituir o header atual por:</span>
+&lt;header className=<span class="str">"h-auto bg-background border-b border-border/40 px-8 py-4 shrink-0"</span>&gt;
+  &lt;div className=<span class="str">"flex items-center justify-between mb-4"</span>&gt;
+    &lt;div className=<span class="str">"flex items-center gap-3"</span>&gt;
+      &lt;h1 className=<span class="str">"text-lg font-bold"</span> style={{ color: <span class="str">'var(--foreground)'</span> }}&gt;Pipeline de Vendas&lt;/h1&gt;
+      &lt;Badge variant=<span class="str">"outline"</span> style={{ color: <span class="str">'var(--primary)'</span>, borderColor: <span class="str">'rgba(0,229,255,0.3)'</span> }}&gt;
+        {business.name}
+      &lt;/Badge&gt;
+    &lt;/div&gt;
+    &lt;div className=<span class="str">"flex items-center gap-2 text-xs"</span> style={{ color: <span class="str">'var(--foreground-muted)'</span> }}&gt;
+      &lt;span&gt;{kanbanLeads.length} leads no funil&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+
+  {<span class="cmt">/* Mini stat pills por stage */</span>}
+  &lt;div className=<span class="str">"flex gap-3 overflow-x-auto pb-1"</span>&gt;
+    {stageStats.<span class="fn">map</span>(<span class="var">s</span> => (
+      &lt;div key={s.id} className=<span class="str">"flex items-center gap-2 px-3 py-1.5 rounded-xl shrink-0"</span>
+        style={{ background: <span class="str">'var(--background-2)'</span>, border: <span class="str">'1px solid var(--border)'</span> }}&gt;
+        &lt;div className=<span class="str">"w-2 h-2 rounded-full"</span> style={{ background: STAGE_COLORS[s.id] }} /&gt;
+        &lt;span className=<span class="str">"text-xs font-medium"</span> style={{ color: <span class="str">'var(--foreground)'</span> }}&gt;{s.title}&lt;/span&gt;
+        &lt;span className=<span class="str">"text-xs font-bold font-mono"</span> style={{ color: STAGE_COLORS[s.id] }}&gt;{s.count}&lt;/span&gt;
+      &lt;/div&gt;
+    ))}
+  &lt;/div&gt;
+&lt;/header&gt;
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S8 — KANBAN: NOTAS & HISTÓRICO ════════════ -->
+<section class="section" id="s8">
+  <div class="eyebrow">Kanban · Item 6</div>
+  <div class="section-title">Notas, Tags e Histórico de Contato</div>
+  <div class="section-sub">
+    Salvar notas e tags diretamente no campo <code>metadata</code> do lead no Supabase. Sem nova tabela — usa a estrutura JSONB existente.
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/app/(dashboard)/pipeline/actions.ts — novas actions</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="str">'use server'</span>
+
+<span class="kw">import</span> { createClient } <span class="kw">from</span> <span class="str">"@/utils/supabase/server"</span>;
+<span class="kw">import</span> { revalidatePath } <span class="kw">from</span> <span class="str">"next/cache"</span>;
+
+<span class="kw">export async function</span> <span class="fn">updateLeadStatus</span>(<span class="var">leadId</span>: string, <span class="var">newStatus</span>: string) {
+  <span class="kw">const</span> <span class="var">supabase</span> = <span class="kw">await</span> <span class="fn">createClient</span>();
+  <span class="kw">await</span> <span class="var">supabase</span>.<span class="fn">from</span>(<span class="str">"leads"</span>).<span class="fn">update</span>({ status: <span class="var">newStatus</span> }).<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>);
+  <span class="fn">revalidatePath</span>(<span class="str">"/pipeline"</span>);
+}
+
+<span class="cmt">/** Salva uma nota no metadata do lead */</span>
+<span class="kw">export async function</span> <span class="fn">saveLeadNote</span>(<span class="var">leadId</span>: string, <span class="var">note</span>: string) {
+  <span class="kw">const</span> <span class="var">supabase</span> = <span class="kw">await</span> <span class="fn">createClient</span>();
+  <span class="kw">const</span> { data: <span class="var">lead</span> } = <span class="kw">await</span> <span class="var">supabase</span>
+    .<span class="fn">from</span>(<span class="str">"leads"</span>).<span class="fn">select</span>(<span class="str">"metadata"</span>).<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>).<span class="fn">single</span>();
+
+  <span class="kw">const</span> <span class="var">history</span> = <span class="var">lead</span>?.metadata?.contact_history || [];
+  <span class="var">history</span>.<span class="fn">push</span>({ type: <span class="str">'note'</span>, content: <span class="var">note</span>, at: <span class="kw">new</span> Date().<span class="fn">toISOString</span>() });
+
+  <span class="kw">await</span> <span class="var">supabase</span>.<span class="fn">from</span>(<span class="str">"leads"</span>)
+    .<span class="fn">update</span>({ metadata: { ...<span class="var">lead</span>?.metadata, notes: <span class="var">note</span>, contact_history: <span class="var">history</span> } })
+    .<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>);
+  <span class="fn">revalidatePath</span>(<span class="str">"/pipeline"</span>);
+}
+
+<span class="cmt">/** Adiciona ou remove uma tag do lead */</span>
+<span class="kw">export async function</span> <span class="fn">toggleLeadTag</span>(<span class="var">leadId</span>: string, <span class="var">tag</span>: string) {
+  <span class="kw">const</span> <span class="var">supabase</span> = <span class="kw">await</span> <span class="fn">createClient</span>();
+  <span class="kw">const</span> { data: <span class="var">lead</span> } = <span class="kw">await</span> <span class="var">supabase</span>
+    .<span class="fn">from</span>(<span class="str">"leads"</span>).<span class="fn">select</span>(<span class="str">"metadata"</span>).<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>).<span class="fn">single</span>();
+
+  <span class="kw">const</span> <span class="var">tags</span>: string[] = <span class="var">lead</span>?.metadata?.tags || [];
+  <span class="kw">const</span> <span class="var">newTags</span> = <span class="var">tags</span>.<span class="fn">includes</span>(<span class="var">tag</span>)
+    ? <span class="var">tags</span>.<span class="fn">filter</span>(<span class="var">t</span> => <span class="var">t</span> !== <span class="var">tag</span>)
+    : [...<span class="var">tags</span>, <span class="var">tag</span>];
+
+  <span class="kw">await</span> <span class="var">supabase</span>.<span class="fn">from</span>(<span class="str">"leads"</span>)
+    .<span class="fn">update</span>({ metadata: { ...<span class="var">lead</span>?.metadata, tags: <span class="var">newTags</span> } })
+    .<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>);
+  <span class="fn">revalidatePath</span>(<span class="str">"/pipeline"</span>);
+}
+
+<span class="cmt">/** Registra um contato manual (chamada, reunião, etc.) */</span>
+<span class="kw">export async function</span> <span class="fn">logContact</span>(<span class="var">leadId</span>: string, <span class="var">type</span>: string, <span class="var">summary</span>: string) {
+  <span class="kw">const</span> <span class="var">supabase</span> = <span class="kw">await</span> <span class="fn">createClient</span>();
+  <span class="kw">const</span> { data: <span class="var">lead</span> } = <span class="kw">await</span> <span class="var">supabase</span>
+    .<span class="fn">from</span>(<span class="str">"leads"</span>).<span class="fn">select</span>(<span class="str">"metadata"</span>).<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>).<span class="fn">single</span>();
+
+  <span class="kw">const</span> <span class="var">history</span> = <span class="var">lead</span>?.metadata?.contact_history || [];
+  <span class="var">history</span>.<span class="fn">push</span>({ type, summary, at: <span class="kw">new</span> Date().<span class="fn">toISOString</span>() });
+
+  <span class="kw">await</span> <span class="var">supabase</span>.<span class="fn">from</span>(<span class="str">"leads"</span>)
+    .<span class="fn">update</span>({ metadata: { ...<span class="var">lead</span>?.metadata, contact_history: <span class="var">history</span> } })
+    .<span class="fn">eq</span>(<span class="str">"id"</span>, <span class="var">leadId</span>);
+  <span class="fn">revalidatePath</span>(<span class="str">"/pipeline"</span>);
+}
+</pre>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">Tags sugeridas para implementar no UI</div>
+      Criar um array de tags predefinidas que o usuário pode aplicar ao lead com 1 clique:
+      <code style="font-family:var(--mono);font-size:11px;background:var(--code-bg);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:6px;">['Quente 🔥', 'Aguardando resposta', 'Ligação agendada', 'Enviou proposta', 'Não atende', 'VIP']</code>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S9 — KANBAN: FILTROS ════════════════════════ -->
+<section class="section" id="s9">
+  <div class="eyebrow">Kanban · Item 6</div>
+  <div class="section-title">Busca e Filtros no Pipeline</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/components/KanbanBoard.tsx — adicionar busca e filtro por tier</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// Adicionar no topo do KanbanBoard, antes do DndContext</span>
+<span class="kw">const</span> [<span class="var">search</span>, <span class="fn">setSearch</span>] = useState(<span class="str">''</span>)
+<span class="kw">const</span> [<span class="var">filterTier</span>, <span class="fn">setFilterTier</span>] = useState&lt;string&gt;(<span class="str">'all'</span>)
+
+<span class="kw">const</span> <span class="var">filteredLeads</span> = useMemo(() => {
+  <span class="kw">return</span> <span class="var">leads</span>.<span class="fn">filter</span>(<span class="var">l</span> => {
+    <span class="kw">const</span> <span class="var">matchSearch</span> = !<span class="var">search</span> || <span class="var">l</span>.name.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(<span class="var">search</span>.<span class="fn">toLowerCase</span>())
+    <span class="kw">const</span> <span class="var">matchTier</span> = <span class="var">filterTier</span> === <span class="str">'all'</span> || <span class="var">l</span>.tier === <span class="var">filterTier</span>
+    <span class="kw">return</span> <span class="var">matchSearch</span> &amp;&amp; <span class="var">matchTier</span>
+  })
+}, [<span class="var">leads</span>, <span class="var">search</span>, <span class="var">filterTier</span>])
+
+<span class="cmt">// Barra de controles — adicionar antes do DndContext</span>
+<span class="kw">return</span> (
+  &lt;div className=<span class="str">"flex flex-col h-full gap-4"</span>&gt;
+    &lt;div className=<span class="str">"flex items-center gap-3 shrink-0"</span>&gt;
+      {<span class="cmt">/* Campo de busca */</span>}
+      &lt;input
+        placeholder=<span class="str">"🔍 Buscar lead..."</span>
+        value={search}
+        onChange={<span class="var">e</span> =&gt; <span class="fn">setSearch</span>(<span class="var">e</span>.target.value)}
+        className=<span class="str">"h-9 px-3 rounded-xl text-sm outline-none flex-1 max-w-xs"</span>
+        style={{ background: <span class="str">'var(--background-2)'</span>, border: <span class="str">'1px solid var(--border)'</span>, color: <span class="str">'var(--foreground)'</span> }}
+      /&gt;
+      {<span class="cmt">/* Filtro por tier */</span>}
+      {[<span class="str">'all'</span>, <span class="str">'A+'</span>, <span class="str">'A'</span>, <span class="str">'B'</span>, <span class="str">'C'</span>, <span class="str">'D'</span>].<span class="fn">map</span>(<span class="var">t</span> => (
+        &lt;button key={t}
+          onClick={() =&gt; <span class="fn">setFilterTier</span>(t)}
+          className=<span class="str">"h-8 px-3 rounded-lg text-[11px] font-bold font-mono transition-all"</span>
+          style={{
+            background: <span class="var">filterTier</span> === t ? <span class="str">'var(--primary-dim)'</span> : <span class="str">'transparent'</span>,
+            color: <span class="var">filterTier</span> === t ? <span class="str">'var(--primary)'</span> : <span class="str">'var(--foreground-dim)'</span>,
+            border: <span class="str">`1px solid ${filterTier === t ? 'rgba(0,229,255,0.3)' : 'var(--border)'}`</span>,
+          }}&gt;
+          {t === <span class="str">'all'</span> ? <span class="str">'Todos'</span> : t}
+        &lt;/button&gt;
+      ))}
+    &lt;/div&gt;
+    {<span class="cmt">/* DndContext com filteredLeads ao invés de leads */</span>}
+    &lt;DndContext ...&gt; ... &lt;/DndContext&gt;
+  &lt;/div&gt;
+)
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S10 — DASHBOARD: ANALYTICS ═════════════════ -->
+<section class="section" id="s10">
+  <div class="eyebrow">Dashboard · Item 7</div>
+  <div class="section-title">Analytics de Funil e Conversão</div>
+  <div class="section-sub">
+    O dashboard atual só mostra contagem de leads filtrados. Adicionar métricas de pipeline: taxa de conversão por estágio, valor estimado e tempo médio de progressão.
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/app/(dashboard)/dashboard/page.tsx — queries adicionais</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// Adicionar após o select de leads existente</span>
+
+<span class="cmt">// Stats do pipeline para o novo analytics</span>
+<span class="kw">const</span> { data: <span class="var">pipelineStats</span> } = <span class="kw">await</span> <span class="var">supabase</span>
+  .<span class="fn">from</span>(<span class="str">'leads'</span>)
+  .<span class="fn">select</span>(<span class="str">'status, score'</span>)
+  .<span class="fn">eq</span>(<span class="str">'business_id'</span>, <span class="var">business</span>.id);
+
+<span class="kw">const</span> <span class="var">funnel</span> = {
+  total:       <span class="var">pipelineStats</span>?.length || <span class="num">0</span>,
+  contacted:   <span class="var">pipelineStats</span>?.<span class="fn">filter</span>(<span class="var">l</span> => [<span class="str">'contacted'</span>,<span class="str">'interested'</span>,<span class="str">'negotiating'</span>,<span class="str">'closed'</span>].<span class="fn">includes</span>(<span class="var">l</span>.status)).length || <span class="num">0</span>,
+  interested:  <span class="var">pipelineStats</span>?.<span class="fn">filter</span>(<span class="var">l</span> => [<span class="str">'interested'</span>,<span class="str">'negotiating'</span>,<span class="str">'closed'</span>].<span class="fn">includes</span>(<span class="var">l</span>.status)).length || <span class="num">0</span>,
+  closed:      <span class="var">pipelineStats</span>?.<span class="fn">filter</span>(<span class="var">l</span> => <span class="var">l</span>.status === <span class="str">'closed'</span>).length || <span class="num">0</span>,
+  avgScore:    <span class="var">pipelineStats</span>?.length
+    ? Math.<span class="fn">round</span>(<span class="var">pipelineStats</span>.<span class="fn">reduce</span>((<span class="var">a</span>,<span class="var">l</span>) => <span class="var">a</span> + <span class="var">l</span>.score, <span class="num">0</span>) / <span class="var">pipelineStats</span>.length)
+    : <span class="num">0</span>,
+};
+
+<span class="cmt">// Passar para DashboardContent</span>
+&lt;DashboardContent
+  leads={allLeads}
+  segment={business.segment || <span class="str">''</span>}
+  campaigns={campaigns || []}
+  funnel={funnel}  <span class="cmt">// NOVO</span>
+/&gt;
+</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/components/DashboardContent.tsx — adicionar FunnelBar</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// Adicionar interface e componente FunnelBar</span>
+<span class="kw">interface</span> FunnelData {
+  total: number; contacted: number; interested: number; closed: number; avgScore: number;
+}
+
+<span class="kw">function</span> <span class="fn">FunnelBar</span>({ funnel }: { funnel: FunnelData }) {
+  <span class="kw">const</span> <span class="var">stages</span> = [
+    { label: <span class="str">'Leads'</span>, value: <span class="var">funnel</span>.total, color: <span class="str">'#6B7FA8'</span> },
+    { label: <span class="str">'Contatados'</span>, value: <span class="var">funnel</span>.contacted, color: <span class="str">'#FFD600'</span> },
+    { label: <span class="str">'Interessados'</span>, value: <span class="var">funnel</span>.interested, color: <span class="str">'#00E5FF'</span> },
+    { label: <span class="str">'Fechados'</span>, value: <span class="var">funnel</span>.closed, color: <span class="str">'#00FFA3'</span> },
+  ];
+  <span class="kw">const</span> <span class="var">max</span> = Math.<span class="fn">max</span>(<span class="var">funnel</span>.total, <span class="num">1</span>);
+
+  <span class="kw">return</span> (
+    &lt;div className=<span class="str">"rounded-2xl p-5"</span>
+      style={{ background: <span class="str">'var(--background-2)'</span>, border: <span class="str">'1px solid var(--border)'</span> }}&gt;
+      &lt;div className=<span class="str">"flex items-center justify-between mb-4"</span>&gt;
+        &lt;span className=<span class="str">"text-xs font-bold uppercase tracking-wider"</span>
+          style={{ color: <span class="str">'var(--foreground-muted)'</span> }}&gt;Funil de Conversão&lt;/span&gt;
+        &lt;span className=<span class="str">"text-xs font-mono"</span> style={{ color: <span class="str">'var(--primary)'</span> }}&gt;
+          Score médio: {funnel.avgScore}
+        &lt;/span&gt;
+      &lt;/div&gt;
+      &lt;div className=<span class="str">"flex flex-col gap-3"</span>&gt;
+        {stages.<span class="fn">map</span>((<span class="var">s</span>, <span class="var">i</span>) => (
+          &lt;div key={s.label}&gt;
+            &lt;div className=<span class="str">"flex justify-between mb-1"</span>&gt;
+              &lt;span className=<span class="str">"text-xs"</span> style={{ color: <span class="str">'var(--foreground-muted)'</span> }}&gt;{s.label}&lt;/span&gt;
+              &lt;div className=<span class="str">"flex items-center gap-2"</span>&gt;
+                &lt;span className=<span class="str">"text-xs font-bold font-mono"</span> style={{ color: s.color }}&gt;{s.value}&lt;/span&gt;
+                {<span class="var">i</span> &gt; <span class="num">0</span> &amp;&amp; stages[<span class="var">i</span>-<span class="num">1</span>].value &gt; <span class="num">0</span> &amp;&amp; (
+                  &lt;span className=<span class="str">"text-[10px]"</span> style={{ color: <span class="str">'var(--foreground-dim)'</span> }}&gt;
+                    {Math.<span class="fn">round</span>(<span class="var">s</span>.value / stages[<span class="var">i</span>-<span class="num">1</span>].value * <span class="num">100</span>)}%
+                  &lt;/span&gt;
+                )}
+              &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div className=<span class="str">"h-2 rounded-full overflow-hidden"</span> style={{ background: <span class="str">'var(--border)'</span> }}&gt;
+              &lt;div style={{ width: <span class="str">`${(s.value/max)*100}%`</span>, height: <span class="str">'100%'</span>, background: s.color,
+                borderRadius: <span class="str">'4px'</span>, transition: <span class="str">'width 0.8s ease'</span> }} /&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        ))}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+
+<span class="cmt">// Adicionar no return do DashboardContent, após os StatCards:</span>
+&lt;div className=<span class="str">"grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5"</span>&gt;
+  &lt;div className=<span class="str">"lg:col-span-2"</span>&gt; {<span class="cmt">/* mapa existente */</span>} &lt;/div&gt;
+  &lt;div className=<span class="str">"flex flex-col gap-4"</span>&gt;
+    &lt;FunnelBar funnel={funnel} /&gt;
+    &lt;RecentActivity leads={leads} /&gt;  {<span class="cmt">/* próxima seção */</span>}
+  &lt;/div&gt;
+&lt;/div&gt;
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S11 — DASHBOARD: FUNIL ══════════════════════ -->
+<section class="section" id="s11">
+  <div class="eyebrow">Dashboard · Item 7</div>
+  <div class="section-title">4 StatCards — Métricas Completas</div>
+  <div class="section-sub">Expandir de 3 para 4 StatCards incluindo o total de conversões fechadas.</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/components/DashboardContent.tsx — grid de stats expandido</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">// Substituir o grid de stats atual (3 cards) por 4 cards:</span>
+&lt;div className=<span class="str">"grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5"</span>&gt;
+  &lt;StatCard label=<span class="str">"Leads Encontrados"</span> value={totalLeads}
+    sub={leads.length !== totalLeads ? <span class="str">`de ${leads.length} total`</span> : undefined}
+    color=<span class="str">"var(--primary)"</span> icon={&lt;Users className=<span class="str">"h-4 w-4"</span> /&gt;} delay={0} /&gt;
+
+  &lt;StatCard label=<span class="str">"Qualificados (70+)"</span> value={qualifiedLeads}
+    sub={totalLeads &gt; 0 ? <span class="str">`${Math.round(qualifiedLeads/totalLeads*100)}% do total`</span> : undefined}
+    color=<span class="str">"var(--green)"</span> icon={&lt;Target className=<span class="str">"h-4 w-4"</span> /&gt;} delay={80} /&gt;
+
+  &lt;StatCard label=<span class="str">"Score Médio"</span> value={avgScore}
+    sub={avgScore &gt;= 70 ? <span class="str">"Excelente"</span> : avgScore &gt;= 40 ? <span class="str">"Regular"</span> : <span class="str">"—"</span>}
+    color={avgScore &gt;= 70 ? <span class="str">"var(--green)"</span> : avgScore &gt;= 40 ? <span class="str">"var(--yellow)"</span> : <span class="str">"var(--red)"</span>}
+    icon={&lt;TrendingUp className=<span class="str">"h-4 w-4"</span> /&gt;} delay={160} /&gt;
+
+  &lt;StatCard label=<span class="str">"Fechamentos"</span> value={funnel?.closed || 0}
+    sub={funnel?.total &gt; 0 ? <span class="str">`${Math.round((funnel.closed/funnel.total)*100)}% conversão`</span> : <span class="str">"—"</span>}
+    color=<span class="str">"var(--purple)"</span> icon={&lt;CheckCircle2 className=<span class="str">"h-4 w-4"</span> /&gt;} delay={240} /&gt;
+&lt;/div&gt;
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S12 — DASHBOARD: ATIVIDADE RECENTE ═════════ -->
+<section class="section" id="s12">
+  <div class="eyebrow">Dashboard · Item 8</div>
+  <div class="section-title">Feed de Atividade Recente</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">src/components/DashboardContent.tsx — componente RecentActivity</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">TypeScript</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="kw">function</span> <span class="fn">RecentActivity</span>({ leads }: { leads: Lead[] }) {
+  <span class="kw">const</span> <span class="var">recent</span> = [...leads]
+    .<span class="fn">sort</span>((<span class="var">a</span>, <span class="var">b</span>) => <span class="kw">new</span> Date(<span class="var">b</span>.updated_at || <span class="num">0</span>).<span class="fn">getTime</span>() - <span class="kw">new</span> Date(<span class="var">a</span>.updated_at || <span class="num">0</span>).<span class="fn">getTime</span>())
+    .<span class="fn">slice</span>(<span class="num">0</span>, <span class="num">5</span>);
+
+  <span class="kw">const</span> statusLabel: Record&lt;string, {label: string, color: string}&gt; = {
+    new:         { label: <span class="str">'Novo'</span>,       color: <span class="str">'var(--primary)'</span> },
+    contacted:   { label: <span class="str">'Contatado'</span>,  color: <span class="str">'var(--yellow)'</span>  },
+    interested:  { label: <span class="str">'Interessado'</span>,color: <span class="str">'var(--green)'</span>   },
+    negotiating: { label: <span class="str">'Negociação'</span>, color: <span class="str">'var(--purple)'</span>  },
+    closed:      { label: <span class="str">'Fechado ✓'</span>,  color: <span class="str">'var(--green)'</span>   },
+  };
+
+  <span class="kw">return</span> (
+    &lt;div className=<span class="str">"rounded-2xl p-5"</span>
+      style={{ background: <span class="str">'var(--background-2)'</span>, border: <span class="str">'1px solid var(--border)'</span> }}&gt;
+      &lt;span className=<span class="str">"text-xs font-bold uppercase tracking-wider block mb-4"</span>
+        style={{ color: <span class="str">'var(--foreground-muted)'</span> }}&gt;Atividade Recente&lt;/span&gt;
+      &lt;div className=<span class="str">"flex flex-col gap-3"</span>&gt;
+        {recent.<span class="fn">map</span>(<span class="var">l</span> => {
+          <span class="kw">const</span> <span class="var">cfg</span> = statusLabel[<span class="var">l</span>.status] || { label: <span class="var">l</span>.status, color: <span class="str">'var(--muted)'</span> };
+          <span class="kw">return</span> (
+            &lt;div key={l.id} className=<span class="str">"flex items-center gap-3"</span>&gt;
+              &lt;div className=<span class="str">"w-2 h-2 rounded-full shrink-0"</span>
+                style={{ background: cfg.color, boxShadow: <span class="str">`0 0 6px ${cfg.color}60`</span> }} /&gt;
+              &lt;div className=<span class="str">"flex-1 min-w-0"</span>&gt;
+                &lt;span className=<span class="str">"text-xs font-medium block truncate"</span>
+                  style={{ color: <span class="str">'var(--foreground)'</span> }}&gt;{l.name}&lt;/span&gt;
+                &lt;span className=<span class="str">"text-[10px]"</span> style={{ color: <span class="str">'var(--foreground-dim)'</span> }}&gt;{l.segment}&lt;/span&gt;
+              &lt;/div&gt;
+              &lt;span className=<span class="str">"text-[10px] font-semibold shrink-0"</span>
+                style={{ color: cfg.color }}&gt;{cfg.label}&lt;/span&gt;
+            &lt;/div&gt;
+          );
+        })}
+        {recent.length === 0 &amp;&amp; (
+          &lt;p className=<span class="str">"text-xs text-center py-4"</span>
+            style={{ color: <span class="str">'var(--foreground-dim)'</span> }}&gt;Nenhuma atividade ainda&lt;/p&gt;
+        )}
+      &lt;/div&gt;
+    &lt;/div&gt;
+  );
+}
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S13 — MIGRATION SQL ════════════════════════ -->
+<section class="section" id="s13">
+  <div class="eyebrow">Infraestrutura</div>
+  <div class="section-title">Migration SQL para novas features</div>
+  <div class="section-sub">A migration de campanhas já foi aplicada. Esta migration adiciona índices de performance e a função SQL de analytics que o dashboard usa.</div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span class="code-filename">supabase/migrations/20260325000000_analytics_and_indexes.sql</span>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="code-lang">SQL</span>
+        <button class="code-copy" onclick="copyCode(this)">Copiar</button>
+      </div>
+    </div>
+<pre><span class="cmt">-- Migration: analytics_and_indexes
+-- Executar no Supabase SQL Editor</span>
+
+<span class="cmt">-- Índice para busca rápida de atividade recente</span>
+<span class="kw">create index if not exists</span> leads_updated_at_idx
+  <span class="kw">on</span> public.leads(updated_at <span class="kw">desc</span>);
+
+<span class="cmt">-- Índice para filtro por status no pipeline</span>
+<span class="kw">create index if not exists</span> leads_status_idx
+  <span class="kw">on</span> public.leads(status);
+
+<span class="cmt">-- Índice composto para dashboard analytics</span>
+<span class="kw">create index if not exists</span> leads_business_status_idx
+  <span class="kw">on</span> public.leads(business_id, status);
+
+<span class="cmt">-- Adicionar campo updated_at com auto-update (se não existir)</span>
+<span class="kw">alter table</span> public.leads
+  <span class="kw">add column if not exists</span> updated_at <span class="typ">timestamp with time zone</span>
+  <span class="kw">default</span> timezone(<span class="str">'utc'</span>::text, <span class="fn">now</span>());
+
+<span class="cmt">-- Trigger para auto-update do updated_at</span>
+<span class="kw">create or replace function</span> <span class="fn">update_updated_at</span>()
+<span class="kw">returns trigger as</span> $$
+<span class="kw">begin</span>
+  NEW.updated_at = timezone(<span class="str">'utc'</span>::text, <span class="fn">now</span>());
+  <span class="kw">return</span> NEW;
+<span class="kw">end</span>;
+$$ <span class="kw">language</span> plpgsql;
+
+<span class="kw">drop trigger if exists</span> leads_updated_at_trigger <span class="kw">on</span> public.leads;
+<span class="kw">create trigger</span> leads_updated_at_trigger
+  <span class="kw">before update on</span> public.leads
+  <span class="kw">for each row execute function</span> <span class="fn">update_updated_at</span>();
+
+<span class="cmt">-- Função SQL para stats do funil (usada pelo dashboard)</span>
+<span class="kw">create or replace function</span> <span class="fn">get_pipeline_stats</span>(<span class="var">p_business_id</span> uuid)
+<span class="kw">returns json as</span> $$
+  <span class="kw">select</span> json_build_object(
+    <span class="str">'total'</span>,      <span class="fn">count</span>(*),
+    <span class="str">'contacted'</span>,  <span class="fn">count</span>(*) filter (<span class="kw">where</span> status <span class="kw">in</span> (<span class="str">'contacted'</span>,<span class="str">'interested'</span>,<span class="str">'negotiating'</span>,<span class="str">'closed'</span>)),
+    <span class="str">'interested'</span>, <span class="fn">count</span>(*) filter (<span class="kw">where</span> status <span class="kw">in</span> (<span class="str">'interested'</span>,<span class="str">'negotiating'</span>,<span class="str">'closed'</span>)),
+    <span class="str">'closed'</span>,     <span class="fn">count</span>(*) filter (<span class="kw">where</span> status = <span class="str">'closed'</span>),
+    <span class="str">'avg_score'</span>,  <span class="fn">round</span>(<span class="fn">avg</span>(score)::<span class="typ">numeric</span>, <span class="num">1</span>),
+    <span class="str">'top_leads'</span>,  (
+      <span class="kw">select</span> json_agg(sub) <span class="kw">from</span> (
+        <span class="kw">select</span> id, name, score, status, metadata->><span class="str">'tier'</span> <span class="kw">as</span> tier
+        <span class="kw">from</span> public.leads
+        <span class="kw">where</span> business_id = p_business_id
+        <span class="kw">order by</span> score <span class="kw">desc</span>
+        <span class="kw">limit</span> <span class="num">5</span>
+      ) sub
+    )
+  )
+  <span class="kw">from</span> public.leads
+  <span class="kw">where</span> business_id = p_business_id
+$$ <span class="kw">language sql security definer</span>;
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S14 — BUG FIXES ═════════════════════════════ -->
+<section class="section" id="s14">
+  <div class="eyebrow">Bug Fixes críticos</div>
+  <div class="section-title">Correções obrigatórias</div>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <div class="alert-title">Bug 1 — Import incorreto do PDFParse (onboarding quebrado)</div>
+      <strong>Arquivo:</strong> <code style="font-family:var(--mono);font-size:11px;">src/app/(dashboard)/onboarding/actions.ts</code><br><br>
+      Linha atual: <code style="font-family:var(--mono);font-size:11px;color:#FF4D6D;">import { PDFParse } from "pdf-parse";</code><br>
+      Substituir por: <code style="font-family:var(--mono);font-size:11px;color:#00FFA3;">import pdfParse from "pdf-parse";</code><br><br>
+      E a chamada:<br>
+      Atual: <code style="font-family:var(--mono);font-size:11px;color:#FF4D6D;">const parser = new PDFParse({ data: buffer }); const result = await parser.getText();</code><br>
+      Corrigir para: <code style="font-family:var(--mono);font-size:11px;color:#00FFA3;">const result = await pdfParse(buffer); extraContext += result.text;</code>
+    </div>
+  </div>
+
+  <div class="alert alert-danger">
+    <div class="alert-icon">🔴</div>
+    <div class="alert-body">
+      <div class="alert-title">Bug 2 — Kanban drag entre colunas pode não salvar (colisão de ID)</div>
+      <strong>Arquivo:</strong> <code style="font-family:var(--mono);font-size:11px;">src/components/KanbanBoard.tsx</code><br><br>
+      O <code>handleDragEnd</code> só chama <code>onStatusChange</code> se <code>active.id !== over.id</code>, mas ao mover para coluna vazia o <code>over.id</code> é o ID da coluna (string) que é diferente do ID do lead. Funciona, mas adicionar o log para confirmar:
+      <br><br>
+      <code style="font-family:var(--mono);font-size:11px;background:var(--code-bg);padding:6px 10px;border-radius:6px;display:block;margin-top:6px;">// Em handleDragEnd, antes do if:
+const updatedLead = leads.find(l => l.id === active.id);
+if (updatedLead) onStatusChange(updatedLead.id, updatedLead.status);</code>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">Atenção — Supabase select em lead-actions.ts precisa incluir agents</div>
+      Após as mudanças nos prompts, a action de scoring precisa buscar o agent config junto. Atualizar o select:
+      <br><br>
+      <code style="font-family:var(--mono);font-size:11px;background:var(--code-bg);padding:6px 10px;border-radius:6px;display:block;margin-top:6px;">.select("id, icp, agents(config)")   // de: .select("id, icp")</code>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S15 — CHECKLIST FINAL ══════════════════════ -->
+<section class="section" id="s15">
+  <div class="eyebrow">Checklist de entrega</div>
+  <div class="section-title">O que validar antes de fazer deploy</div>
+
+  <div class="grid2">
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Crítico — não deployar sem isso</div>
+      <ul class="task-list">
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Fix PDFParse</strong> — <span>testar upload de PDF no onboarding</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Executar migration SQL</strong> — <span>20260325000000_analytics_and_indexes.sql</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>trainAgent atualizado</strong> — <span>verificar se retorna sales_persona e objection_handling</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>generateOutreachMessage</strong> — <span>testar geração em campanha de WhatsApp e Email</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>lead-actions.ts</strong> — <span>select inclui agents(config) para scoring</span></div></li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--yellow);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Alta prioridade — sprint atual</div>
+      <ul class="task-list">
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Chat com histórico</strong> — <span>LeadChat.tsx enviando array history</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>KanbanBoard cards</strong> — <span>mostrando phone, website, tier, days</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Pipeline page select</strong> — <span>campos enriquecidos passando para KanbanBoard</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>FunnelBar no Dashboard</strong> — <span>funnel prop chegando do page.tsx</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>4 StatCards</strong> — <span>incluindo Fechamentos com % conversão</span></div></li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Média prioridade — sprint seguinte</div>
+      <ul class="task-list">
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>saveLeadNote e toggleLeadTag</strong> — <span>actions criadas e chamadas no KanbanBoard</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Busca e filtro tier no Kanban</strong> — <span>search e filterTier funcionando</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Header do pipeline com stats</strong> — <span>mini pills por stage visíveis</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>RecentActivity no dashboard</strong> — <span>5 leads mais recentes ordenados</span></div></li>
+      </ul>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">Testes de qualidade IA</div>
+      <ul class="task-list">
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>trainAgent</strong> — <span>JSON retornado tem todos os 5 campos principais</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Mensagem WPP</strong> — <span>max 3 parágrafos, sem markdown, sem IA mencionada</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Mensagem Email</strong> — <span>tem ASSUNTO: na primeira linha</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Chat</strong> — <span>resposta em máx 150 palavras, usa persona correta</span></div></li>
+        <li class="task-item"><div class="task-check">☐</div><div class="task-text"><strong>Score tier</strong> — <span>retorna A+/A/B/C/D + recommended_angle</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Capturo · Dev Implementation Guide v1.0 · Março 2026</p>
+  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+    <span class="badge b-cyan">Next.js 16</span>
+    <span class="badge b-gray">Supabase</span>
+    <span class="badge b-gray">Claude claude-sonnet-4-5</span>
+    <span class="badge b-gray">@dnd-kit</span>
+  </div>
+  <p>capturo.com.br</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+// Nav active state on scroll
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navItems.forEach(n => {
+        n.classList.toggle('active', n.getAttribute('href') === `#${id}`);
+      });
+    }
+  });
+}, { threshold: 0.3 });
+sections.forEach(s => obs.observe(s));
+
+// Copy code
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copiado ✓';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+</script>
+
+</body>
+</html>

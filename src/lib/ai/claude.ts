@@ -53,48 +53,80 @@ export async function extractBusinessProfile(description: string) {
   throw new Error("Resposta inesperada da IA.");
 }
 
+/**
+ * GERAÇÃO DE MENSAGEM — Versão 2.0
+ * Usa persona de vendas, ângulo recomendado pelo scoring e tom calibrado.
+ * Cada mensagem é única, específica e soa como escrita por um humano expert.
+ */
 export async function generateOutreachMessage(
-  lead: any,
-  business: any,
-  campaign: any
+  lead: any, business: any, campaign: any, agentConfig?: any
 ) {
   const isWhatsApp = campaign.channel === 'whatsapp';
+  const persona = agentConfig?.sales_persona || {};
+  const angles = agentConfig?.approach_angles || [];
+  const recommendedAngle = lead.metadata?.recommended_angle || angles[0] || '';
+  const objections = agentConfig?.objection_handling || {};
+  const neverSay = persona.never_say || [];
 
-  const prompt = `Você é ${business.name}, uma empresa de ${business.segment}.
-Tom de voz: ${business.tone}
-ICP: ${JSON.stringify(business.icp)}
+  const systemPrompt = `Você é ${persona.name || business.name}, ${persona.role || 'Consultor de Vendas'}.
+Sua personalidade: ${persona.personality || business.tone}.
+Você representa: ${business.name} — ${business.segment}.
 
-Escreva uma mensagem de PRIMEIRO contato para o lead abaixo.
+REGRAS DE OURO da sua comunicação:
+${neverSay.map((s: string, i: number) => `${i+1}. NUNCA diga: "${s}"`).join('\n')}
+- NUNCA mencione automação, robô ou IA
+- NUNCA use linguagem corporativa genérica
+- SEMPRE soe como uma pessoa real que pesquisou o lead
+- SEMPRE foque no resultado para o lead, não nas features do produto`;
+
+  const userPrompt = `Escreva UMA mensagem de primeiro contato para o lead abaixo.
+
+CONTEXTO DA CAMPANHA:
 Canal: ${campaign.channel.toUpperCase()}
-Campanha: ${campaign.name} — ${campaign.description}
+Objetivo: ${campaign.name} — ${campaign.description}
 
-LEAD:
-- Nome: ${lead.name}
+DADOS DO LEAD (use para personalizar):
+- Empresa: ${lead.name}
 - Endereço: ${lead.address}
-- Avaliação Google: ${lead.metadata?.rating || 'N/A'} estrelas
-- Score de qualificação: ${lead.score}/100
-- Por que é um bom lead: ${lead.metadata?.reasoning || ''}
+- Avaliação Google: ${lead.metadata?.rating || 'N/A'} estrelas (${lead.metadata?.user_ratings_total || 0} avaliações)
+- Score de qualificação: ${lead.score}/100 (${lead.metadata?.tier || 'B'})
+- Por que é um bom fit: ${lead.metadata?.reasoning || ''}
+- Pontos fortes do lead: ${JSON.stringify(lead.metadata?.fit_reasons || [])}
 ${lead.phone ? `- Telefone: ${lead.phone}` : ''}
 ${lead.website ? `- Website: ${lead.website}` : ''}
 
-REGRAS ABSOLUTAS:
-- ${isWhatsApp ? 'Máximo 3 parágrafos curtos, tom amigável, sem markdown' : 'Inclua ASSUNTO: na primeira linha, máximo 4 parágrafos'}
-- Primeira frase deve mencionar algo específico sobre o negócio ou localização
-- Nunca use: "espero que esteja bem", "venho por meio desta"
-- Nunca mencione automação ou IA
-- Termine com: ${business.name}
+ÂNGULO DE ABORDAGEM RECOMENDADO:
+${recommendedAngle || 'Use o ângulo mais relevante para o perfil do lead'}
 
-Escreva APENAS a mensagem final, sem comentários.`;
+PROPOSTA DE VALOR DO PRODUTO:
+${business.icp?.solution_value || ''}
+
+${isWhatsApp ? `FORMATO WHATSAPP:
+- Máximo 3 parágrafos CURTOS (cada um com no máximo 2 linhas)
+- Tom conversacional, direto, sem formalidades excessivas
+- Sem formatação markdown (sem **, sem -, sem listas)
+- Terminar com UMA pergunta aberta simples
+- Assinatura: ${persona.name || business.name}` : `FORMATO EMAIL:
+- Primeira linha: ASSUNTO: [assunto que gera curiosidade, máximo 50 chars]
+- 3-4 parágrafos bem estruturados
+- Abertura que não começa com "Olá" ou "Oi"
+- Parágrafo de valor claro com dado ou resultado específico
+- CTA claro e fácil de responder
+- Assinatura: ${persona.name || business.name} | ${business.name}`}
+
+IMPORTANTE: A primeira frase DEVE mencionar algo específico sobre o ${lead.name} ou sua localização.
+Escreva APENAS a mensagem. Sem explicações, sem comentários, sem notas.`;
 
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-5",
     max_tokens: 800,
-    messages: [{ role: "user", content: prompt }],
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
   });
 
   const content = response.content[0];
   if (content.type === "text") return content.text;
-  throw new Error("Falha ao gerar mensagem de abordagem.");
+  throw new Error("Falha ao gerar mensagem.");
 }
 
 // ────────────────────────────────────────────
@@ -102,53 +134,83 @@ Escreva APENAS a mensagem final, sem comentários.`;
 // ────────────────────────────────────────────
 
 /**
- * 3.1 — Treinamento estruturado do agente.
- * Retorna JSON rico com scoring_criteria, approach_angles e mais.
+ * TREINAMENTO DO AGENTE — Versão 2.0
+ * Cria um "DNA de vendas" completo: persona, ICP detalhado,
+ * gatilhos de compra, objeções, proposta de valor e scripts de abordagem.
  */
 export async function trainAgent(businessData: {
-  name: string;
-  description: string;
-  services: string;
-  targetAudience: string;
-  differentials: string;
-  tone: string;
-  extraContext?: string;
+  name: string; description: string; services: string;
+  targetAudience: string; differentials: string;
+  tone: string; extraContext?: string;
 }) {
-  const prompt = `Você é um especialista em estratégia de vendas B2B.
-Analise o perfil do negócio abaixo e configure um agente de prospecção de alta performance.
+  const systemPrompt = `Você é um Diretor de Vendas sênior com 15 anos de experiência em B2B brasileiro.
+Sua especialidade é construir playbooks de vendas que geram resultados reais.
+Você pensa como um vendedor que precisa bater meta — não como um consultor teórico.
+Sua análise deve ser PRÁTICA, ESPECÍFICA e ACIONÁVEL.`;
 
-PERFIL:
-Nome: ${businessData.name}
+  const userPrompt = `Analise profundamente o negócio abaixo e crie o DNA de vendas completo do agente de prospecção.
+
+═══ DADOS DO NEGÓCIO ═══
+Empresa: ${businessData.name}
 Descrição: ${businessData.description}
-Serviços: ${businessData.services}
-Público-alvo: ${businessData.targetAudience}
+Serviços/Produtos: ${businessData.services}
+Público-alvo declarado: ${businessData.targetAudience}
 Diferenciais: ${businessData.differentials}
-Tom: ${businessData.tone}
-${businessData.extraContext ? `Contexto adicional:\n${businessData.extraContext}` : ''}
+Tom de comunicação: ${businessData.tone}
+${businessData.extraContext ? `Contexto adicional (website/doc):\n${businessData.extraContext}` : ''}
 
-Retorne EXCLUSIVAMENTE JSON válido:
+═══ SUA MISSÃO ═══
+Crie um agente de prospecção que:
+1. Conhece profundamente QUEM compra e POR QUÊ compra
+2. Sabe identificar o momento certo de abordar
+3. Personaliza a mensagem por perfil de lead
+4. Antecipa e responde objeções antes de serem levantadas
+5. Tem uma identidade de comunicação forte e consistente
+
+Retorne EXCLUSIVAMENTE JSON válido (sem markdown, sem comentários):
 {
   "icp": {
-    "target_audience": "string",
-    "pain_points": ["string"],
-    "solution_value": "string",
-    "ideal_segments": ["string"],
-    "disqualifiers": ["string"]
+    "target_audience": "descrição precisa de quem é o cliente ideal (cargo, porte, setor)",
+    "pain_points": ["dor 1 específica do nicho", "dor 2", "dor 3", "dor 4", "dor 5"],
+    "solution_value": "o que o cliente GANHA de concreto (resultado mensurável quando possível)",
+    "ideal_segments": ["segmento A com exemplo real", "segmento B", "segmento C"],
+    "buying_triggers": ["situação que faz o cliente buscar solução agora", "gatilho 2", "gatilho 3"],
+    "disqualifiers": ["sinal claro de que não é cliente ideal", "disqualifier 2"]
   },
-  "suggested_tone": "string",
-  "niche": "string",
-  "approach_angles": ["string"],
+  "sales_persona": {
+    "name": "nome do agente (ex: Agente ${businessData.name})",
+    "role": "cargo que o agente representa (ex: Consultor de Crescimento)",
+    "personality": "3 traços de personalidade que definem o estilo (ex: direto, consultivo, focado em ROI)",
+    "never_say": ["frase que nunca deve aparecer nas mensagens", "frase 2", "frase 3"],
+    "always_do": ["comportamento obrigatório na abordagem", "comportamento 2"]
+  },
+  "objection_handling": {
+    "nao_tenho_tempo": "resposta curta e direta para 'não tenho tempo'",
+    "ja_tenho_fornecedor": "resposta para 'já tenho quem faz isso'",
+    "muito_caro": "resposta para objeção de preço sem dar desconto",
+    "nao_preciso": "resposta para 'não preciso disso agora'"
+  },
+  "approach_angles": [
+    "ângulo 1: baseado na dor mais comum (ex: 'vi que vocês...')",
+    "ângulo 2: baseado em resultado/prova social do nicho",
+    "ângulo 3: baseado em timing/oportunidade do mercado",
+    "ângulo 4: baseado em curiosidade/dado surpreendente",
+    "ângulo 5: baseado em conexão geográfica ou setorial"
+  ],
   "scoring_criteria": {
-    "must_have": ["string"],
-    "nice_to_have": ["string"],
-    "red_flags": ["string"]
-  }
+    "must_have": ["critério eliminatório positivo 1", "critério 2", "critério 3"],
+    "nice_to_have": ["bônus de qualificação 1", "bônus 2"],
+    "red_flags": ["sinal de desqualificação 1", "sinal 2", "sinal 3"]
+  },
+  "suggested_tone": "tom de voz detalhado (ex: 'Direto e consultivo — como um amigo especialista, não como vendedor')",
+  "niche": "nome do nicho em 2-4 palavras"
 }`;
 
   const response = await anthropic.messages.create({
     model: "claude-sonnet-4-5",
-    max_tokens: 1500,
-    messages: [{ role: "user", content: prompt }],
+    max_tokens: 2000,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
   });
 
   const content = response.content[0];

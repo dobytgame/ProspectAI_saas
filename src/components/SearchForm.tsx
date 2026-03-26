@@ -14,15 +14,21 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
   const [isPending, startTransition] = useTransition()
   const [query, setQuery] = useState('')
   const [region, setRegion] = useState('')
+  const [limitError, setLimitError] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim() || !region.trim()) return
 
     startTransition(async () => {
-      await searchLeadsAction(query, region, campaignId)
-      setQuery('')
-      setRegion('')
+      setLimitError(null)
+      const res = await searchLeadsAction(query, region, campaignId)
+      if (res?.error) {
+        setLimitError(res.error)
+      } else {
+        setQuery('')
+        setRegion('')
+      }
     })
   }
 
@@ -58,6 +64,21 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
               {campaignId ? 'Descobrir para esta Campanha' : 'Prospecção IA'}
             </span>
           </div>
+
+          {/* Limit Error */}
+          {limitError && (
+            <div className="mx-4 mt-2 mb-2 px-3 py-2 rounded-lg border border-destructive/20 bg-destructive/15 flex flex-col gap-2">
+              <span className="text-sm font-medium text-destructive">{limitError}</span>
+              <button 
+                type="button" 
+                onClick={() => window.location.href = '/upgrade'} 
+                className="text-xs font-bold text-white bg-primary px-3 py-1.5 rounded-md hover:bg-primary/90 w-max transition-colors"
+                disabled={isPending}
+              >
+                Fazer Upgrade para o Pro
+              </button>
+            </div>
+          )}
 
           {/* Input Row */}
           <div className="px-3 pb-3 flex flex-wrap md:flex-nowrap gap-2">

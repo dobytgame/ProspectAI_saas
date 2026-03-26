@@ -27,18 +27,11 @@ export default function LoginPage() {
       >
         {/* Logo */}
         <div className="flex flex-col items-center gap-3 mb-8">
-          <div
-            className="w-12 h-12 rounded-2xl flex items-center justify-center"
-            style={{
-              background: "linear-gradient(135deg, var(--primary), #0066FF)",
-              boxShadow: "0 0 30px var(--primary-glow)",
-            }}
-          >
-            <Zap className="h-6 w-6 text-[#080C14]" fill="currentColor" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-center" style={{ color: "var(--foreground)" }}>ProspectAI</h1>
-            <p className="text-sm text-center mt-1" style={{ color: "var(--foreground-muted)" }}>
+          <Link href="/" className="transition-transform hover:scale-105">
+            <img src="/capturo.png" alt="Capturo Logo" className="h-12 w-auto object-contain" />
+          </Link>
+          <div className="text-center">
+            <p className="text-sm font-medium" style={{ color: "var(--foreground-muted)" }}>
               Entre na sua conta
             </p>
           </div>

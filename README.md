@@ -1,6 +1,6 @@
-# ProspectAI 🚀🤖
+# Capturo 🚀🤖
 
-**ProspectAI** is a premium, AI-powered lead discovery and outreach automation platform. It transforms how businesses find and approach customers by combining Google Maps data with GPT-4o intelligence to score leads and write personalized sales pitches.
+**Capturo** is a premium, AI-powered lead discovery and outreach automation platform. It transforms how businesses find and approach customers by combining Google Maps data with GPT-4o intelligence to score leads and write personalized sales pitches.
 
 ## ✨ Principais Funcionalidades
 
@@ -41,4 +41,4 @@
 - `supabase/migrations`: SQL de estrutura do banco.
 
 ---
-Desenvolvido com ❤️ e IA para ProspectAI.
+Desenvolvido com ❤️ e IA para Capturo.

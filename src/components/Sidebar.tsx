@@ -25,12 +25,9 @@ export default function Sidebar({ userEmail }: { userEmail?: string | null }) {
     >
       {/* Logo */}
       <div className="h-14 flex items-center justify-center border-b" style={{ borderColor: "var(--border)" }}>
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform hover:scale-110"
-          style={{ background: "linear-gradient(135deg, var(--primary), #0066FF)" }}
-        >
-          <Zap className="h-5 w-5 text-[#080C14]" fill="currentColor" />
-        </div>
+        <Link href="/dashboard" className="transition-transform hover:scale-110">
+          <img src="/capturo.png" alt="Capturo Logo" className="w-9 h-9 object-contain" />
+        </Link>
       </div>
 
       {/* Nav */}

@@ -5,7 +5,6 @@ import { extractBusinessProfile, trainAgent } from "@/lib/ai/claude";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import axios from "axios";
-import { PDFParse } from "pdf-parse";
 
 export async function onboardBusiness(formData: FormData) {
   const supabase = await createClient();
@@ -23,6 +22,7 @@ export async function onboardBusiness(formData: FormData) {
   const tone = formData.get("tone") as string || "Profissional";
   const websiteUrl = formData.get("website_url") as string;
   const file = formData.get("file") as File;
+  const plan = formData.get("plan") as string || "free";
 
   let extraContext = "";
 
@@ -44,8 +44,8 @@ export async function onboardBusiness(formData: FormData) {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
         if (file.type === "application/pdf") {
-          const parser = new PDFParse({ data: buffer });
-          const result = await parser.getText();
+          const pdfParse = require("pdf-parse");
+          const result = await pdfParse(buffer);
           extraContext += `\nCONTEÚDO DO DOCUMENTO (PDF):\n${result.text}\n`;
         } else {
           const text = buffer.toString("utf-8");
@@ -132,6 +132,10 @@ export async function onboardBusiness(formData: FormData) {
   } catch (error) {
     console.error("Onboarding error:", error);
     redirect("/onboarding?error=true");
+  }
+
+  if (plan === 'pro') {
+    redirect("/upgrade");
   }
 
   redirect("/dashboard");

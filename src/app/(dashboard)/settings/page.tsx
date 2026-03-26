@@ -74,7 +74,7 @@ export default async function SettingsPage() {
                     </div>
                     <div>
                       <CardTitle>Perfil de Usuário</CardTitle>
-                      <CardDescription>Como você será identificado no ProspectAI.</CardDescription>
+                      <CardDescription>Como você será identificado no Capturo.</CardDescription>
                     </div>
                   </div>
                 </CardHeader>

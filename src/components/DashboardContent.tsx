@@ -5,7 +5,9 @@ import LeadMap from '@/components/LeadMap'
 import LeadSidebar from '@/components/LeadSidebar'
 import SearchForm from '@/components/SearchForm'
 import { StatCard } from '@/components/ui/StatCard'
-import { Users, Target, TrendingUp } from 'lucide-react'
+import { Users, Target, TrendingUp, Handshake, Info, Clock, ExternalLink } from 'lucide-react'
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 
 interface Lead {
   id: string;
@@ -31,6 +33,8 @@ interface DashboardContentProps {
   leads: Lead[];
   segment: string;
   campaigns: { id: string; name: string }[];
+  pipelineStats?: any;
+  recentActivity?: any[];
 }
 
 const SCORE_RANGES = [
@@ -40,7 +44,7 @@ const SCORE_RANGES = [
   { label: '🔴 Baixo (<40)', min: 0, max: 39 },
 ];
 
-export default function DashboardContent({ leads, segment, campaigns }: DashboardContentProps) {
+export default function DashboardContent({ leads, segment, campaigns, pipelineStats = {}, recentActivity = [] }: DashboardContentProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedScoreRange, setSelectedScoreRange] = useState<number>(0)
 
@@ -62,9 +66,9 @@ export default function DashboardContent({ leads, segment, campaigns }: Dashboar
     : 0
 
   return (
-    <div className="flex-1 overflow-auto p-6">
-      {/* Animated Stats Row */}
-      <div className="grid grid-cols-3 gap-4 mb-5">
+    <div className="flex-1 overflow-auto p-6 space-y-6">
+      {/* Animated Stats Row (4 Cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label="Leads Encontrados"
           value={totalLeads}
@@ -82,20 +86,93 @@ export default function DashboardContent({ leads, segment, campaigns }: Dashboar
           delay={80}
         />
         <StatCard
-          label="Score Médio"
-          value={avgScore}
-          sub={avgScore >= 70 ? "Excelente" : avgScore >= 40 ? "Regular" : "—"}
-          color={avgScore >= 70 ? "var(--green)" : avgScore >= 40 ? "var(--yellow)" : "var(--red)"}
+          label="Score Médio (Funil)"
+          value={pipelineStats?.avg_score || avgScore}
+          sub={pipelineStats?.avg_score >= 70 ? "Excelente" : pipelineStats?.avg_score >= 40 ? "Regular" : "—"}
+          color={pipelineStats?.avg_score >= 70 ? "var(--green)" : pipelineStats?.avg_score >= 40 ? "var(--yellow)" : "var(--red)"}
           icon={<TrendingUp className="h-4 w-4" />}
           delay={160}
         />
+        <StatCard
+          label="Fechamentos (Won)"
+          value={pipelineStats?.closed || 0}
+          sub={pipelineStats?.total > 0 ? `${Math.round((pipelineStats?.closed / pipelineStats?.total) * 100)}% de conversão` : "0% de conversão"}
+          color="var(--primary)"
+          icon={<Handshake className="h-4 w-4" />}
+          delay={240}
+        />
       </div>
 
-      {/* Main Content: Map + Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 h-[calc(100vh-15rem)]">
-        {/* Map */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Column: Funnel & Activity */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Funnel Metrics */}
+          <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-sm">Funil de Conversão</h3>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Descobertos</span>
+                  <span className="font-medium text-foreground">{pipelineStats?.total || 0}</span>
+                </div>
+                <Progress value={100} className="h-1.5 bg-muted/30 [&>div]:bg-muted-foreground/30" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Contatados</span>
+                  <span className="font-medium text-purple-600">{pipelineStats?.contacted || 0}</span>
+                </div>
+                <Progress value={pipelineStats?.total ? (pipelineStats.contacted / pipelineStats.total) * 100 : 0} className="h-1.5 bg-purple-100 [&>div]:bg-purple-600" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Interessados</span>
+                  <span className="font-medium text-blue-600">{pipelineStats?.interested || 0}</span>
+                </div>
+                <Progress value={pipelineStats?.contacted ? (pipelineStats.interested / pipelineStats.contacted) * 100 : 0} className="h-1.5 bg-blue-100 [&>div]:bg-blue-600" />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Fechados</span>
+                  <span className="font-medium text-green-600">{pipelineStats?.closed || 0}</span>
+                </div>
+                <Progress value={pipelineStats?.interested ? (pipelineStats.closed / pipelineStats.interested) * 100 : 0} className="h-1.5 bg-green-100 [&>div]:bg-green-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Activity Feed */}
+          <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Clock className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-sm">Atividade Recente</h3>
+            </div>
+            <div className="space-y-3">
+              {recentActivity.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-4">Nenhuma atividade recente.</p>
+              ) : (
+                recentActivity.map((activity, i) => (
+                  <div key={i} className="flex gap-3 text-sm">
+                    <div className="mt-1 shrink-0 h-2 w-2 rounded-full bg-primary/40 ring-4 ring-primary/10"></div>
+                    <div>
+                      <p className="font-medium leading-none text-[13px]">{activity.name}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                        Moveu para <strong className="font-semibold capitalize">{activity.status}</strong>
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Map */}
         <div
-          className="lg:col-span-3 rounded-2xl overflow-hidden relative"
+          className="lg:col-span-3 rounded-2xl overflow-hidden relative min-h-[500px]"
           style={{
             background: "var(--background-2)",
             border: "1px solid var(--border)",
@@ -116,18 +193,6 @@ export default function DashboardContent({ leads, segment, campaigns }: Dashboar
             reasoning: l.reasoning,
           }))} />
         </div>
-
-        {/* Sidebar: Filters + Lead List */}
-        <LeadSidebar 
-          leads={leads} 
-          filteredLeads={filteredLeads}
-          segment={segment} 
-          campaigns={campaigns}
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          selectedScoreRange={selectedScoreRange}
-          setSelectedScoreRange={setSelectedScoreRange}
-        />
       </div>
     </div>
   )

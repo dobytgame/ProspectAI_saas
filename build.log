@@ -1,0 +1,28 @@
+
+> prospect-ai@0.1.0 build
+> next build
+
+Ôû▓ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+
+ÔÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./src/app/(dashboard)/onboarding/actions.ts:9:1
+Export default doesn't exist in target module
+   7 | import axios from "axios";
+   8 | // @ts-ignore
+>  9 | import pdfParse from "pdf-parse";
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  10 |
+  11 | export async function onboardBusiness(formData: FormData) {
+  12 |   const supabase = await createClient();
+
+The export default was not found in module [project]/node_modules/pdf-parse/dist/pdf-parse/esm/index.js [app-rsc] (ecmascript).
+Did you mean to import Rectangle?
+All exports of the module are statically known (It doesn't have dynamic exports). So it's known statically that the requested export doesn't exist.
+
+
+    at <unknown> (./src/app/(dashboard)/onboarding/actions.ts:9:1)
