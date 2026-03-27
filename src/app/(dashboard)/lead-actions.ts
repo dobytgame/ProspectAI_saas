@@ -47,8 +47,9 @@ export async function searchLeadsAction(query: string, region: string, campaignI
   const geo = await getGeocode(region);
   if (!geo) throw new Error("Não foi possível localizar a região informada.");
 
-  // 4. Search Places
-  const places = await searchPlaces(query, `${geo.lat},${geo.lng}`);
+  // 4. Search Places - Max 3 pages (60 leads) for paid plans, 1 page (20) for free
+  const maxPages = plan === 'free' ? 1 : 3;
+  const places = await searchPlaces(query, `${geo.lat},${geo.lng}`, 5000, maxPages);
   
   if (currentLeadsCount + places.length > limit) {
     const remaining = limit - currentLeadsCount;

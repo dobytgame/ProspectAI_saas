@@ -85,17 +85,21 @@ export default function OnboardingMultiStep() {
       });
 
       const data = await resp.json();
-
       setProcessingItems(prev => prev.filter(p => p !== processId));
 
       if (data.success) {
         setKbItems(prev => [...prev, data.record]);
       } else {
-        alert(data.error || "Erro ao processar fonte.");
+        // Se houver um registro (mesmo falho), podemos adicionar pra mostrar o erro no histórico
+        if (data.record) {
+          setKbItems(prev => [...prev, data.record]);
+        }
+        setErrorMsg(data.error || "Erro ao processar fonte.");
+        // setTimeout(() => setErrorMsg(""), 5000);
       }
     } catch (err) {
       setProcessingItems(prev => prev.filter(p => p !== processId));
-      alert("Falha de rede ao tentar processar conhecimento.");
+      setErrorMsg("Falha de rede ao tentar processar conhecimento.");
     }
   };
 
@@ -242,6 +246,11 @@ export default function OnboardingMultiStep() {
               </div>
             </CardHeader>
             <CardContent className="space-y-8 px-8">
+              {errorMsg && (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm font-bold text-center">
+                  {errorMsg}
+                </div>
+              )}
               
               {/* Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-border/40">
@@ -322,15 +331,23 @@ export default function OnboardingMultiStep() {
                     
                     {/* Completed */}
                     {[...kbItems].reverse().map((item, idx) => (
-                      <div key={item.id || idx} className="flex gap-4 p-4 rounded-xl border border-border/40 bg-muted/20 hover:bg-muted/30 transition-colors">
+                      <div key={item.id || idx} className={`flex gap-4 p-4 rounded-xl border transition-colors ${item.status === 'failed' ? 'border-red-500/30 bg-red-500/5' : 'border-border/40 bg-muted/20 hover:bg-muted/30'}`}>
                         <div className="mt-1 shrink-0">
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          {item.status === 'failed' ? (
+                            <X className="h-5 w-5 text-red-500" />
+                          ) : (
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          )}
                         </div>
                         <div className="space-y-2 w-full">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-black tracking-wider text-muted-foreground uppercase">{item.type} • {String(item.source).substring(0,30)}</span>
+                            <span className={`text-xs font-black tracking-wider uppercase ${item.status === 'failed' ? 'text-red-400' : 'text-muted-foreground'}`}>
+                              {item.type} • {String(item.source).substring(0,30)}
+                            </span>
                           </div>
-                          <p className="text-sm font-medium text-foreground leading-relaxed italic border-l-2 border-primary/50 pl-3">"{item.ai_feedback}"</p>
+                          <p className={`text-sm font-medium leading-relaxed italic border-l-2 pl-3 ${item.status === 'failed' ? 'border-red-500/50 text-red-200/70' : 'border-primary/50 text-foreground'}`}>
+                            "{item.ai_feedback}"
+                          </p>
                         </div>
                       </div>
                     ))}

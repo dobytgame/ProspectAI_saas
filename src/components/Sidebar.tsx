@@ -11,7 +11,8 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight,
-  User
+  User,
+  Users
 } from "lucide-react";
 import { signOut } from "@/app/(auth)/actions";
 import SidebarUsage from "./SidebarUsage";
@@ -19,6 +20,7 @@ import SidebarUsage from "./SidebarUsage";
 const navItems = [
   { href: "/dashboard",  label: "Dashboard",      icon: LayoutDashboard },
   { href: "/pipeline",   label: "Pipeline",        icon: Columns3 },
+  { href: "/leads",      label: "Leads",           icon: Users },
   { href: "/campanhas",  label: "Campanhas",       icon: MessageSquare },
   { href: "/settings",   label: "Configurações",   icon: Settings },
 ];

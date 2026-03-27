@@ -96,15 +96,15 @@ export async function POST(request: Request) {
         await supabase.storage.from("knowledge_base").upload(filePath, file);
       }
 
-      if (!extractedText.trim()) {
-        throw new Error("No text could be extracted");
+      if (!extractedText || extractedText.trim().length < 50) {
+        throw new Error("Não foi possível extrair conteúdo suficiente deste site ou documento. Verifique se a URL está correta ou se o arquivo contém texto legível.");
       }
 
       // 3. Analisar com a IA
       const analysis = await analyzeKnowledgeSource(extractedText, business.name, dbType);
 
-      // 4. Salvar conclusão
-      await supabase
+      // 4. Salvar conclusão e retornar o registro atualizado
+      const { data: updatedRecord, error: updateError } = await supabase
         .from("knowledge_bases")
         .update({
           content: extractedText.substring(0, 10000), // Saving a truncated version for history
@@ -112,22 +112,31 @@ export async function POST(request: Request) {
           metadata: { confidence: analysis.confidence },
           status: 'completed'
         })
-        .eq("id", kbRecord.id);
+        .eq("id", kbRecord.id)
+        .select()
+        .single();
 
-      return NextResponse.json({ success: true, analysis, record: kbRecord });
+      if (updateError) throw updateError;
+
+      return NextResponse.json({ success: true, analysis, record: updatedRecord });
       
     } catch (processError: any) {
       console.error("Error processing KB:", processError);
       // Mark as failed
-      await supabase
+      const { data: failedRecord } = await supabase
         .from("knowledge_bases")
         .update({
           status: 'failed',
           ai_feedback: processError.message || "Erro desconhecido ao processar",
         })
-        .eq("id", kbRecord.id);
+        .eq("id", kbRecord.id)
+        .select()
+        .single();
 
-      return NextResponse.json({ error: "Failed to process knowledge source" }, { status: 500 });
+      return NextResponse.json({ 
+        error: processError.message || "Failed to process knowledge source", 
+        record: failedRecord || kbRecord 
+      }, { status: 500 });
     }
 
   } catch (error: any) {

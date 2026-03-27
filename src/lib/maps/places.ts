@@ -2,19 +2,45 @@ import axios from 'axios';
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
-export async function searchPlaces(query: string, location: string, radius: number = 5000) {
+export async function searchPlaces(query: string, location: string, radius: number = 5000, maxPages: number = 3) {
   if (!GOOGLE_MAPS_API_KEY) {
     throw new Error("GOOGLE_MAPS_API_KEY não configurada.");
   }
 
-  // Note: Using the Text Search (New) or standard Text Search
-  const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${location}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`;
+  let allResults: any[] = [];
+  let nextToken: string | null = null;
+  let pagesFetched = 0;
 
   try {
-    const response = await axios.get(url);
-    const results = response.data.results;
+    do {
+      const currentUrl: string = nextToken 
+        ? `https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextToken}&key=${GOOGLE_MAPS_API_KEY}`
+        : `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${location}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}`;
 
-    return results.map((place: any) => ({
+      const response = await axios.get(currentUrl);
+      const { results, next_page_token, status }: { results: any[], next_page_token?: string, status: string } = response.data;
+
+      if (status === "OK" || status === "ZERO_RESULTS") {
+        allResults = [...allResults, ...results];
+        nextToken = next_page_token || null;
+        pagesFetched++;
+      } else if (status === "INVALID_REQUEST" && nextToken) {
+        // O token pode ainda não estar ativo, esperar um pouco mais e tentar uma última vez
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        continue;
+      } else {
+        console.error("Google Places API error status:", status);
+        break;
+      }
+
+      // Se houver próxima página e ainda não atingimos o limite, esperar o token ativar
+      if (nextToken && pagesFetched < maxPages) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+
+    } while (nextToken && pagesFetched < maxPages);
+
+    return allResults.map((place: any) => ({
       name: place.name,
       address: place.formatted_address,
       place_id: place.place_id,
