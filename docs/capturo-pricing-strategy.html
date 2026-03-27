@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capturo — Estratégia de Precificação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C14;--surf:#0D1420;--surf2:#111827;
+  --b:#1E2D45;--bh:#2D4060;
+  --cyan:#00E5FF;--cD:rgba(0,229,255,.09);--cB:rgba(0,229,255,.22);
+  --green:#00FFA3;--gD:rgba(0,255,163,.09);
+  --yellow:#FFD600;--yD:rgba(255,214,0,.09);
+  --red:#FF4D6D;--rD:rgba(255,77,109,.09);
+  --purple:#A855F7;--pD:rgba(168,85,247,.09);
+  --orange:#FF8C42;
+  --text:#E2EAF4;--muted:#6B7FA8;--dim:#3D4F6E;
+  --display:'Syne',sans-serif;
+  --body:'DM Sans',sans-serif;
+  --mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.6}
+
+/* LAYOUT */
+.page{max-width:1100px;margin:0 auto;padding:48px 24px 100px}
+
+/* HEADER */
+.doc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:48px;padding-bottom:28px;border-bottom:1px solid var(--b)}
+.logo-name{font-family:var(--display);font-size:22px;font-weight:800}
+.logo-name span{color:var(--cyan)}
+
+/* EYEBROW */
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+.section-title{font-family:var(--display);font-size:26px;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.2}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.7;max-width:700px}
+
+/* SECTION */
+.section{margin-bottom:64px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--b),transparent);margin:56px 0}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.b-cyan{background:var(--cD);color:var(--cyan);border:1px solid var(--cB)}
+.b-green{background:var(--gD);color:var(--green);border:1px solid rgba(0,255,163,.22)}
+.b-yellow{background:var(--yD);color:var(--yellow);border:1px solid rgba(255,214,0,.22)}
+.b-red{background:var(--rD);color:var(--red);border:1px solid rgba(255,77,109,.22)}
+.b-purple{background:var(--pD);color:var(--purple);border:1px solid rgba(168,85,247,.22)}
+.b-gray{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--b)}
+.b-orange{background:rgba(255,140,66,.09);color:var(--orange);border:1px solid rgba(255,140,66,.22)}
+
+/* CARDS */
+.card{background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:20px 22px;margin-bottom:12px}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.grid4{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+
+/* METRIC */
+.metric{background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:18px 20px;text-align:center}
+.metric-val{font-family:var(--display);font-size:32px;font-weight:800;line-height:1;margin:4px 0 3px}
+.metric-label{font-size:11px;color:var(--muted);line-height:1.4}
+.metric-sub{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* TABLE */
+.table-wrap{border:1px solid var(--b);border-radius:14px;overflow:hidden;margin:14px 0}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--b);background:var(--surf2)}
+td{padding:11px 14px;font-size:12px;border-bottom:1px solid rgba(30,45,69,.5);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+.td-center{text-align:center}
+
+/* PRICING CARD */
+.plan-card{
+  background:var(--surf);border:1px solid var(--b);border-radius:20px;
+  overflow:hidden;display:flex;flex-direction:column;position:relative;
+  transition:all .25s;
+}
+.plan-card:hover{transform:translateY(-4px);border-color:var(--bh);box-shadow:0 20px 50px rgba(0,0,0,.4)}
+.plan-card.featured{border-color:var(--cB);box-shadow:0 0 60px rgba(0,229,255,.1)}
+.plan-card.featured:hover{box-shadow:0 20px 60px rgba(0,229,255,.2)}
+.plan-top-bar{height:3px;width:100%}
+.plan-body{padding:28px 26px;flex:1;display:flex;flex-direction:column}
+.plan-badge{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:14px;display:block}
+.plan-name{font-family:var(--display);font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px}
+.plan-tagline{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5;min-height:36px}
+.plan-price{display:flex;align-items:flex-end;gap:4px;margin-bottom:6px}
+.plan-price-val{font-family:var(--display);font-size:42px;font-weight:800;line-height:1}
+.plan-price-period{font-size:13px;color:var(--muted);margin-bottom:6px}
+.plan-savings{font-size:11px;color:var(--green);margin-bottom:20px;min-height:16px}
+.plan-divider{height:1px;background:var(--b);margin:18px 0}
+.plan-feature-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:8px;flex:1}
+.plan-feature{display:flex;align-items:flex-start;gap:9px;font-size:12px}
+.feat-icon{font-size:12px;flex-shrink:0;margin-top:1px}
+.feat-text{color:var(--muted);line-height:1.4}
+.feat-text strong{color:var(--text);font-weight:500}
+.feat-text.dimmed{color:var(--dim)}
+.plan-cta{
+  display:block;width:100%;padding:13px;border-radius:12px;
+  font-family:var(--display);font-size:14px;font-weight:700;
+  text-align:center;cursor:pointer;border:none;
+  margin-top:22px;transition:all .2s;text-decoration:none;
+}
+.popular-tag{
+  position:absolute;top:-1px;left:50%;transform:translateX(-50%);
+  padding:4px 16px;border-radius:0 0 12px 12px;
+  font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  background:linear-gradient(135deg,var(--cyan),#0066FF);color:#080C14;
+  white-space:nowrap;
+}
+
+/* FEATURE CHECK */
+.check-yes{color:var(--green);font-size:14px}
+.check-no{color:var(--dim);font-size:14px}
+.check-partial{color:var(--yellow);font-size:12px}
+.feature-highlight{background:rgba(0,229,255,.04);color:var(--text);font-weight:500}
+
+/* UNIT ECONOMICS */
+.econ-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(30,45,69,.4)}
+.econ-row:last-child{border-bottom:none;padding-bottom:0}
+.econ-label{font-size:12px;color:var(--muted);flex:1}
+.econ-val{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--text);text-align:right;white-space:nowrap}
+.econ-total{background:var(--cD);border-radius:10px;padding:14px 18px;margin-top:16px;display:flex;justify-content:space-between;align-items:center}
+.econ-total-label{font-size:12px;color:var(--cyan)}
+.econ-total-val{font-family:var(--display);font-size:22px;font-weight:800;color:var(--cyan)}
+
+/* SCENARIO */
+.scenario-card{background:var(--surf);border:1px solid var(--b);border-radius:16px;padding:20px 22px}
+.scenario-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.scenario-title{font-size:14px;font-weight:600;color:var(--text)}
+.scenario-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px}
+.scenario-key{color:var(--muted)}
+.scenario-result{font-weight:600;color:var(--text)}
+.scenario-profit{margin-top:12px;padding:10px 14px;border-radius:10px;display:flex;justify-content:space-between;align-items:center}
+
+/* ALERT */
+.alert{display:flex;gap:12px;padding:14px 16px;border-radius:12px;margin:14px 0}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-body{flex:1;font-size:12px;line-height:1.6}
+.alert-title{font-weight:600;margin-bottom:3px}
+.alert-info{background:var(--cD);border:1px solid var(--cB)}
+.alert-info .alert-title{color:var(--cyan)}
+.alert-ok{background:var(--gD);border:1px solid rgba(0,255,163,.22)}
+.alert-ok .alert-title{color:var(--green)}
+.alert-warn{background:var(--yD);border:1px solid rgba(255,214,0,.22)}
+.alert-warn .alert-title{color:var(--yellow)}
+
+/* TOGGLE */
+.billing-toggle{display:flex;align-items:center;gap:12px;justify-content:center;margin-bottom:32px}
+.toggle-track{width:48px;height:26px;background:var(--b);border-radius:13px;position:relative;cursor:pointer;transition:.2s}
+.toggle-track.on{background:var(--cyan)}
+.toggle-thumb{width:20px;height:20px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:.2s}
+.toggle-track.on .toggle-thumb{left:25px}
+.toggle-label{font-size:13px;color:var(--muted)}
+.toggle-label.active{color:var(--text);font-weight:500}
+.discount-pill{background:var(--gD);color:var(--green);border:1px solid rgba(0,255,163,.22);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px}
+
+/* COMPETITIVE */
+.comp-row{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(30,45,69,.4);align-items:flex-start}
+.comp-row:last-child{border-bottom:none}
+.comp-name{font-size:13px;font-weight:600;color:var(--text);width:130px;flex-shrink:0}
+.comp-price{font-family:var(--mono);font-size:12px;color:var(--yellow);width:100px;flex-shrink:0}
+.comp-model{font-size:12px;color:var(--muted);flex:1;line-height:1.5}
+.comp-diff{font-size:11px;padding:2px 8px;border-radius:20px;flex-shrink:0;white-space:nowrap}
+
+/* STRATEGY NOTE */
+.strategy-box{background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:22px 24px;margin-bottom:12px}
+.strategy-num{font-family:var(--display);font-size:28px;font-weight:800;line-height:1;margin-bottom:8px}
+.strategy-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.strategy-body{font-size:12px;color:var(--muted);line-height:1.7}
+
+footer{margin-top:80px;padding-top:24px;border-top:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer p{font-size:11px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<header class="doc-header">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#00E5FF,#0066FF);display:flex;align-items:center;justify-content:center;font-size:20px">⚡</div>
+      <div class="logo-name">captur<span>o</span></div>
+    </div>
+    <h1 style="font-family:var(--display);font-size:28px;font-weight:800;line-height:1.2;margin-bottom:6px">Estratégia de Precificação & Planos</h1>
+    <p style="font-size:13px;color:var(--muted);max-width:560px;line-height:1.7">Baseado em benchmarks do mercado brasileiro (Ramper, Econodata, Apollo), custo real de API (Claude Sonnet + Google Maps) e análise de disposição a pagar do ICP definido.</p>
+  </div>
+  <div style="text-align:right;flex-shrink:0">
+    <div style="font-size:11px;color:var(--dim)">Versão 1.0</div>
+    <div style="font-size:11px;color:var(--dim);margin-top:2px">Março 2026</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px">
+      <span class="badge b-gray">Mercado BR</span>
+      <span class="badge b-cyan">SaaS Prospecção</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════
+     1. BENCHMARKS DA CONCORRÊNCIA
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Análise de mercado</div>
+  <div class="section-title">Onde a concorrência está e onde o Capturo entra</div>
+  <div class="section-sub">O mercado se divide em 4 camadas. O Capturo compete na camada mais premium (agente autônomo), porém com precificação agressiva para o Brasil.</div>
+
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:20px">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--b)">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Competidores diretos e indiretos — preços atuais</div>
+    </div>
+    <div style="padding:8px 0">
+      <div class="comp-row" style="padding:14px 20px">
+        <div class="comp-name">Econodata</div>
+        <div class="comp-price">R$ 200–2.000/mês</div>
+        <div class="comp-model">Só dados (listas CNPJ). Nenhuma automação, nenhuma IA. Usuário ainda precisa prospectar manualmente.</div>
+        <span class="comp-diff" style="background:rgba(0,255,163,.09);color:var(--green);border:1px solid rgba(0,255,163,.2)">Camada 1</span>
+      </div>
+      <div class="comp-row" style="padding:14px 20px">
+        <div class="comp-name">Ramper</div>
+        <div class="comp-price">Sob consulta (R$ 500–1.500+)</div>
+        <div class="comp-model">Dados + sequências de e-mail. Foco em LinkedIn. Requer SDR para operar. Sem WhatsApp nativo, sem Google Maps.</div>
+        <span class="comp-diff" style="background:var(--yD);color:var(--yellow);border:1px solid rgba(255,214,0,.2)">Camada 3</span>
+      </div>
+      <div class="comp-row" style="padding:14px 20px">
+        <div class="comp-name">Apollo.io</div>
+        <div class="comp-price">US$ 49–99/mês (~R$ 290–590)</div>
+        <div class="comp-model">Dados globais + sequências. Em inglês. Sem WhatsApp, sem foco em estabelecimentos locais BR. Curva de aprendizado alta.</div>
+        <span class="comp-diff" style="background:var(--yD);color:var(--yellow);border:1px solid rgba(255,214,0,.2)">Camada 3</span>
+      </div>
+      <div class="comp-row" style="padding:14px 20px">
+        <div class="comp-name">eesier (BR)</div>
+        <div class="comp-price">R$ 497–2.000/mês</div>
+        <div class="comp-model">Agente autônomo de SDR. Foco em e-mail. Sem Google Maps, sem WhatsApp integrado. Posicionamento premium.</div>
+        <span class="comp-diff" style="background:var(--pD);color:var(--purple);border:1px solid rgba(168,85,247,.2)">Camada 4</span>
+      </div>
+      <div class="comp-row" style="padding:14px 20px;background:rgba(0,229,255,.03)">
+        <div class="comp-name" style="color:var(--cyan)">⚡ Capturo</div>
+        <div class="comp-price" style="color:var(--cyan)">R$ 97–597/mês</div>
+        <div class="comp-model" style="color:rgba(226,234,244,.8)">Google Maps + IA + WhatsApp + CRM. Único produto que conecta as 4 camadas. Preço acessível para PME e agências.</div>
+        <span class="comp-diff" style="background:var(--cD);color:var(--cyan);border:1px solid var(--cB)">Camada 4</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">🎯</div>
+    <div class="alert-body">
+      <div class="alert-title">Posicionamento de preço ideal</div>
+      Mais barato que eesier (R$497+) e mais completo que Ramper/Apollo — o Capturo ocupa o espaço de "agente autônomo acessível para PME brasileira". Ticket alvo: <strong>R$197–297</strong> para a maioria dos clientes, com upsell para R$597 em times.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════
+     2. UNIT ECONOMICS — CUSTO REAL
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Unit economics</div>
+  <div class="section-title">Custo real por usuário por mês</div>
+  <div class="section-sub">Calculado com base nos preços atuais de API. Fundamental para definir margens saudáveis e limites por plano.</div>
+
+  <div class="grid3" style="margin-bottom:20px">
+
+    <!-- Plano Starter -->
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Custo — Plano Starter</div>
+      <div class="econ-row"><div class="econ-label">Claude Sonnet (100 leads × scoring)</div><div class="econ-val" style="color:var(--green)">~R$ 0,90</div></div>
+      <div class="econ-row"><div class="econ-label">Claude Sonnet (100 mensagens geradas)</div><div class="econ-val" style="color:var(--green)">~R$ 1,40</div></div>
+      <div class="econ-row"><div class="econ-label">Google Places API (100 leads)</div><div class="econ-val" style="color:var(--green)">~R$ 3,00</div></div>
+      <div class="econ-row"><div class="econ-label">Supabase (free tier cobre)</div><div class="econ-val" style="color:var(--green)">R$ 0,00</div></div>
+      <div class="econ-row"><div class="econ-label">Vercel + infra (rateio)</div><div class="econ-val">~R$ 2,00</div></div>
+      <div class="econ-total">
+        <div class="econ-total-label">Custo total / usuário</div>
+        <div class="econ-total-val">~R$ 7,30</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:8px;text-align:center">Preço: R$97 → Margem: <span style="color:var(--green)">92%</span></div>
+    </div>
+
+    <!-- Plano Pro -->
+    <div class="card" style="border-color:var(--cB)">
+      <div style="font-size:11px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Custo — Plano Pro ⭐</div>
+      <div class="econ-row"><div class="econ-label">Claude Sonnet (500 leads × scoring)</div><div class="econ-val" style="color:var(--green)">~R$ 4,50</div></div>
+      <div class="econ-row"><div class="econ-label">Claude Sonnet (500 mensagens geradas)</div><div class="econ-val" style="color:var(--green)">~R$ 7,00</div></div>
+      <div class="econ-row"><div class="econ-label">Google Places API (500 leads)</div><div class="econ-val" style="color:var(--green)">~R$ 16,00</div></div>
+      <div class="econ-row"><div class="econ-label">Supabase (Pro rateio)</div><div class="econ-val">~R$ 5,00</div></div>
+      <div class="econ-row"><div class="econ-label">Vercel + infra (rateio)</div><div class="econ-val">~R$ 3,00</div></div>
+      <div class="econ-total">
+        <div class="econ-total-label">Custo total / usuário</div>
+        <div class="econ-total-val">~R$ 35,50</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:8px;text-align:center">Preço: R$197 → Margem: <span style="color:var(--green)">82%</span></div>
+    </div>
+
+    <!-- Plano Scale -->
+    <div class="card">
+      <div style="font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px">Custo — Plano Scale</div>
+      <div class="econ-row"><div class="econ-label">Claude Sonnet (2000 leads × scoring)</div><div class="econ-val" style="color:var(--green)">~R$ 18,00</div></div>
+      <div class="econ-row"><div class="econ-label">Claude Sonnet (2000 mensagens + chat)</div><div class="econ-val" style="color:var(--green)">~R$ 28,00</div></div>
+      <div class="econ-row"><div class="econ-label">Google Places API (2000 leads)</div><div class="econ-val" style="color:var(--yellow)">~R$ 54,00</div></div>
+      <div class="econ-row"><div class="econ-label">Supabase + Upstash Redis</div><div class="econ-val">~R$ 15,00</div></div>
+      <div class="econ-row"><div class="econ-label">Vercel + infra + email</div><div class="econ-val">~R$ 10,00</div></div>
+      <div class="econ-total">
+        <div class="econ-total-label">Custo total / usuário</div>
+        <div class="econ-total-val">~R$ 125,00</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:8px;text-align:center">Preço: R$397 → Margem: <span style="color:var(--green)">69%</span></div>
+    </div>
+  </div>
+
+  <div class="alert alert-ok">
+    <div class="alert-icon">✓</div>
+    <div class="alert-body">
+      <div class="alert-title">Margens saudáveis em todos os planos</div>
+      Margens de 69–92% são excelentes para SaaS. O plano Scale tem margem menor por causa do volume de Google Maps API, mas compensado pelo ticket alto (R$397–597). Usar <strong>cache de prompt do Claude</strong> e <strong>batch requests</strong> reduz custos de IA em até 50%.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════
+     3. OS 4 PLANOS
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Planos & preços</div>
+  <div class="section-title">4 planos desenhados para converter</div>
+  <div class="section-sub">Cada plano tem uma persona específica e um "momento de upgrade" claro. O plano Pro é o anchor — onde você quer que 60% dos clientes estejam.</div>
+
+  <!-- Toggle anual/mensal -->
+  <div class="billing-toggle" id="billingToggle">
+    <span class="toggle-label active" id="labelMonthly">Mensal</span>
+    <div class="toggle-track" id="toggleTrack" onclick="toggleBilling()">
+      <div class="toggle-thumb" id="toggleThumb"></div>
+    </div>
+    <span class="toggle-label" id="labelAnnual">Anual <span class="discount-pill">2 meses grátis</span></span>
+  </div>
+
+  <!-- Plans grid -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;align-items:start">
+
+    <!-- FREE -->
+    <div class="plan-card">
+      <div class="plan-top-bar" style="background:var(--b)"></div>
+      <div class="plan-body">
+        <span class="plan-badge" style="color:var(--muted)">Para começar</span>
+        <div class="plan-name">Grátis</div>
+        <div class="plan-tagline">Conheça o produto sem risco. Sem cartão de crédito.</div>
+        <div class="plan-price">
+          <span class="plan-price-val" style="color:var(--text)">R$ 0</span>
+        </div>
+        <div class="plan-savings" style="color:var(--dim)">Para sempre gratuito</div>
+        <div class="plan-divider"></div>
+        <div class="plan-feature-label">Incluso</div>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>100 leads / mês</strong> via Google Maps</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Score IA</strong> para todos os leads</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>1 agente</strong> treinado com o perfil do negócio</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Pipeline Kanban</strong> completo</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Link WhatsApp</strong> com mensagem pré-preenchida</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>1 campanha</strong> ativa</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Geração de mensagem com IA</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Envio real via WhatsApp</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Analytics de funil</div></li>
+        </ul>
+        <a href="/signup" class="plan-cta" style="background:transparent;color:var(--text);border:1px solid var(--b)">
+          Começar grátis
+        </a>
+        <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:8px">Sem cartão · Upgrade quando quiser</div>
+      </div>
+    </div>
+
+    <!-- STARTER -->
+    <div class="plan-card">
+      <div class="plan-top-bar" style="background:var(--green)"></div>
+      <div class="plan-body">
+        <span class="plan-badge" style="color:var(--green)">Autônomos & Freelancers</span>
+        <div class="plan-name">Starter</div>
+        <div class="plan-tagline">Para closers e consultores que prospectam sozinhos e querem resultado rápido.</div>
+        <div class="plan-price">
+          <span class="plan-price-val" style="color:var(--green)" id="starter-price">R$ 97</span>
+          <span class="plan-price-period">/mês</span>
+        </div>
+        <div class="plan-savings" id="starter-savings" style="color:transparent">_</div>
+        <div class="plan-divider"></div>
+        <div class="plan-feature-label">Tudo do Grátis, mais</div>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--green)">★</span><div class="feat-text"><strong>300 leads / mês</strong> via Google Maps</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Geração de mensagem com IA</strong> (WhatsApp e Email)</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Score Tier A/B/C/D</strong> com reasoning</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>3 campanhas</strong> simultâneas</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Chat IA por lead</strong> com persona de vendas</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Export CSV</strong> de leads</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Notas e tags</strong> no Kanban</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Envio automático via WhatsApp</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Analytics de funil</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Follow-up automático</div></li>
+        </ul>
+        <a href="/signup?plan=starter" class="plan-cta" style="background:var(--gD);color:var(--green);border:1px solid rgba(0,255,163,.3)">
+          Assinar Starter
+        </a>
+        <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:8px">Equivale a <strong style="color:var(--green)">R$ 0,32/lead</strong></div>
+      </div>
+    </div>
+
+    <!-- PRO — FEATURED -->
+    <div class="plan-card featured" style="margin-top:-8px">
+      <div class="popular-tag">⭐ Mais popular</div>
+      <div class="plan-top-bar" style="background:linear-gradient(90deg,var(--cyan),#0066FF)"></div>
+      <div class="plan-body">
+        <span class="plan-badge" style="color:var(--cyan)">Agências & Times Pequenos</span>
+        <div class="plan-name">Pro</div>
+        <div class="plan-tagline">O plano completo para quem precisa de resultado em escala sem contratar um SDR.</div>
+        <div class="plan-price">
+          <span class="plan-price-val" style="color:var(--cyan)" id="pro-price">R$ 197</span>
+          <span class="plan-price-period">/mês</span>
+        </div>
+        <div class="plan-savings" id="pro-savings" style="color:var(--green)">_</div>
+        <div class="plan-divider"></div>
+        <div class="plan-feature-label">Tudo do Starter, mais</div>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--cyan)">★</span><div class="feat-text"><strong>1.000 leads / mês</strong> via Google Maps</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Envio automático WhatsApp</strong> (Evolution API)</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Envio de e-mail</strong> com tracking de abertura</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Follow-up automático</strong> D+1 / D+3 / D+7</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Analytics de funil</strong> com taxa de conversão</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Campanhas ilimitadas</strong></div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Análise de resposta</strong> do lead com IA</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Importação de leads (CSV)</strong></div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Webhook de notificação</strong> ao receber resposta</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">Multi-usuário (apenas 1 assento)</div></li>
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--dim)">✗</span><div class="feat-text dimmed">A/B testing de mensagens</div></li>
+        </ul>
+        <a href="/signup?plan=pro" class="plan-cta" style="background:linear-gradient(135deg,var(--cyan),#0066FF);color:#080C14;box-shadow:0 6px 24px rgba(0,229,255,.3)">
+          Assinar Pro
+        </a>
+        <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:8px">Equivale a <strong style="color:var(--cyan)">R$ 0,20/lead</strong> · ROI médio: 3.8x</div>
+      </div>
+    </div>
+
+    <!-- SCALE -->
+    <div class="plan-card">
+      <div class="plan-top-bar" style="background:var(--purple)"></div>
+      <div class="plan-body">
+        <span class="plan-badge" style="color:var(--purple)">Times & Agências Growth</span>
+        <div class="plan-name">Scale</div>
+        <div class="plan-tagline">Para times que prospectam em alto volume com múltiplos usuários e nichos.</div>
+        <div class="plan-price">
+          <span class="plan-price-val" style="color:var(--purple)" id="scale-price">R$ 397</span>
+          <span class="plan-price-period">/mês</span>
+        </div>
+        <div class="plan-savings" id="scale-savings" style="color:var(--green)">_</div>
+        <div class="plan-divider"></div>
+        <div class="plan-feature-label">Tudo do Pro, mais</div>
+        <ul class="plan-features">
+          <li class="plan-feature"><span class="feat-icon" style="color:var(--purple)">★</span><div class="feat-text"><strong>5.000 leads / mês</strong> via Google Maps</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>3 usuários</strong> no mesmo workspace</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>A/B testing</strong> de mensagens por campanha</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>ICP dinâmico</strong> — aprende com conversões</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Insights de campanha</strong> com IA (relatório semanal)</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Enriquecimento via website</strong> dos leads</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Suporte prioritário</strong> (resposta em até 4h)</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>API pública</strong> para integrações externas</div></li>
+          <li class="plan-feature"><span class="feat-icon">✓</span><div class="feat-text"><strong>Onboarding dedicado</strong> (1h de setup com especialista)</div></li>
+        </ul>
+        <a href="/signup?plan=scale" class="plan-cta" style="background:var(--pD);color:var(--purple);border:1px solid rgba(168,85,247,.3)">
+          Assinar Scale
+        </a>
+        <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:8px">Equivale a <strong style="color:var(--purple)">R$ 0,08/lead</strong></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Enterprise note -->
+  <div style="margin-top:20px;padding:18px 22px;background:var(--surf);border:1px dashed var(--b);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+    <div>
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px">🏢 Enterprise — Para grandes operações</div>
+      <div style="font-size:12px;color:var(--muted)">Leads ilimitados · +10 usuários · SLA 99.9% · Contrato anual · Integração com CRM (HubSpot, Pipedrive, RD Station) · Suporte 24h · Preço sob consulta a partir de R$ 797/mês</div>
+    </div>
+    <a href="mailto:sales@capturo.com.br" style="padding:10px 20px;border-radius:12px;background:var(--surf2);border:1px solid var(--b);color:var(--text);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap">Falar com vendas →</a>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════
+     4. TABELA COMPARATIVA COMPLETA
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Comparativo detalhado</div>
+  <div class="section-title">Feature por feature</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:35%">Funcionalidade</th>
+          <th class="td-center">Grátis</th>
+          <th class="td-center">Starter<br><span style="color:var(--green);font-weight:400;font-size:9px">R$97/mês</span></th>
+          <th class="td-center" style="background:rgba(0,229,255,.04)">Pro ⭐<br><span style="color:var(--cyan);font-weight:400;font-size:9px">R$197/mês</span></th>
+          <th class="td-center">Scale<br><span style="color:var(--purple);font-weight:400;font-size:9px">R$397/mês</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- PROSPECÇÃO -->
+        <tr><td colspan="5" style="background:var(--surf2);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px">Prospecção</td></tr>
+        <tr><td>Leads / mês (Google Maps)</td><td class="td-center">100</td><td class="td-center" style="color:var(--green)">300</td><td class="td-center feature-highlight" style="color:var(--cyan)">1.000</td><td class="td-center" style="color:var(--purple)">5.000</td></tr>
+        <tr><td>Geocodificação de regiões</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Enriquecimento (telefone, website)</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Enriquecimento via análise de website</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Importação de leads (CSV)</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+
+        <!-- IA & QUALIFICAÇÃO -->
+        <tr><td colspan="5" style="background:var(--surf2);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px">IA & Qualificação</td></tr>
+        <tr><td>Score 0–100 por lead</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Score Tier A+/A/B/C/D com reasoning</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Treinamento de agente (ICP completo)</td><td class="td-center check-partial">Básico</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>ICP dinâmico (aprende com conversões)</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Chat IA por lead (com persona de vendas)</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Análise automática de resposta do lead</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+
+        <!-- MENSAGENS & ENVIO -->
+        <tr><td colspan="5" style="background:var(--surf2);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px">Mensagens & Envio</td></tr>
+        <tr><td>Geração de mensagem com IA</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Link WhatsApp (manual)</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Envio automático WhatsApp (Evolution API)</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Envio de e-mail com tracking</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Follow-up automático D+1 / D+3 / D+7</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>A/B testing de mensagens</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td></tr>
+
+        <!-- CRM & PIPELINE -->
+        <tr><td colspan="5" style="background:var(--surf2);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px">CRM & Pipeline</td></tr>
+        <tr><td>Kanban Pipeline</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Notas e tags por lead</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Histórico de contatos</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Campanhas ativas</td><td class="td-center">1</td><td class="td-center">3</td><td class="td-center feature-highlight">Ilimitadas</td><td class="td-center">Ilimitadas</td></tr>
+        <tr><td>Export CSV de leads</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Webhook de notificação</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+
+        <!-- ANALYTICS -->
+        <tr><td colspan="5" style="background:var(--surf2);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px">Analytics</td></tr>
+        <tr><td>Dashboard de leads e score médio</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Funil de conversão por estágio</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Taxa de abertura e resposta</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Insights IA de campanha (relatório)</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td></tr>
+
+        <!-- WORKSPACE & SUPORTE -->
+        <tr><td colspan="5" style="background:var(--surf2);color:var(--muted);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px 14px">Workspace & Suporte</td></tr>
+        <tr><td>Usuários no workspace</td><td class="td-center">1</td><td class="td-center">1</td><td class="td-center feature-highlight">1</td><td class="td-center" style="color:var(--purple)">3</td></tr>
+        <tr><td>API pública</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Onboarding dedicado</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓</td></tr>
+        <tr><td>Suporte</td><td class="td-center" style="font-size:11px;color:var(--dim)">E-mail</td><td class="td-center" style="font-size:11px;color:var(--muted)">E-mail 48h</td><td class="td-center feature-highlight" style="font-size:11px">Chat 24h</td><td class="td-center" style="font-size:11px;color:var(--purple)">Prioritário 4h</td></tr>
+        <tr><td>Garantia de devolução</td><td class="td-center check-no">✗</td><td class="td-center check-yes">✓ 7 dias</td><td class="td-center check-yes">✓ 7 dias</td><td class="td-center check-yes">✓ 14 dias</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════
+     5. CENÁRIOS DE LUCRATIVIDADE
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Projeção financeira</div>
+  <div class="section-title">Cenários de receita e lucro</div>
+  <div class="section-sub">Projeções conservadoras para os primeiros 12 meses com foco no plano Pro como âncora de receita.</div>
+
+  <div class="grid3" style="margin-bottom:20px">
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div class="scenario-title">Mês 3 — Early traction</div>
+        <span class="badge b-yellow">Inicial</span>
+      </div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Grátis</div><div class="scenario-result">40</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Starter (R$97)</div><div class="scenario-result">8</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Pro (R$197)</div><div class="scenario-result">12</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Scale (R$397)</div><div class="scenario-result">2</div></div>
+      <div class="scenario-row"><div class="scenario-key">MRR bruto</div><div class="scenario-result" style="color:var(--cyan)">R$ 4.122</div></div>
+      <div class="scenario-row"><div class="scenario-key">Custo total de API</div><div class="scenario-result" style="color:var(--red)">~R$ 820</div></div>
+      <div class="scenario-profit" style="background:var(--gD);border:1px solid rgba(0,255,163,.2)">
+        <div style="font-size:12px;color:var(--green)">Lucro líquido estimado</div>
+        <div style="font-family:var(--display);font-size:20px;font-weight:800;color:var(--green)">R$ 2.100</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:8px">Margem ~51% (antes de infra e taxas)</div>
+    </div>
+
+    <div class="scenario-card" style="border-color:var(--cB)">
+      <div class="scenario-header">
+        <div class="scenario-title">Mês 6 — Product-Market Fit</div>
+        <span class="badge b-cyan">Crescimento</span>
+      </div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Grátis</div><div class="scenario-result">120</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Starter (R$97)</div><div class="scenario-result">22</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Pro (R$197)</div><div class="scenario-result">45</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Scale (R$397)</div><div class="scenario-result">8</div></div>
+      <div class="scenario-row"><div class="scenario-key">MRR bruto</div><div class="scenario-result" style="color:var(--cyan)">R$ 14.100</div></div>
+      <div class="scenario-row"><div class="scenario-key">Custo total de API</div><div class="scenario-result" style="color:var(--red)">~R$ 2.900</div></div>
+      <div class="scenario-profit" style="background:var(--cD);border:1px solid var(--cB)">
+        <div style="font-size:12px;color:var(--cyan)">Lucro líquido estimado</div>
+        <div style="font-family:var(--display);font-size:20px;font-weight:800;color:var(--cyan)">R$ 8.200</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:8px">Margem ~58% · Break-even confortável</div>
+    </div>
+
+    <div class="scenario-card">
+      <div class="scenario-header">
+        <div class="scenario-title">Mês 12 — Escala</div>
+        <span class="badge b-green">Sustentável</span>
+      </div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Grátis</div><div class="scenario-result">400</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Starter (R$97)</div><div class="scenario-result">60</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Pro (R$197)</div><div class="scenario-result">130</div></div>
+      <div class="scenario-row"><div class="scenario-key">Usuários Scale (R$397)</div><div class="scenario-result">28</div></div>
+      <div class="scenario-row"><div class="scenario-key">MRR bruto</div><div class="scenario-result" style="color:var(--green)">R$ 42.916</div></div>
+      <div class="scenario-row"><div class="scenario-key">Custo total de API</div><div class="scenario-result" style="color:var(--red)">~R$ 8.500</div></div>
+      <div class="scenario-profit" style="background:var(--gD);border:1px solid rgba(0,255,163,.2)">
+        <div style="font-size:12px;color:var(--green)">Lucro líquido estimado</div>
+        <div style="font-family:var(--display);font-size:20px;font-weight:800;color:var(--green)">R$ 28.000</div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);margin-top:8px">Margem ~65% com escala de API</div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">Como acelerar a receita</div>
+      O maior alavancador é a conversão Grátis → Pro. Com 400 usuários grátis, converter apenas <strong>33% para Pro</strong> já gera R$ 26k MRR. Estratégias: (1) limitar leads do Grátis a 100 por mês para criar urgência, (2) mostrar "você usou 87 dos 100 leads" na barra de progresso, (3) oferecer 7 dias do Pro grátis quando o usuário esgotar o plano Grátis.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════
+     6. ESTRATÉGIAS COMERCIAIS
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Estratégia comercial</div>
+  <div class="section-title">9 decisões que maximizam receita</div>
+
+  <div class="grid3">
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--cyan)">01</div>
+      <div class="strategy-title">Plano anual com desconto agressivo</div>
+      <div class="strategy-body">Oferecer 2 meses grátis no anual (equivale a 17% de desconto). Melhora o LTV, reduz churn e antecipa caixa. Meta: 40% dos assinantes pagando anual.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--green)">02</div>
+      <div class="strategy-title">Freemium como máquina de leads</div>
+      <div class="strategy-body">O plano Grátis não é custo — é aquisição de cliente. Com 100 leads/mês, o usuário pode ter 1 fechamento real. Isso paga 1 ano do Pro. Fazer ele calcular isso na tela de upgrade.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--yellow)">03</div>
+      <div class="strategy-title">Âncora Pro — evitar opção muito barata</div>
+      <div class="strategy-body">O Starter existe para capturar quem não quer Pro ainda, mas o posicionamento do Pro como "mais popular" direciona a maioria para ele. Não dar muito no Starter.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--purple)">04</div>
+      <div class="strategy-title">Upsell automático por uso</div>
+      <div class="strategy-body">Quando o usuário atinge 80% do limite de leads, exibir notificação: "Você está gerando ótimos resultados. Faça upgrade para continuar sem interrupções." Momento de maior intenção.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--orange)">05</div>
+      <div class="strategy-title">Add-on de leads extra</div>
+      <div class="strategy-body">Vender pacotes extras: 200 leads = R$ 47, 500 leads = R$ 97. Gera receita variável e teste de valor antes de upgrade. Usuário Pro que compra extra tende a virar Scale.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--red)">06</div>
+      <div class="strategy-title">Garantia de 7 dias — reduz risco percebido</div>
+      <div class="strategy-body">"Se não fechar nenhum lead em 7 dias, devolvemos 100%." Reduz a objeção de preço. Em SaaS com produto bom, taxa real de reembolso é menor que 3%.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--cyan)">07</div>
+      <div class="strategy-title">Indicação com comissão</div>
+      <div class="strategy-body">Programa de afiliados: 20% recorrente por 6 meses para quem indicar. Um afiliado ativo com 10 referências gera R$ 394/mês passivo — ele vira vendedor voluntário.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--green)">08</div>
+      <div class="strategy-title">Cupom para grupos e comunidades</div>
+      <div class="strategy-body">Código "AGENCIAS20" (20% off primeiro mês) para grupos de WhatsApp de agências e closers. Custo zero de aquisição, alta conversão em comunidades nichadas.</div>
+    </div>
+
+    <div class="strategy-box">
+      <div class="strategy-num" style="color:var(--yellow)">09</div>
+      <div class="strategy-title">Trial Pro para usuários Grátis ativos</div>
+      <div class="strategy-body">Usuário que usa o Grátis por 2+ semanas recebe e-mail: "Você está mandando bem. Aqui estão 7 dias do Pro, de graça." Taxa de conversão de trial ativo é 4× maior que cold upgrade.</div>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════
+     7. IMPLEMENTAÇÃO NO PRODUTO
+═══════════════════════════════════════ -->
+<section class="section">
+  <div class="eyebrow">Implementação técnica</div>
+  <div class="section-title">Como colocar isso no produto</div>
+
+  <div class="grid2">
+    <div class="card" style="border-left:3px solid var(--cyan)">
+      <div style="font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:12px">Migration SQL — campo de plano</div>
+      <pre style="background:var(--surf2);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11px;color:#A8D8EA;line-height:1.7;overflow-x:auto"><span style="color:#C792EA">alter table</span> public.businesses
+  <span style="color:#C792EA">add column if not exists</span> plan <span style="color:#FFCB6B">text</span>
+    <span style="color:#C792EA">default</span> <span style="color:#C3E88D">'free'</span>,
+  <span style="color:#C792EA">add column if not exists</span> plan_leads_used <span style="color:#FFCB6B">int</span>
+    <span style="color:#C792EA">default</span> <span style="color:#F78C6C">0</span>,
+  <span style="color:#C792EA">add column if not exists</span> plan_expires_at
+    <span style="color:#FFCB6B">timestamptz</span>,
+  <span style="color:#C792EA">add column if not exists</span> stripe_customer_id
+    <span style="color:#FFCB6B">text</span>;
+
+<span style="color:#4A6072">-- Limites por plano</span>
+<span style="color:#C792EA">create or replace function</span>
+  <span style="color:#82AAFF">get_plan_limits</span>(p_plan text)
+<span style="color:#C792EA">returns json as</span> $$
+  <span style="color:#C792EA">select case</span> p_plan
+    <span style="color:#C792EA">when</span> <span style="color:#C3E88D">'free'</span>    <span style="color:#C792EA">then</span>
+      <span style="color:#82AAFF">json_build_object</span>(<span style="color:#C3E88D">'leads'</span>,<span style="color:#F78C6C">100</span>,
+        <span style="color:#C3E88D">'campaigns'</span>,<span style="color:#F78C6C">1</span>,<span style="color:#C3E88D">'users'</span>,<span style="color:#F78C6C">1</span>)
+    <span style="color:#C792EA">when</span> <span style="color:#C3E88D">'starter'</span> <span style="color:#C792EA">then</span>
+      <span style="color:#82AAFF">json_build_object</span>(<span style="color:#C3E88D">'leads'</span>,<span style="color:#F78C6C">300</span>,
+        <span style="color:#C3E88D">'campaigns'</span>,<span style="color:#F78C6C">3</span>,<span style="color:#C3E88D">'users'</span>,<span style="color:#F78C6C">1</span>)
+    <span style="color:#C792EA">when</span> <span style="color:#C3E88D">'pro'</span>     <span style="color:#C792EA">then</span>
+      <span style="color:#82AAFF">json_build_object</span>(<span style="color:#C3E88D">'leads'</span>,<span style="color:#F78C6C">1000</span>,
+        <span style="color:#C3E88D">'campaigns'</span>,-<span style="color:#F78C6C">1</span>,<span style="color:#C3E88D">'users'</span>,<span style="color:#F78C6C">1</span>)
+    <span style="color:#C792EA">when</span> <span style="color:#C3E88D">'scale'</span>   <span style="color:#C792EA">then</span>
+      <span style="color:#82AAFF">json_build_object</span>(<span style="color:#C3E88D">'leads'</span>,<span style="color:#F78C6C">5000</span>,
+        <span style="color:#C3E88D">'campaigns'</span>,-<span style="color:#F78C6C">1</span>,<span style="color:#C3E88D">'users'</span>,<span style="color:#F78C6C">3</span>)
+    <span style="color:#C792EA">else</span>
+      <span style="color:#82AAFF">json_build_object</span>(<span style="color:#C3E88D">'leads'</span>,<span style="color:#F78C6C">100</span>,
+        <span style="color:#C3E88D">'campaigns'</span>,<span style="color:#F78C6C">1</span>,<span style="color:#C3E88D">'users'</span>,<span style="color:#F78C6C">1</span>)
+  <span style="color:#C792EA">end</span>
+$$ <span style="color:#C792EA">language sql</span>;
+</pre>
+    </div>
+    <div class="card" style="border-left:3px solid var(--green)">
+      <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:12px">Checagem de limite em lead-actions.ts</div>
+      <pre style="background:var(--surf2);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11px;color:#A8D8EA;line-height:1.7;overflow-x:auto"><span style="color:#4A6072">// Antes de buscar leads, verificar limite</span>
+<span style="color:#C792EA">const</span> PLAN_LIMITS: Record&lt;string, number&gt; = {
+  free:    <span style="color:#F78C6C">100</span>,
+  starter: <span style="color:#F78C6C">300</span>,
+  pro:     <span style="color:#F78C6C">1000</span>,
+  scale:   <span style="color:#F78C6C">5000</span>,
+};
+
+<span style="color:#C792EA">const</span> { data: biz } = <span style="color:#C792EA">await</span> supabase
+  .from(<span style="color:#C3E88D">"businesses"</span>)
+  .select(<span style="color:#C3E88D">"id, icp, plan, plan_leads_used, agents(config)"</span>)
+  .eq(<span style="color:#C3E88D">"user_id"</span>, user.id)
+  .single();
+
+<span style="color:#C792EA">const</span> limit = PLAN_LIMITS[biz.plan || <span style="color:#C3E88D">'free'</span>];
+<span style="color:#C792EA">const</span> used = biz.plan_leads_used || <span style="color:#F78C6C">0</span>;
+
+<span style="color:#C792EA">if</span> (used >= limit) {
+  <span style="color:#C792EA">throw new</span> Error(
+    <span style="color:#C3E88D">`LIMIT_REACHED:${limit}:${biz.plan}`</span>
+  );
+}
+
+<span style="color:#4A6072">// Após inserir os leads, incrementar o contador</span>
+<span style="color:#C792EA">await</span> supabase
+  .from(<span style="color:#C3E88D">"businesses"</span>)
+  .update({
+    plan_leads_used: used + leadsInserted
+  })
+  .eq(<span style="color:#C3E88D">"id"</span>, biz.id);
+</pre>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--yD);border:1px solid rgba(255,214,0,.2);border-radius:8px;font-size:11px;color:var(--yellow)">
+        ⚠️ Resetar <code style="font-family:var(--mono)">plan_leads_used = 0</code> todo dia 1 do mês via cron job ou trigger Supabase.
+      </div>
+    </div>
+  </div>
+
+  <!-- Stripe note -->
+  <div class="card" style="margin-top:4px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">IDs dos produtos Stripe para criar</div>
+    <div class="table-wrap" style="margin:0">
+      <table>
+        <thead><tr><th>Plano</th><th>Stripe Price ID (criar)</th><th>Valor mensal</th><th>Valor anual</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--green)">Starter</td><td style="font-family:var(--mono);font-size:11px;color:var(--muted)">price_starter_monthly / price_starter_annual</td><td>R$ 97</td><td>R$ 970 (2 meses grátis)</td></tr>
+          <tr><td style="color:var(--cyan)">Pro ⭐</td><td style="font-family:var(--mono);font-size:11px;color:var(--muted)">price_pro_monthly / price_pro_annual</td><td>R$ 197</td><td>R$ 1.970</td></tr>
+          <tr><td style="color:var(--purple)">Scale</td><td style="font-family:var(--mono);font-size:11px;color:var(--muted)">price_scale_monthly / price_scale_annual</td><td>R$ 397</td><td>R$ 3.970</td></tr>
+          <tr><td style="color:var(--orange)">Add-on: +200 leads</td><td style="font-family:var(--mono);font-size:11px;color:var(--muted)">price_addon_leads_200</td><td>R$ 47</td><td>—</td></tr>
+          <tr><td style="color:var(--orange)">Add-on: +500 leads</td><td style="font-family:var(--mono);font-size:11px;color:var(--muted)">price_addon_leads_500</td><td>R$ 97</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>Capturo · Estratégia de Precificação v1.0 · Março 2026</p>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <span class="badge b-cyan">4 planos</span>
+    <span class="badge b-gray">Margens 69–92%</span>
+    <span class="badge b-gray">Baseado em dados reais de mercado</span>
+  </div>
+  <p>capturo.com.br</p>
+</footer>
+
+</div>
+
+<script>
+// Billing toggle
+let isAnnual = false;
+
+const prices = {
+  starter: { monthly: 97,  annual: 970  },
+  pro:     { monthly: 197, annual: 1970 },
+  scale:   { monthly: 397, annual: 3970 },
+};
+
+function toggleBilling() {
+  isAnnual = !isAnnual;
+  const track = document.getElementById('toggleTrack');
+  const lm = document.getElementById('labelMonthly');
+  const la = document.getElementById('labelAnnual');
+  track.classList.toggle('on', isAnnual);
+  lm.classList.toggle('active', !isAnnual);
+  la.classList.toggle('active', isAnnual);
+
+  Object.entries(prices).forEach(([plan, p]) => {
+    const priceEl = document.getElementById(`${plan}-price`);
+    const savingsEl = document.getElementById(`${plan}-savings`);
+    if (!priceEl) return;
+    if (isAnnual) {
+      const monthly_equiv = Math.round(p.annual / 12);
+      priceEl.textContent = `R$ ${monthly_equiv}`;
+      const savings = p.monthly * 12 - p.annual;
+      savingsEl.textContent = `Economia de R$ ${savings}/ano`;
+      savingsEl.style.color = 'var(--green)';
+    } else {
+      priceEl.textContent = `R$ ${p.monthly}`;
+      savingsEl.textContent = ' ';
+      savingsEl.style.color = 'transparent';
+    }
+  });
+}
+
+// Update starter savings on load
+document.getElementById('starter-savings').textContent = ' ';
+document.getElementById('pro-savings').textContent = ' ';
+document.getElementById('scale-savings').textContent = ' ';
+</script>
+</body>
+</html>

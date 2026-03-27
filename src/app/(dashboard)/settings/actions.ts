@@ -14,9 +14,38 @@ export async function updateBusinessAction(formData: FormData) {
   const website = formData.get("website") as string;
   const icp = formData.get("icp") as string;
 
+  // Integrations
+  const evolution_url = formData.get("evolution_url") as string;
+  const evolution_key = formData.get("evolution_key") as string;
+  const evolution_instance = formData.get("evolution_instance") as string;
+  const resend_key = formData.get("resend_key") as string;
+
+  const { data: currentBusiness } = await supabase.from('businesses').select('metadata').eq('user_id', user.id).single();
+  const metadata = currentBusiness?.metadata || {};
+
+  const updatedMetadata = {
+    ...metadata,
+    integrations: {
+      evolution: {
+        url: evolution_url,
+        key: evolution_key,
+        instance: evolution_instance
+      },
+      resend: {
+        key: resend_key
+      }
+    }
+  };
+
   const { error } = await supabase
     .from("businesses")
-    .update({ name, segment, website, icp })
+    .update({ 
+      name, 
+      segment, 
+      website, 
+      icp, 
+      metadata: updatedMetadata 
+    })
     .eq("user_id", user.id);
 
   if (error) throw error;

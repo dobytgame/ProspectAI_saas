@@ -25,28 +25,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 });
     }
 
-    // Prepare checkout session
-    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
-      payment_method_types: ['card'],
-      mode: 'subscription',
+    const { priceId } = await req.json();
+
+    if (!priceId) {
+      return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
+    }
+
+    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    const session = await stripe.checkout.sessions.create({
+      customer: business.stripe_customer_id || undefined,
+      customer_email: business.stripe_customer_id ? undefined : user.email,
       line_items: [
         {
-          price: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO || 'price_1TFETwBSvryDe29gG81FL3SY',
+          price: priceId,
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?upgrade=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?upgrade=cancelled`,
-      client_reference_id: business.id,
-      customer_email: user.email,
-    };
-
-    if (business.stripe_customer_id) {
-       sessionConfig.customer = business.stripe_customer_id;
-       delete sessionConfig.customer_email;
-    }
-
-    const session = await stripe.checkout.sessions.create(sessionConfig);
+      mode: 'subscription',
+      success_url: `${APP_URL}/dashboard?checkout=success`,
+      cancel_url: `${APP_URL}/upgrade?checkout=cancel`,
+      metadata: {
+        userId: user.id,
+        businessId: business.id,
+      },
+    });
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {

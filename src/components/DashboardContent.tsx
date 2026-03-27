@@ -35,6 +35,7 @@ interface DashboardContentProps {
   campaigns: { id: string; name: string }[];
   pipelineStats?: any;
   recentActivity?: any[];
+  currentPlan: string;
 }
 
 const SCORE_RANGES = [
@@ -44,7 +45,7 @@ const SCORE_RANGES = [
   { label: '🔴 Baixo (<40)', min: 0, max: 39 },
 ];
 
-export default function DashboardContent({ leads, segment, campaigns, pipelineStats = {}, recentActivity = [] }: DashboardContentProps) {
+export default function DashboardContent({ leads, segment, campaigns, pipelineStats = {}, recentActivity = [], currentPlan }: DashboardContentProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedScoreRange, setSelectedScoreRange] = useState<number>(0)
 
@@ -178,7 +179,7 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
             border: "1px solid var(--border)",
           }}
         >
-          <SearchForm segment={segment} />
+          <SearchForm segment={segment} currentPlan={currentPlan} />
           <LeadMap leads={filteredLeads.map(l => ({
             id: l.id,
             name: l.name,

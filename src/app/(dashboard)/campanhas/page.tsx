@@ -4,6 +4,7 @@ import { MessageSquare } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import CreateCampaignDialog from "@/components/campaigns/CreateCampaignDialog";
 import CampaignCard from "@/components/campaigns/CampaignCard";
+import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 
 export default async function CampaignsPage() {
   const supabase = await createClient();
@@ -15,13 +16,15 @@ export default async function CampaignsPage() {
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id")
+    .select("id, plan")
     .eq("user_id", user.id)
     .single();
 
   if (!business) {
     redirect("/onboarding");
   }
+
+  const usage = await getPlanUsage(supabase, business.id, (business.plan || 'free') as PlanType);
 
   const { data: campaigns } = await supabase
     .from("campaigns")
@@ -31,7 +34,7 @@ export default async function CampaignsPage() {
 
   return (
     <div className="flex h-screen bg-muted/30 font-sans text-foreground">
-      <Sidebar userEmail={user.email} />
+      <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main */}
       <main className="flex-1 flex flex-col overflow-hidden">

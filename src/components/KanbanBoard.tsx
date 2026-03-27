@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -23,10 +23,14 @@ import { CSS } from '@dnd-kit/utilities'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, GripVertical, MessageSquare, Bot, Search, Filter } from 'lucide-react'
+import { MoreHorizontal, GripVertical, MessageSquare, Bot, Search, Filter, Download, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import LeadChat from './LeadChat'
 import KanbanLeadSheet from './KanbanLeadSheet'
+
+import { importLeads } from '@/app/(dashboard)/pipeline/actions'
+import { PlanType, PLAN_LIMITS } from '@/utils/plan-limits'
+import UpgradeModal from './UpgradeModal'
 
 interface Lead {
   id: string
@@ -46,6 +50,7 @@ interface Lead {
 interface KanbanBoardProps {
   initialLeads: Lead[]
   onStatusChange: (leadId: string, newStatus: string) => void
+  plan: PlanType
 }
 
 const STAGES = [
@@ -56,7 +61,7 @@ const STAGES = [
   { id: 'closed', title: 'Fechado' },
 ]
 
-export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoardProps) {
+export default function KanbanBoard({ initialLeads, onStatusChange, plan }: KanbanBoardProps) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [activeChatLead, setActiveChatLead] = useState<Lead | null>(null)
@@ -65,6 +70,9 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
   const [filterTier, setFilterTier] = useState<string | null>(null)
   const [filterCampaign, setFilterCampaign] = useState<string | null>(null)
   const [filterSegment, setFilterSegment] = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [upgradeTitle, setUpgradeTitle] = useState('')
+  const [upgradeDesc, setUpgradeDesc] = useState('')
 
   const campaigns = Array.from(new Set(initialLeads.map(l => l.campaign_name).filter(Boolean)))
   const segments = Array.from(new Set(initialLeads.map(l => l.segment).filter(Boolean)))
@@ -132,6 +140,84 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
     return matchesSearch && matchesTier && matchesCampaign && matchesSegment;
   })
 
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!PLAN_LIMITS[plan].features.includes('can_import_csv')) {
+      setUpgradeTitle("Importação de CSV Bloqueada")
+      setUpgradeDesc("A importação direta de leads via CSV é uma funcionalidade exclusiva dos planos PRO e Scale.")
+      setShowUpgradeModal(true)
+      return
+    }
+
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      const text = event.target?.result as string
+      const lines = text.split('\n')
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase())
+      
+      const importedLeads = lines.slice(1).filter(line => line.trim()).map(line => {
+        const values = line.split(',').map(v => v.trim())
+        const lead: any = {}
+        headers.forEach((header, index) => {
+          if (header === 'nome') lead.name = values[index]
+          if (header === 'telefone') lead.phone = values[index]
+          if (header === 'website') lead.website = values[index]
+          if (header === 'segmento') lead.segment = values[index]
+          if (header === 'endereco') lead.address = values[index]
+        })
+        return lead
+      }).filter(l => l.name)
+
+      if (importedLeads.length > 0) {
+        try {
+          await importLeads(importedLeads)
+          alert(`${importedLeads.length} leads importados com sucesso!`)
+        } catch (error: any) {
+          alert(error.message || 'Erro ao importar leads')
+        }
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const exportToCSV = () => {
+    if (!PLAN_LIMITS[plan].features.includes('can_export_csv')) {
+      setUpgradeTitle("Exportação de CSV Bloqueada")
+      setUpgradeDesc("A exportação de dados é uma funcionalidade disponível a partir do plano Starter.")
+      setShowUpgradeModal(true)
+      return
+    }
+
+    const headers = ['Nome', 'Status', 'Score', 'Telefone', 'Website', 'Segmento', 'Campanha']
+    const rows = filteredLeads.map(l => [
+      l.name,
+      l.status,
+      l.score || 0,
+      l.phone || '',
+      l.website || '',
+      l.segment || '',
+      l.campaign_name || ''
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(r => r.join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.setAttribute('href', url)
+    link.setAttribute('download', `leads-prospectai-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -140,6 +226,13 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)}
+        title={upgradeTitle}
+        description={upgradeDesc}
+        currentPlan={plan}
+      />
       <div className="flex items-center gap-4 mb-6">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -151,6 +244,31 @@ export default function KanbanBoard({ initialLeads, onStatusChange }: KanbanBoar
           />
         </div>
         <div className="flex items-center gap-2">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept=".csv" 
+            onChange={handleImportCSV} 
+          />
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-white border-border/40 hover:bg-muted/50 text-muted-foreground gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Importar CSV
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={exportToCSV}
+            className="bg-white border-border/40 hover:bg-muted/50 text-muted-foreground gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Exportar CSV
+          </Button>
           <Input
             type="text"
             placeholder="Tier..."

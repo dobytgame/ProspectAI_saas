@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { searchPlaces, getGeocode, getPlaceDetails } from "@/lib/maps/places";
 import { scoreLead } from "@/lib/ai/claude";
 import { revalidatePath } from "next/cache";
+import { PlanType, PLAN_LIMITS } from "@/utils/plan-limits";
 
 export async function searchLeadsAction(query: string, region: string, campaignId?: string) {
   const supabase = await createClient();
@@ -13,13 +14,22 @@ export async function searchLeadsAction(query: string, region: string, campaignI
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id, icp, plan, agents(config)")
+    .select("id, icp, plan, leads_used_this_month, agents(config)")
     .eq("user_id", user.id)
     .single();
 
   if (!business) throw new Error("Perfil de negócio não encontrado");
 
-  // 1. Create a Prospecting Job
+  // 1. Check Limits First
+  const plan = (business.plan || 'free') as PlanType;
+  const currentLeadsCount = business.leads_used_this_month || 0;
+  const limit = PLAN_LIMITS[plan].leadsPerMonth;
+
+  if (currentLeadsCount >= limit) {
+    return { error: `VOCE_ATINGIU_O_LIMITE_DE_LEADS_DO_SEU_PLANO` };
+  }
+
+  // 2. Create a Prospecting Job
   const { data: job, error: jobError } = await supabase
     .from("prospecting_jobs")
     .insert({
@@ -33,24 +43,20 @@ export async function searchLeadsAction(query: string, region: string, campaignI
 
   if (jobError) throw jobError;
 
-  // 2. Geocode Region
+  // 3. Geocode Region
   const geo = await getGeocode(region);
   if (!geo) throw new Error("Não foi possível localizar a região informada.");
-
-  // 3. Current Leads Count
-  const { count: leadsCount } = await supabase.from('leads').select('*', { count: 'exact', head: true }).eq('business_id', business.id);
-  const currentLeadsCount = leadsCount || 0;
 
   // 4. Search Places
   const places = await searchPlaces(query, `${geo.lat},${geo.lng}`);
   
-  // 5. Check Limits Let's assume places.length places will be added
-  const estimatedNewTotal = currentLeadsCount + places.length;
-  if (business.plan === 'free' && estimatedNewTotal > 100) {
-    throw new Error("LIMIT_REACHED_LEADS_FREE");
-  }
-  if (business.plan === 'pro' && estimatedNewTotal > 2000) {
-    throw new Error("LIMIT_REACHED_LEADS_PRO");
+  if (currentLeadsCount + places.length > limit) {
+    const remaining = limit - currentLeadsCount;
+    if (remaining <= 0) {
+      return { error: `VOCE_ATINGIU_O_LIMITE_DE_LEADS_DO_SEU_PLANO` };
+    }
+    // Truncate results to fit limit
+    places.splice(remaining);
   }
 
   // 4. Enrich with Place Details (phone, website) — all leads with rate limiting
@@ -99,6 +105,12 @@ export async function searchLeadsAction(query: string, region: string, campaignI
     .select("id");
 
   if (leadsError) return { error: leadsError.message };
+
+  // 6. Increment Lead Counter in Business
+  await supabase.rpc('increment_business_leads', { 
+    p_business_id: business.id, 
+    p_count: leadsToInsert.length 
+  });
 
   // 6. Score all leads with AI — using ID for safe updates
   if (!leadsError && insertedLeads) {

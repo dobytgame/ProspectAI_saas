@@ -100,6 +100,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                   segment={campaign.business?.segment || ""} 
                   campaignId={id} 
                   isFloating={false} 
+                  currentPlan={campaign.business?.plan || 'free'}
                 />
               </div>
             </div>

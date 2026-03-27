@@ -1015,71 +1015,89 @@ export default function LandingPage() {
           id="planos"
           style={{ background: 'linear-gradient(180deg, transparent, rgba(0,229,255,0.02), transparent)' }}
         >
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
 
             <div className="text-center mb-16">
               <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#00E5FF' }}>
                 Planos & Preços
               </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
-                Escale no seu ritmo.
+              <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-white">
+                O plano ideal para sua <span style={{ color: '#00E5FF' }}>escala.</span>
               </h2>
               <p className="text-base" style={{ color: '#6B7FA8' }}>
-                Comece grátis. Sem cartão. Faça upgrade quando estiver pronto.
+                Comece grátis. Sem cartão. Faça upgrade quando estiver pronto para decolar.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch mb-20">
               <PricingCard
-                name="Starter"
-                price="Grátis"
-                period=""
-                description="Para começar a prospectar sem risco."
+                name="Free"
+                price="R$ 0"
+                period="/mês"
+                description="Para validar sua estratégia inicial."
                 features={[
                   '100 leads / mês',
-                  'Score IA básico',
-                  'Pipeline Kanban',
-                  '1 campanha ativa',
-                  'Link WhatsApp manual',
-                  'Suporte por e-mail',
+                  '1 Agente de Negócios',
+                  'IA Escritora (Abordagem Básica)',
+                  '1 Campanha ativa',
+                  'Visualização Leads Maps',
+                  'Suporte via e-mail',
                 ]}
                 cta="Começar grátis"
               />
               <PricingCard
-                name="Pro"
+                name="Starter"
+                price="R$ 97"
+                period="/mês"
+                description="Para autônomos e consultores."
+                features={[
+                  '300 leads / mês',
+                  'Copywriter IA (Vendas Pro - GPT4)',
+                  '3 Campanhas ativas',
+                  'Exportar CSV',
+                  'Filtros Avançados Maps',
+                  'Suporte via e-mail',
+                ]}
+                cta="Selecionar Starter"
+              />
+              <PricingCard
+                name="PRO"
                 price="R$ 197"
                 period="/mês"
-                description="Para quem quer resultados em escala."
+                description="O plano completo para escala."
                 features={[
-                  '500 leads / mês',
-                  'Score + tier A/B/C/D',
-                  'Mensagens IA personalizadas',
-                  'Envio real via WhatsApp',
-                  'Campanhas ilimitadas',
-                  'Chat IA por lead',
-                  'Analytics de funil',
-                  'Suporte prioritário',
+                  '1.000 leads / mês',
+                  'IA de Vendas Consultiva (Premium)',
+                  'Até 3 Usuários',
+                  'Auto Follow-up (CRM)',
+                  'Campanhas Ilimitadas',
+                  'Importar CSV',
+                  'Filtros Avançados Maps',
+                  'Suporte via e-mail',
                 ]}
-                cta="Assinar Pro"
+                cta="Selecionar Pro"
                 highlight
                 badge="Mais popular"
               />
               <PricingCard
-                name="Business"
+                name="Scale"
                 price="R$ 397"
                 period="/mês"
-                description="Para times e operações de alto volume."
+                description="Para operações de alto volume."
                 features={[
-                  'Leads ilimitados',
-                  'Todos os recursos Pro',
-                  'Envio de e-mail (Resend)',
-                  'Sequências de follow-up',
-                  'Multi-usuário (5 assentos)',
-                  'API pública',
-                  'Onboarding dedicado',
-                  'SLA de suporte 24h',
+                  '5.000 leads / mês',
+                  'Inteligência de Escala (Atendimento IA)',
+                  'Até 5 usuários vinculados',
+                  'A/B Testing de Mensagens',
+                  'ICP Dinâmico (IA Aprende)',
+                  'Enriquecimento de Sites',
+                  'Auto Follow-up (CRM)',
+                  'Campanhas Ilimitadas',
+                  'Importar CSV',
+                  'Filtros Avançados Maps',
+                  'Suporte Prioritário VIP',
                 ]}
-                cta="Falar com vendas"
+                cta="Selecionar Scale"
               />
             </div>
 

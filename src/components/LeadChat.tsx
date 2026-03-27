@@ -28,7 +28,28 @@ export default function LeadChat({ lead, onClose }: LeadChatProps) {
   ])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  const suggestApproach = async () => {
+    if (isGenerating) return
+    setIsGenerating(true)
+    try {
+      const response = await fetch('/api/ai/generate-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId: lead.id })
+      })
+      const data = await response.json()
+      if (data.message) {
+        setMessages(prev => [...prev, { role: 'assistant', content: data.message }])
+      }
+    } catch (error) {
+      console.error("Error generating message:", error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -112,6 +133,22 @@ export default function LeadChat({ lead, onClose }: LeadChatProps) {
         </ScrollArea>
 
         <div className="p-4 bg-white border-t border-border/50">
+          <div className="mb-4 flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 bg-secondary/5 border-secondary/20 text-secondary hover:bg-secondary/10 gap-2 h-9"
+              onClick={suggestApproach}
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Zap className="h-4 w-4" />
+              )}
+              Sugerir Abordagem
+            </Button>
+          </div>
           <div className="relative flex items-center gap-2">
             <Input 
               placeholder="Digite sua mensagem..." 

@@ -3,18 +3,21 @@
 import { useState, useTransition } from 'react'
 import { Search, MapPin, Sparkles, Loader2, Radar } from 'lucide-react'
 import { searchLeadsAction } from '@/app/(dashboard)/lead-actions'
+import UpgradeModal from './UpgradeModal'
 
 interface SearchFormProps {
   segment: string;
   campaignId?: string;
   isFloating?: boolean;
+  currentPlan: string;
 }
 
-export default function SearchForm({ segment, campaignId, isFloating = true }: SearchFormProps) {
+export default function SearchForm({ segment, campaignId, isFloating = true, currentPlan }: SearchFormProps) {
   const [isPending, startTransition] = useTransition()
   const [query, setQuery] = useState('')
   const [region, setRegion] = useState('')
   const [limitError, setLimitError] = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,6 +28,9 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
       const res = await searchLeadsAction(query, region, campaignId)
       if (res?.error) {
         setLimitError(res.error)
+        if (res.error.includes('LIMITE')) {
+          setShowUpgradeModal(true)
+        }
       } else {
         setQuery('')
         setRegion('')
@@ -38,6 +44,11 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
 
   return (
     <div className={containerClasses}>
+      <UpgradeModal 
+        isOpen={showUpgradeModal} 
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={currentPlan}
+      />
       <form onSubmit={handleSubmit} className="relative">
         <div
           className="glass rounded-2xl shadow-2xl transition-all duration-500"
@@ -68,14 +79,14 @@ export default function SearchForm({ segment, campaignId, isFloating = true }: S
           {/* Limit Error */}
           {limitError && (
             <div className="mx-4 mt-2 mb-2 px-3 py-2 rounded-lg border border-destructive/20 bg-destructive/15 flex flex-col gap-2">
-              <span className="text-sm font-medium text-destructive">{limitError}</span>
+              <span className="text-sm font-medium text-destructive">{limitError.replace(/_/g, ' ')}</span>
               <button 
                 type="button" 
-                onClick={() => window.location.href = '/upgrade'} 
-                className="text-xs font-bold text-white bg-primary px-3 py-1.5 rounded-md hover:bg-primary/90 w-max transition-colors"
+                onClick={() => setShowUpgradeModal(true)} 
+                className="text-xs font-bold text-white bg-primary px-3 py-1.5 rounded-md hover:bg-primary/90 w-max transition-colors shadow-lg shadow-primary/20"
                 disabled={isPending}
               >
-                Fazer Upgrade para o Pro
+                Liberar Agora
               </button>
             </div>
           )}

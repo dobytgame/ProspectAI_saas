@@ -8,8 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Building2, Sparkles, Save, ShieldCheck, Globe, Info, AlertTriangle } from "lucide-react";
+import { User, Building2, Sparkles, Save, ShieldCheck, Globe, Info, AlertTriangle, MessageSquare } from "lucide-react";
 import { updateBusinessAction, updateProfileAction } from "./actions";
+import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -21,9 +22,15 @@ export default async function SettingsPage() {
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("*")
+    .select("*, agents(config)")
     .eq("user_id", user.id)
     .single();
+
+  if (!business) {
+    redirect("/onboarding");
+  }
+
+  const usage = await getPlanUsage(supabase, business.id, (business.plan || 'free') as PlanType);
 
   const fullName = user.user_metadata?.full_name || "";
   const [firstName, ...lastNameParts] = fullName.split(" ");
@@ -62,6 +69,9 @@ export default async function SettingsPage() {
               </TabsTrigger>
               <TabsTrigger value="business" className="rounded-lg px-6 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
                 <Building2 className="h-4 w-4" /> Negócio & IA
+              </TabsTrigger>
+              <TabsTrigger value="integrations" className="rounded-lg px-6 gap-2 data-[state=active]:bg-primary data-[state=active]:text-white">
+                <Globe className="h-4 w-4" /> Integrações
               </TabsTrigger>
             </TabsList>
 
@@ -192,6 +202,87 @@ export default async function SettingsPage() {
                   </code>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="integrations" className="space-y-6">
+              <Card className="border-border/40 shadow-sm overflow-hidden">
+                <CardHeader className="bg-muted/30 pb-6 border-b">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-600">
+                      <MessageSquare className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <CardTitle>WhatsApp (Evolution API)</CardTitle>
+                      <CardDescription>Configure sua instância da Evolution API para automação de mensagens.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <form action={updateBusinessAction}>
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="evolution_url">API URL</Label>
+                        <Input 
+                          id="evolution_url" 
+                          name="evolution_url" 
+                          defaultValue={business?.metadata?.integrations?.evolution?.url || ""} 
+                          placeholder="https://api.sua-evolution.com" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="evolution_instance">Nome da Instância</Label>
+                        <Input 
+                          id="evolution_instance" 
+                          name="evolution_instance" 
+                          defaultValue={business?.metadata?.integrations?.evolution?.instance || ""} 
+                          placeholder="Ex: ProspectAI_01" 
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="evolution_key">API Key (Global ou da Instância)</Label>
+                      <Input 
+                        id="evolution_key" 
+                        name="evolution_key" 
+                        type="password"
+                        defaultValue={business?.metadata?.integrations?.evolution?.key || ""} 
+                        placeholder="Sua chave secreta" 
+                      />
+                    </div>
+                  </CardContent>
+                  
+                  <div className="px-6 py-4 bg-muted/10 border-t border-b">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600">
+                        <Globe className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-sm">E-mail (Resend)</CardTitle>
+                        <CardDescription className="text-xs">Configure sua API Key do Resend para envio de campanhas.</CardDescription>
+                      </div>
+                    </div>
+                  </div>
+
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="resend_key">Resend API Key</Label>
+                      <Input 
+                        id="resend_key" 
+                        name="resend_key" 
+                        type="password"
+                        defaultValue={business?.metadata?.integrations?.resend?.key || ""} 
+                        placeholder="re_..." 
+                      />
+                    </div>
+                  </CardContent>
+
+                  <CardFooter className="bg-muted/10 border-t px-6 py-4 flex justify-end">
+                    <Button type="submit" className="gap-2 px-6 font-bold shadow-lg shadow-primary/20">
+                      <Save className="h-4 w-4" /> Salvar Integrações
+                    </Button>
+                  </CardFooter>
+                </form>
+              </Card>
             </TabsContent>
           </Tabs>
         </div>

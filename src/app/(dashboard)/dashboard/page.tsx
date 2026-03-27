@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import DashboardContent from "@/components/DashboardContent";
 import Sidebar from "@/components/Sidebar";
 import Link from "next/link";
+import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -72,9 +73,11 @@ export default async function DashboardPage() {
     },
   })) || [];
 
+  const usage = await getPlanUsage(supabase, business.id, (business.plan || 'free') as PlanType);
+
   return (
     <div className="flex h-screen bg-muted/30">
-      <Sidebar userEmail={user.email} />
+      <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main */}
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -99,6 +102,7 @@ export default async function DashboardPage() {
           campaigns={campaigns || []}
           pipelineStats={pipelineData || {}}
           recentActivity={recentActivity || []}
+          currentPlan={business.plan || 'free'}
         />
       </main>
     </div>

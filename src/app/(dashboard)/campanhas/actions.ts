@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { revalidatePath } from "next/cache";
+import { PlanType, PLAN_LIMITS } from "@/utils/plan-limits";
 
 export async function createCampaignAction(formData: FormData) {
   const supabase = await createClient();
@@ -17,10 +18,13 @@ export async function createCampaignAction(formData: FormData) {
 
   if (!business) throw new Error("Negócio não encontrado");
 
-  if (business.plan === 'free') {
+  if (business) {
     const { count } = await supabase.from('campaigns').select('*', { count: 'exact', head: true }).eq('business_id', business.id);
-    if ((count || 0) >= 3) {
-      return { error: "LIMIT_REACHED_CAMPAIGNS" };
+    const plan = (business.plan || 'free') as PlanType;
+    const limit = PLAN_LIMITS[plan].maxCampaigns;
+
+    if ((count || 0) >= limit) {
+      return { error: `VOCE_ATINGIU_O_LIMITE_DE_CAMPANHAS_DO_SEU_PLANO` };
     }
   }
 
