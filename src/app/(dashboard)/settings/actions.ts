@@ -67,3 +67,25 @@ export async function updateProfileAction(formData: FormData) {
 
   revalidatePath("/settings");
 }
+
+export async function removeKnowledgeBaseItem(id: string, businessId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return false;
+
+  try {
+    const { error } = await supabase
+      .from("knowledge_bases")
+      .delete()
+      .eq("id", id)
+      .eq("business_id", businessId);
+
+    if (error) throw error;
+    
+    return true;
+  } catch (err) {
+    console.error("Delete KB error:", err);
+    return false;
+  }
+}

@@ -1,11 +1,13 @@
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
+// Mantivemos o nome do arquivo (claude.ts) para não quebrar os imports, 
+// mas agora o motor por trás de tudo é a OpenAI (gpt-4o).
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Helper para extrair JSON limpo do response do Claude
-function parseClaudeJSON(text: string): any {
+// Helper para extrair JSON limpo do response
+function parseJSON(text: string): any {
   const clean = text.replace(/```json|```/g, "").trim();
   return JSON.parse(clean);
 }
@@ -34,18 +36,18 @@ export async function extractBusinessProfile(description: string) {
     }
   `;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 1000,
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
     messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" }
   });
 
-  const content = response.content[0];
-  if (content.type === "text") {
+  const content = response.choices[0].message.content;
+  if (content) {
     try {
-      return parseClaudeJSON(content.text);
+      return parseJSON(content);
     } catch (e) {
-      console.error("Failed to parse Claude response:", content.text);
+      console.error("Failed to parse OpenAI response:", content);
       throw new Error("Falha ao processar perfil do negócio com IA.");
     }
   }
@@ -117,15 +119,16 @@ ${isWhatsApp ? `FORMATO WHATSAPP:
 IMPORTANTE: A primeira frase DEVE mencionar algo específico sobre o ${lead.name} ou sua localização.
 Escreva APENAS a mensagem. Sem explicações, sem comentários, sem notas.`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 800,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ],
   });
 
-  const content = response.content[0];
-  if (content.type === "text") return content.text;
+  const content = response.choices[0].message.content;
+  if (content) return content;
   throw new Error("Falha ao gerar mensagem.");
 }
 
@@ -206,18 +209,70 @@ Retorne EXCLUSIVAMENTE JSON válido (sem markdown, sem comentários):
   "niche": "nome do nicho em 2-4 palavras"
 }`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 2000,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
+    ],
+    response_format: { type: "json_object" }
   });
 
-  const content = response.content[0];
-  if (content.type === "text") {
-    return parseClaudeJSON(content.text);
+  const content = response.choices[0].message.content;
+  if (content) {
+    return parseJSON(content);
   }
   throw new Error("Falha ao treinar agente.");
+}
+
+/**
+ * 3.1.5 — Análise individual de Fonte de Conhecimento (URL/PDF)
+ * Extrai dados isolados de uma única fonte para salvar no histórico.
+ */
+export async function analyzeKnowledgeSource(sourceText: string, businessName: string, sourceType: string) {
+  const cleanText = sourceText.trim();
+  
+  if (cleanText.length < 50) {
+    return {
+      insight: "Conteúdo insuficiente para uma análise profunda nesta fonte. Tente uma URL com mais conteúdo textual ou um documento completo.",
+      confidence: 10
+    };
+  }
+
+  const prompt = `Analise o conteúdo desta fonte de dados (${sourceType}) da empresa "${businessName}".
+Sua tarefa é extrair inteligência de vendas:
+1. O que a empresa faz? (Proposta de valor)
+2. Para quem ela vende? (Público-alvo/Nicho)
+3. Quais problemas ela resolve? (Dores do cliente)
+4. Quais os diferenciais competitivos?
+
+Crie um resumo executivo focado em alimentar um agente de prospecção. Seja específico.
+Se o conteúdo parecer ser apenas um menu ou rodapé, tente extrair o máximo de contexto comercial possível.
+
+CONTEÚDO DA FONTE:
+"${cleanText.substring(0, 20000)}"
+
+Retorne EXCLUSIVAMENTE um JSON no formato:
+{
+  "insight": "Um resumo detalhado e persuasivo do que foi aprendido (3-5 parágrafos).",
+  "confidence": number (0-100)
+}`;
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" }
+  });
+
+  const content = response.choices[0].message.content;
+  if (content) {
+    try {
+      return parseJSON(content);
+    } catch {
+      return { insight: "Falha ao processar insight detalhado.", confidence: 50 };
+    }
+  }
+  throw new Error("Falha ao analisar fonte de conhecimento.");
 }
 
 /**
@@ -242,7 +297,7 @@ Critérios:
 - 61-85: Bom fit (nicho e perfil batem com ICP)
 - 86-100: Lead perfeito (todos os must_have presentes)
 
-Retorne APENAS JSON:
+Retorne APENAS JSON no seguinte formato:
 {
   "score": number,
   "tier": "A|B|C|D",
@@ -252,16 +307,16 @@ Retorne APENAS JSON:
   "priority": "high|medium|low"
 }`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 400,
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
     messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" }
   });
 
-  const content = response.content[0];
-  if (content.type === "text") {
+  const content = response.choices[0].message.content;
+  if (content) {
     try {
-      return parseClaudeJSON(content.text);
+      return parseJSON(content);
     } catch {
       return { score: 50, tier: "C", reasoning: "Falha na análise automática.", fit_reasons: [], concerns: [], priority: "medium" };
     }
@@ -291,7 +346,7 @@ CONTEXTO:
 - Estágio atual: ${currentStage}
 - Score: ${leadData.score}/100
 
-Retorne APENAS JSON:
+Retorne APENAS JSON no formato:
 {
   "sentiment": "positive|neutral|negative|objection|interested|not_now",
   "intent": "resumo em uma linha do que o lead quer",
@@ -302,15 +357,15 @@ Retorne APENAS JSON:
   "notes": "observações para o vendedor"
 }`;
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 600,
+  const response = await openai.chat.completions.create({
+    model: "gpt-4o",
     messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" }
   });
 
-  const content = response.content[0];
-  if (content.type === "text") {
-    return parseClaudeJSON(content.text);
+  const content = response.choices[0].message.content;
+  if (content) {
+    return parseJSON(content);
   }
   throw new Error("Falha ao analisar resposta.");
 }
