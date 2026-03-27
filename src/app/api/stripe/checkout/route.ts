@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       mode: 'subscription',
       line_items: [
         {
-          price: 'price_1TFETwBSvryDe29gG81FL3SY', // Pro Plan
+          price: process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO || 'price_1TFETwBSvryDe29gG81FL3SY',
           quantity: 1,
         },
       ],

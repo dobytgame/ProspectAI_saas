@@ -22,6 +22,12 @@ export async function POST(req: Request) {
   }
 
   // Handle the event
+  const { createClient: createSupabase } = require('@supabase/supabase-js');
+  const supabaseAdmin = createSupabase(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
     const businessId = session.client_reference_id;
@@ -29,15 +35,6 @@ export async function POST(req: Request) {
     const subscriptionId = session.subscription as string;
 
     if (businessId) {
-      // Import createClient from a specialized service role client to bypass RLS in webhook, 
-      // or just assume standard server client has permissions (if RLS is configured or if we use service_role)
-      // Note: Webhook is unauthenticated. We MUST use service_role to update DB.
-      const { createClient: createSupabase } = require('@supabase/supabase-js');
-      const supabaseAdmin = createSupabase(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-      );
-
       await supabaseAdmin
         .from('businesses')
         .update({
@@ -48,6 +45,36 @@ export async function POST(req: Request) {
         .eq('id', businessId);
       
       console.log(`Business ${businessId} upgraded to Pro.`);
+    }
+  }
+
+  if (event.type === 'customer.subscription.deleted') {
+    const subscription = event.data.object as Stripe.Subscription;
+    
+    await supabaseAdmin
+      .from('businesses')
+      .update({
+        plan: 'free',
+        stripe_subscription_id: null,
+      })
+      .eq('stripe_subscription_id', subscription.id);
+    
+    console.log(`Subscription ${subscription.id} deleted. Plan reverted to free.`);
+  }
+
+  if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object as Stripe.Subscription;
+    
+    if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+      await supabaseAdmin
+        .from('businesses')
+        .update({ plan: 'free' })
+        .eq('stripe_subscription_id', subscription.id);
+    } else if (subscription.status === 'active') {
+      await supabaseAdmin
+        .from('businesses')
+        .update({ plan: 'pro' })
+        .eq('stripe_subscription_id', subscription.id);
     }
   }
 
