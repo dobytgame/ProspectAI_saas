@@ -239,18 +239,25 @@ export async function analyzeKnowledgeSource(sourceText: string, businessName: s
     };
   }
 
-  const prompt = `Analise o conteúdo desta fonte de dados (${sourceType}) da empresa "${businessName}".
-Sua tarefa é extrair inteligência de vendas:
-1. O que a empresa faz? (Proposta de valor)
-2. Para quem ela vende? (Público-alvo/Nicho)
-3. Quais problemas ela resolve? (Dores do cliente)
-4. Quais os diferenciais competitivos?
+  const snippet = cleanText.substring(0, 20000);
+  const isPdf = sourceType === "pdf";
 
-Crie um resumo executivo focado em alimentar um agente de prospecção. Seja específico.
-Se o conteúdo parecer ser apenas um menu ou rodapé, tente extrair o máximo de contexto comercial possível.
+  const prompt = `Analise o conteúdo desta fonte (${sourceType}) relacionada à empresa "${businessName}".
 
-CONTEÚDO DA FONTE:
-"${cleanText.substring(0, 20000)}"
+Sua tarefa é extrair inteligência de vendas com base APENAS no texto entre os delimitadores <<< e >>> abaixo:
+1. O que a empresa faz? (proposta de valor)
+2. Para quem vende? (público / nicho)
+3. Que problemas resolve? (dores do cliente)
+4. Diferenciais competitivos?
+
+Regras:
+- Use fatos e frases presentes no texto; não invente serviços ou clientes que não apareçam.
+${isPdf ? "- Se o texto for claramente só cabeçalhos, numeração de página ou lixo de extração, diga isso e peça PDF com camada de texto ou documento editável.\n" : ""}
+- Seja específico e acionável para um agente de prospecção.
+
+<<<INÍCIO DO TEXTO EXTRAÍDO>>>
+${snippet}
+<<<FIM DO TEXTO EXTRAÍDO>>>
 
 Retorne EXCLUSIVAMENTE um JSON no formato:
 {

@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { analyzeKnowledgeSource } from "@/lib/ai/claude";
+import { extractPdfPlainText } from "@/lib/pdf/extractPdfText";
 import axios from "axios";
 
-// Polyfill for pdf-parse/pdf.js requirements in Node environments
-if (typeof global !== 'undefined') {
-  (global as any).DOMMatrix = (global as any).DOMMatrix || class DOMMatrix {};
-  (global as any).ImageData = (global as any).ImageData || class ImageData {};
-  (global as any).Path2D = (global as any).Path2D || class Path2D {};
-}
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
@@ -92,32 +88,19 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(await file.arrayBuffer());
         if (file.type === "application/pdf") {
           try {
-            // Tentativa robusta de carregar o pdf-parse sem quebrar no Next.js/Node
-            const pdfParse = require("pdf-parse");
-            
-            // Usando a chave correta descoberta nos logs: PDFParse
-            let pdf = pdfParse.PDFParse || pdfParse.default || pdfParse;
-            
-            if (typeof pdf !== 'function' && pdf.PDFParse) pdf = pdf.PDFParse;
-            
-            if (typeof pdf !== 'function') {
-              throw new Error(`Biblioteca de PDF não encontrou função válida. Chaves: ${Object.keys(pdfParse).join(', ')}`);
+            const { text, letterWords } = await extractPdfPlainText(buffer);
+            extractedText = text.replace(/\s+/g, " ").trim().substring(0, 50000);
+
+            if (letterWords < 25 && extractedText.length >= 50) {
+              throw new Error(
+                "O PDF tem pouco texto selecionável (pode ser escaneado como imagem). " +
+                  "Exporte um PDF com texto (Word/Google Docs → PDF) ou cole o conteúdo em um arquivo .txt."
+              );
             }
-
-            // Custom pagerender evita o uso de Canvas e dependências de DOM
-            const options = {
-              pagerender: (pageData: any) => {
-                return pageData.getTextContent().then((textContent: any) => {
-                  return textContent.items.map((item: any) => item.str).join(' ');
-                });
-              }
-            };
-
-            const result = await pdf(buffer, options);
-            extractedText = result.text;
-          } catch (pdfErr: any) {
+          } catch (pdfErr: unknown) {
+            const msg = pdfErr instanceof Error ? pdfErr.message : "Formato não suportado";
             console.error("PDF Parse error:", pdfErr);
-            throw new Error(`Erro ao ler PDF: ${pdfErr.message || 'Formato não suportado'}`);
+            throw new Error(`Erro ao ler PDF: ${msg}`);
           }
         } else {
           extractedText = buffer.toString("utf-8");
@@ -129,7 +112,15 @@ export async function POST(request: Request) {
       }
 
       if (!extractedText || extractedText.trim().length < 50) {
-        throw new Error("Não foi possível extrair conteúdo suficiente deste site ou documento. Verifique se a URL está correta ou se o arquivo contém texto legível.");
+        if (dbType === "pdf") {
+          throw new Error(
+            "Não foi possível extrair texto deste PDF. Provável causa: arquivo só com imagens (escaneado) ou fontes não embutidas. " +
+              "Soluções: exportar de novo como PDF com texto selecionável (Word/Google Docs), usar “OCR” no Acrobat, ou enviar um .txt com o conteúdo."
+          );
+        }
+        throw new Error(
+          "Não foi possível extrair conteúdo suficiente desta fonte. Verifique a URL ou use um documento com texto legível."
+        );
       }
 
       // 3. Analisar com a IA

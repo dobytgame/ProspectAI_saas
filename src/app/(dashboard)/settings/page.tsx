@@ -8,10 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Building2, Sparkles, Save, ShieldCheck, Globe, Info, AlertTriangle, MessageSquare } from "lucide-react";
-import { updateBusinessAction, updateProfileAction } from "./actions";
+import { User, Building2, Sparkles, Save, ShieldCheck, Globe, Info, AlertTriangle } from "lucide-react";
 import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 import KnowledgeBaseManager from "./KnowledgeBaseManager";
+import {
+  BusinessSettingsForm,
+  ProfileSettingsForm,
+  SettingsSubmitButton,
+} from "./SettingsFormShell";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -44,15 +48,17 @@ export default async function SettingsPage() {
   const lastName = lastNameParts.join(" ");
 
   // Helper to format ICP for Textarea
-  const formatICP = (icp: any) => {
+  const formatICP = (icp: unknown) => {
     if (!icp) return "";
-    if (typeof icp === 'string') return icp;
-    
-    // If it's the JSON object from extractBusinessProfile
-    if (icp.target_audience) {
-      return `Público: ${icp.target_audience}\nDores: ${Array.isArray(icp.pain_points) ? icp.pain_points.join(", ") : icp.pain_points}\nValor: ${icp.solution_value}`;
+    if (typeof icp === "string") return icp;
+    if (typeof icp !== "object" || icp === null) return "";
+    const o = icp as Record<string, unknown>;
+    if (typeof o.outline === "string") return o.outline;
+    if (typeof o.target_audience === "string") {
+      const pains = o.pain_points;
+      const painStr = Array.isArray(pains) ? pains.join(", ") : String(pains ?? "");
+      return `Público: ${o.target_audience}\nDores: ${painStr}\nValor: ${o.solution_value ?? ""}`;
     }
-    
     return JSON.stringify(icp, null, 2);
   };
 
@@ -111,7 +117,7 @@ export default async function SettingsPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <form action={updateBusinessAction}>
+                <BusinessSettingsForm>
                   <CardContent className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-2.5">
@@ -159,11 +165,15 @@ export default async function SettingsPage() {
                     <KnowledgeBaseManager businessId={business.id} initialItems={knowledgeItems || []} />
                   </CardContent>
                   <CardFooter className="p-8 bg-muted/20 border-t border-border/40 backdrop-blur-md flex justify-end">
-                    <Button type="submit" className="h-12 bg-secondary hover:bg-secondary/90 text-white gap-3 px-10 rounded-xl font-black shadow-2xl shadow-secondary/20 transition-all hover:scale-[1.02] active:scale-95">
+                    <SettingsSubmitButton
+                      type="submit"
+                      pendingLabel="SALVANDO…"
+                      className="h-12 bg-secondary hover:bg-secondary/90 text-white gap-3 px-10 rounded-xl font-black shadow-2xl shadow-secondary/20 transition-all hover:scale-[1.02] active:scale-95"
+                    >
                       <Save className="h-5 w-5" /> ATUALIZAR INFORMAÇÕES BÁSICAS
-                    </Button>
+                    </SettingsSubmitButton>
                   </CardFooter>
-                </form>
+                </BusinessSettingsForm>
               </Card>
             </TabsContent>
 
@@ -172,7 +182,7 @@ export default async function SettingsPage() {
                 <CardHeader>
                   <CardTitle className="text-xl font-black uppercase italic tracking-tight">Informações Pessoais</CardTitle>
                 </CardHeader>
-                <form action={updateProfileAction}>
+                <ProfileSettingsForm>
                   <CardContent className="space-y-6">
                     <div className="flex flex-col items-center gap-4 mb-4 pb-6 border-b border-border/40">
                       <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-3xl font-black text-black shadow-xl shrink-0">
@@ -196,11 +206,15 @@ export default async function SettingsPage() {
                     </div>
                   </CardContent>
                   <CardFooter className="bg-muted/30 p-6 border-t border-border/40 flex justify-end">
-                    <Button type="submit" className="h-11 bg-primary text-black hover:bg-primary/90 gap-2 px-8 rounded-xl font-black">
+                    <SettingsSubmitButton
+                      type="submit"
+                      pendingLabel="SALVANDO…"
+                      className="h-11 bg-primary text-black hover:bg-primary/90 gap-2 px-8 rounded-xl font-black"
+                    >
                       <Save className="h-4 w-4" /> SALVAR PERFIL
-                    </Button>
+                    </SettingsSubmitButton>
                   </CardFooter>
-                </form>
+                </ProfileSettingsForm>
               </Card>
             </TabsContent>
 
