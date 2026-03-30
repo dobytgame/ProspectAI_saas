@@ -25,15 +25,20 @@ export default function SearchForm({ segment, campaignId, isFloating = true, cur
 
     startTransition(async () => {
       setLimitError(null)
-      const res = await searchLeadsAction(query, region, campaignId)
-      if (res?.error) {
-        setLimitError(res.error)
-        if (res.error.includes('LIMITE')) {
-          setShowUpgradeModal(true)
+      try {
+        const res = await searchLeadsAction(query, region, campaignId)
+        if (res?.error) {
+          setLimitError(res.error)
+          if (res.error.includes('LIMITE')) {
+            setShowUpgradeModal(true)
+          }
+        } else {
+          setQuery('')
+          setRegion('')
         }
-      } else {
-        setQuery('')
-        setRegion('')
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Algo deu errado ao buscar leads.'
+        setLimitError(message)
       }
     })
   }

@@ -12,13 +12,54 @@ export async function searchLeadsAction(query: string, region: string, campaignI
 
   if (!user) throw new Error("Não autorizado");
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, icp, plan, leads_used_this_month, agents(config)")
-    .eq("user_id", user.id)
-    .single();
+  // Try to resolve business through campaign first, then fall back to user_id
+  let business: any = null;
 
-  if (!business) throw new Error("Perfil de negócio não encontrado");
+  if (campaignId) {
+    const { data: campaign, error: campaignErr } = await supabase
+      .from("campaigns")
+      .select("business_id")
+      .eq("id", campaignId)
+      .single();
+
+    if (campaignErr) {
+      console.error("searchLeadsAction: campaign lookup", campaignErr);
+      return { error: "Não foi possível carregar a campanha." };
+    }
+
+    if (campaign?.business_id) {
+      const { data: biz, error: bizErr } = await supabase
+        .from("businesses")
+        .select("id, icp, plan, leads_used_this_month, agents(config)")
+        .eq("id", campaign.business_id)
+        .single();
+      if (bizErr) {
+        console.error("searchLeadsAction: business by campaign", bizErr);
+        return { error: "Não foi possível carregar o perfil do negócio. Tente novamente." };
+      }
+      business = biz;
+    }
+  }
+
+  // Fallback: lookup by user_id
+  if (!business) {
+    const { data: biz, error: bizErr } = await supabase
+      .from("businesses")
+      .select("id, icp, plan, leads_used_this_month, agents(config)")
+      .eq("user_id", user.id)
+      .single();
+    if (bizErr) {
+      console.error("searchLeadsAction: business by user", bizErr);
+      return { error: "Não foi possível carregar o perfil do negócio. Tente novamente." };
+    }
+    business = biz;
+  }
+
+  if (!business) {
+    return {
+      error: "Perfil de negócio não encontrado. Complete o onboarding primeiro.",
+    };
+  }
 
   // 1. Check Limits First
   const plan = (business.plan || 'free') as PlanType;

@@ -67,9 +67,9 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
     : 0
 
   return (
-    <div className="flex-1 overflow-auto p-6 space-y-6">
+    <div className="flex-1 flex flex-col overflow-hidden p-6 space-y-6">
       {/* Animated Stats Row (4 Cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
         <StatCard
           label="Leads Encontrados"
           value={totalLeads}
@@ -104,9 +104,9 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:items-stretch flex-1 min-h-0">
         {/* Left Column: Funnel & Activity */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 flex flex-col gap-4 h-full">
           {/* Funnel Metrics */}
           <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
@@ -146,14 +146,16 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
           </div>
 
           {/* Recent Activity Feed */}
-          <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm">
+          <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm flex-1 flex flex-col">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="h-4 w-4 text-primary" />
               <h3 className="font-semibold text-sm">Atividade Recente</h3>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-3 flex-1 overflow-auto max-h-[300px] lg:max-h-none pr-2 scrollbar-thin">
               {recentActivity.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">Nenhuma atividade recente.</p>
+                <div className="flex-1 flex items-center justify-center">
+                  <p className="text-xs text-muted-foreground text-center py-4 italic">Nenhuma atividade recente.</p>
+                </div>
               ) : (
                 recentActivity.map((activity, i) => (
                   <div key={i} className="flex gap-3 text-sm">
@@ -173,7 +175,7 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
 
         {/* Right Column: Map */}
         <div
-          className="lg:col-span-3 rounded-2xl overflow-hidden relative min-h-[500px]"
+          className="lg:col-span-3 rounded-2xl overflow-hidden relative flex flex-col"
           style={{
             background: "var(--background-2)",
             border: "1px solid var(--border)",

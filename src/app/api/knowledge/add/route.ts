@@ -3,6 +3,13 @@ import { createClient } from "@/utils/supabase/server";
 import { analyzeKnowledgeSource } from "@/lib/ai/claude";
 import axios from "axios";
 
+// Polyfill for pdf-parse/pdf.js requirements in Node environments
+if (typeof global !== 'undefined') {
+  (global as any).DOMMatrix = (global as any).DOMMatrix || class DOMMatrix {};
+  (global as any).ImageData = (global as any).ImageData || class ImageData {};
+  (global as any).Path2D = (global as any).Path2D || class Path2D {};
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -84,9 +91,34 @@ export async function POST(request: Request) {
       } else if (type === 'file' && file) {
         const buffer = Buffer.from(await file.arrayBuffer());
         if (file.type === "application/pdf") {
-          const pdfParse = require("pdf-parse");
-          const result = await pdfParse(buffer);
-          extractedText = result.text;
+          try {
+            // Tentativa robusta de carregar o pdf-parse sem quebrar no Next.js/Node
+            const pdfParse = require("pdf-parse");
+            
+            // Usando a chave correta descoberta nos logs: PDFParse
+            let pdf = pdfParse.PDFParse || pdfParse.default || pdfParse;
+            
+            if (typeof pdf !== 'function' && pdf.PDFParse) pdf = pdf.PDFParse;
+            
+            if (typeof pdf !== 'function') {
+              throw new Error(`Biblioteca de PDF não encontrou função válida. Chaves: ${Object.keys(pdfParse).join(', ')}`);
+            }
+
+            // Custom pagerender evita o uso de Canvas e dependências de DOM
+            const options = {
+              pagerender: (pageData: any) => {
+                return pageData.getTextContent().then((textContent: any) => {
+                  return textContent.items.map((item: any) => item.str).join(' ');
+                });
+              }
+            };
+
+            const result = await pdf(buffer, options);
+            extractedText = result.text;
+          } catch (pdfErr: any) {
+            console.error("PDF Parse error:", pdfErr);
+            throw new Error(`Erro ao ler PDF: ${pdfErr.message || 'Formato não suportado'}`);
+          }
         } else {
           extractedText = buffer.toString("utf-8");
         }
