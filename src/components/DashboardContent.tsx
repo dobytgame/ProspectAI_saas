@@ -71,6 +71,7 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
   const avgScore = totalLeads > 0 
     ? Math.round(filteredLeads.reduce((a, c) => a + (c.score || 0), 0) / totalLeads) 
     : 0
+  const avgScoreValue = pipelineStats?.avg_score ?? avgScore
 
   return (
     <div className="flex-1 flex flex-col overflow-auto md:overflow-hidden p-3 sm:p-6 space-y-4 sm:space-y-6">
@@ -94,9 +95,9 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
         />
         <StatCard
           label="Score Médio (Funil)"
-          value={pipelineStats?.avg_score || avgScore}
-          sub={pipelineStats?.avg_score >= 70 ? "Excelente" : pipelineStats?.avg_score >= 40 ? "Regular" : "—"}
-          color={pipelineStats?.avg_score >= 70 ? "var(--green)" : pipelineStats?.avg_score >= 40 ? "var(--yellow)" : "var(--red)"}
+          value={avgScoreValue}
+          sub={avgScoreValue >= 70 ? "Excelente" : avgScoreValue >= 40 ? "Regular" : "—"}
+          color={avgScoreValue >= 70 ? "var(--green)" : avgScoreValue >= 40 ? "var(--yellow)" : "var(--red)"}
           icon={<TrendingUp className="h-4 w-4" />}
           delay={160}
         />
