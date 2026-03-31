@@ -1,12 +1,8 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { signOut } from "@/app/(auth)/actions";
-import { Zap, LayoutDashboard, LogOut, Columns3, MessageSquare, Settings } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import DashboardContent from "@/components/DashboardContent";
 import Sidebar from "@/components/Sidebar";
-import Link from "next/link";
 import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 
 export default async function DashboardPage() {
@@ -29,12 +25,6 @@ export default async function DashboardPage() {
   if (!business) {
     redirect("/onboarding");
   }
-
-  const { data: campaigns } = await supabase
-    .from("campaigns")
-    .select("id, name")
-    .eq("business_id", business.id)
-    .order("created_at", { ascending: false });
 
   const { data: leads } = await supabase
     .from("leads")
@@ -80,16 +70,16 @@ export default async function DashboardPage() {
       <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-6">
+      <main className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold">Dashboard</h1>
-            <Badge variant="outline" className="text-secondary border-secondary/30 bg-secondary/5 text-xs">
+            <h1 className="text-base sm:text-lg font-semibold">Dashboard</h1>
+            <Badge variant="outline" className="hidden sm:inline-flex text-secondary border-secondary/30 bg-secondary/5 text-xs">
               {business.name}
             </Badge>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{user.email}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden md:inline text-sm text-muted-foreground">{user.email}</span>
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-secondary/30 to-primary/30 border border-secondary/30 flex items-center justify-center text-xs font-bold text-secondary">
               {user.email?.[0].toUpperCase()}
             </div>
@@ -99,7 +89,6 @@ export default async function DashboardPage() {
         <DashboardContent 
           leads={allLeads} 
           segment={business.segment || ''} 
-          campaigns={campaigns || []}
           pipelineStats={pipelineData || {}}
           recentActivity={recentActivity || []}
           currentPlan={business.plan || 'free'}

@@ -34,26 +34,26 @@ export default async function LeadsPage() {
       <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-6 shrink-0">
+      <main className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-3 sm:px-6 shrink-0">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center">
               <Users className="h-4 w-4 text-secondary" />
             </div>
-            <h1 className="text-lg font-bold">Gestão de Leads</h1>
-            <Badge variant="outline" className="text-secondary border-secondary/30 bg-secondary/5 text-[10px] font-black uppercase tracking-widest">
+            <h1 className="text-base sm:text-lg font-bold">Gestão de Leads</h1>
+            <Badge variant="outline" className="hidden sm:inline-flex text-secondary border-secondary/30 bg-secondary/5 text-[10px] font-black uppercase tracking-widest">
               {business.name}
             </Badge>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground">{user.email}</span>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden md:inline text-sm text-muted-foreground">{user.email}</span>
             <div className="h-8 w-8 rounded-full bg-gradient-to-br from-secondary/30 to-primary/30 border border-secondary/30 flex items-center justify-center text-xs font-bold text-secondary">
               {user.email?.[0].toUpperCase()}
             </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-3 sm:p-6">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col space-y-1">
               <h2 className="text-2xl font-black tracking-tight text-foreground">Explorar Base</h2>

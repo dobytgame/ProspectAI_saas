@@ -19,11 +19,12 @@
 
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import {
-  ArrowRight, MapPin, Zap, MessageSquare, BarChart3,
-  CheckCircle2, Star, ChevronDown, Users, Target,
-  TrendingUp, Brain, Radar, Send, Phone, Globe,
-  Sparkles, Shield, Clock, Building2, LayoutDashboard
+  ArrowRight, MapPin, MessageSquare, BarChart3,
+  CheckCircle2, Star, ChevronDown, Users,
+  Brain, Radar, Send, Phone,
+  Sparkles, Shield, Clock, Building2, LayoutDashboard, Menu, X
 } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 
@@ -77,7 +78,6 @@ function NetworkWeb() {
     // Cores
     const C_PRIMARY  = '#00E5FF'
     const C_GREEN    = '#00FFA3'
-    const C_YELLOW   = '#FFD600'
     const C_DIM      = '#1E2D45'
 
     const NODE_COLORS = {
@@ -418,7 +418,8 @@ export default function LandingPage() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -462,7 +463,7 @@ export default function LandingPage() {
           borderBottom: scrolled ? '1px solid rgba(30,45,69,0.8)' : '1px solid transparent',
         }}
       >
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 transition-transform hover:scale-105">
             <img src="/capturo.png" alt="Capturo Logo" className="h-9 w-auto object-contain" />
@@ -490,11 +491,18 @@ export default function LandingPage() {
           </nav>
 
           {/* CTA Header */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              className="md:hidden h-9 w-9 rounded-lg border border-[#1E2D45] flex items-center justify-center"
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Alternar menu"
+            >
+              {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </button>
             {user ? (
               <Link href="/dashboard">
                 <button
-                  className="group flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200"
+                  className="group flex items-center gap-2 px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200"
                   style={{
                     background: 'linear-gradient(135deg, #00E5FF, #0066FF)',
                     color: '#080C14',
@@ -515,7 +523,7 @@ export default function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link href="/login">
+                <Link href="/login" className="hidden sm:inline-flex">
                   <button
                     className="text-sm font-medium px-4 py-2 rounded-lg transition-colors"
                     style={{ color: '#6B7FA8' }}
@@ -527,7 +535,7 @@ export default function LandingPage() {
                 </Link>
                 <Link href="/signup">
                   <button
-                    className="px-5 py-2 rounded-xl text-sm font-bold transition-all duration-200"
+                    className="px-3 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200"
                     style={{
                       background: 'linear-gradient(135deg, #00E5FF, #0066FF)',
                       color: '#080C14',
@@ -549,6 +557,28 @@ export default function LandingPage() {
             )}
           </div>
         </div>
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-[#1E2D45] bg-[#080C14]/95 backdrop-blur px-4 py-3">
+            <nav className="flex flex-col gap-2">
+              {[
+                ['#como-funciona', 'Como funciona'],
+                ['#funcionalidades', 'Funcionalidades'],
+                ['#planos', 'Planos'],
+                ['#faq', 'FAQ'],
+              ].map(([href, label]) => (
+                <a
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm py-2"
+                  style={{ color: '#A8B8CC' }}
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+          </div>
+        )}
       </header>
 
       <main className="flex-1 relative z-10">
@@ -556,7 +586,7 @@ export default function LandingPage() {
         {/* ═══════════════════════════════════════════════
             2. HERO
         ═══════════════════════════════════════════════ */}
-        <section className="pt-36 pb-20 px-6">
+        <section className="pt-28 sm:pt-36 pb-16 sm:pb-20 px-4 sm:px-6">
           <div className="max-w-5xl mx-auto text-center">
 
             {/* Badge animado */}
@@ -578,7 +608,7 @@ export default function LandingPage() {
 
             {/* Headline */}
             <h1
-              className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-none mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-6"
               style={{ animation: 'fadeIn 0.8s ease 0.1s both' }}
             >
               Encontre{' '}
@@ -597,7 +627,7 @@ export default function LandingPage() {
 
             {/* Subheadline */}
             <p
-              className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+              className="text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-2 sm:px-0"
               style={{ color: '#6B7FA8', animation: 'fadeIn 0.8s ease 0.2s both' }}
             >
               O Capturo descobre estabelecimentos no Google Maps, qualifica cada um com IA,
@@ -652,7 +682,7 @@ export default function LandingPage() {
             </div>
 
             {/* Trust line */}
-            <p className="mt-6 text-xs" style={{ color: '#3D4F6E' }}>
+            <p className="mt-6 text-[11px] sm:text-xs px-4 sm:px-0" style={{ color: '#3D4F6E' }}>
               ✓ Grátis para começar &nbsp;·&nbsp; ✓ Sem cartão de crédito &nbsp;·&nbsp; ✓ Setup em 5 minutos
             </p>
           </div>
@@ -662,10 +692,9 @@ export default function LandingPage() {
             3. TEIA DE CONEXÕES — FULL PAGE
         ═══════════════════════════════════════════════ */}
         <section
-          className="relative w-full overflow-hidden"
+          className="relative w-full overflow-hidden h-[70vh] md:h-screen"
           id="rede"
           style={{
-            height: '100vh',
             background: '#080C14',
           }}
         >
@@ -690,7 +719,7 @@ export default function LandingPage() {
               Rede de Prospecção em Tempo Real
             </p>
             <h2
-              className="text-4xl md:text-6xl font-black tracking-tight text-center px-6"
+              className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tight text-center px-4 sm:px-6"
               style={{
                 background: 'linear-gradient(135deg, #E2EAF4 0%, #00E5FF 50%, #00FFA3 100%)',
                 WebkitBackgroundClip: 'text',
@@ -700,14 +729,14 @@ export default function LandingPage() {
             >
               Leads conectados.<br />Resultados reais.
             </h2>
-            <p className="mt-4 text-sm" style={{ color: '#3D4F6E' }}>
-              Passe o mouse para interagir com os leads
+            <p className="mt-4 text-xs sm:text-sm" style={{ color: '#3D4F6E' }}>
+              Toque ou mova o cursor para interagir com os leads
             </p>
           </div>
 
           {/* Legenda overlay — canto inferior esquerdo */}
           <div
-            className="absolute bottom-8 left-8 flex items-center gap-6 px-4 py-2.5 rounded-xl text-xs"
+            className="hidden md:flex absolute bottom-8 left-8 items-center gap-6 px-4 py-2.5 rounded-xl text-xs"
             style={{ background: 'rgba(8,12,20,0.85)', border: '1px solid #1E2D45', backdropFilter: 'blur(12px)' }}
           >
             {[
@@ -724,7 +753,7 @@ export default function LandingPage() {
 
           {/* Score badge — canto superior direito */}
           <div
-            className="absolute top-8 right-8 px-3 py-2 rounded-xl text-xs font-bold"
+            className="hidden md:block absolute top-8 right-8 px-3 py-2 rounded-xl text-xs font-bold"
             style={{ background: 'rgba(0,229,255,0.08)', border: '1px solid rgba(0,229,255,0.2)', color: '#00E5FF' }}
           >
             <span className="text-lg font-black">247</span> leads ativos agora
@@ -734,14 +763,14 @@ export default function LandingPage() {
         {/* ═══════════════════════════════════════════════
             4. COMO FUNCIONA — 4 STEPS
         ═══════════════════════════════════════════════ */}
-        <section className="py-24 px-6" id="como-funciona">
+        <section className="py-16 sm:py-24 px-4 sm:px-6" id="como-funciona">
           <div className="max-w-5xl mx-auto">
 
             <div className="text-center mb-16">
               <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#00E5FF' }}>
                 Como funciona
               </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
                 De zero a lead qualificado{' '}
                 <br />
                 <span style={{ color: '#00E5FF' }}>em 4 passos.</span>
@@ -814,7 +843,7 @@ export default function LandingPage() {
             5. FUNCIONALIDADES — 6 CARDS
         ═══════════════════════════════════════════════ */}
         <section
-          className="py-24 px-6"
+          className="py-16 sm:py-24 px-4 sm:px-6"
           id="funcionalidades"
           style={{ background: 'linear-gradient(180deg, transparent, rgba(13,20,32,0.5), transparent)' }}
         >
@@ -823,7 +852,7 @@ export default function LandingPage() {
               <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#00E5FF' }}>
                 Funcionalidades
               </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight">
                 Tudo que você precisa para{' '}
                 <span style={{ color: '#00E5FF' }}>escalar vendas.</span>
               </h2>
@@ -920,7 +949,7 @@ export default function LandingPage() {
         {/* ═══════════════════════════════════════════════
             6. MÉTRICAS + DEPOIMENTOS
         ═══════════════════════════════════════════════ */}
-        <section className="py-24 px-6">
+        <section className="py-16 sm:py-24 px-4 sm:px-6">
           <div className="max-w-6xl mx-auto">
 
             {/* Métricas */}
@@ -1011,7 +1040,7 @@ export default function LandingPage() {
             7. PLANOS
         ═══════════════════════════════════════════════ */}
         <section
-          className="py-24 px-6"
+          className="py-16 sm:py-24 px-4 sm:px-6"
           id="planos"
           style={{ background: 'linear-gradient(180deg, transparent, rgba(0,229,255,0.02), transparent)' }}
         >
@@ -1021,7 +1050,7 @@ export default function LandingPage() {
               <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#00E5FF' }}>
                 Planos & Preços
               </div>
-              <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4 text-white">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4 text-white">
                 O plano ideal para sua <span style={{ color: '#00E5FF' }}>escala.</span>
               </h2>
               <p className="text-base" style={{ color: '#6B7FA8' }}>
@@ -1117,14 +1146,14 @@ export default function LandingPage() {
         {/* ═══════════════════════════════════════════════
             8. FAQ
         ═══════════════════════════════════════════════ */}
-        <section className="py-24 px-6" id="faq">
+        <section className="py-16 sm:py-24 px-4 sm:px-6" id="faq">
           <div className="max-w-3xl mx-auto">
 
             <div className="text-center mb-16">
               <div className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: '#00E5FF' }}>
                 Perguntas frequentes
               </div>
-              <h2 className="text-4xl font-black tracking-tight">Ainda tem dúvidas?</h2>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight">Ainda tem dúvidas?</h2>
             </div>
 
             <div className="space-y-3">
@@ -1167,10 +1196,10 @@ export default function LandingPage() {
         {/* ═══════════════════════════════════════════════
             9. CTA FINAL
         ═══════════════════════════════════════════════ */}
-        <section className="py-24 px-6">
+        <section className="py-16 sm:py-24 px-4 sm:px-6">
           <div className="max-w-3xl mx-auto">
             <div
-              className="relative rounded-3xl p-12 text-center overflow-hidden"
+              className="relative rounded-3xl p-6 sm:p-12 text-center overflow-hidden"
               style={{
                 background: 'linear-gradient(145deg, #0D1F35, #0A1628)',
                 border: '1px solid rgba(0,229,255,0.2)',
@@ -1198,11 +1227,11 @@ export default function LandingPage() {
                   Comece hoje — resultados em 24h
                 </div>
 
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4">
                   Sua próxima venda{' '}
                   <span style={{ color: '#00E5FF' }}>já está no mapa.</span>
                 </h2>
-                <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: '#6B7FA8' }}>
+                <p className="text-sm sm:text-base mb-8 max-w-lg mx-auto" style={{ color: '#6B7FA8' }}>
                   Junte-se a centenas de profissionais que já substituíram a prospecção manual pelo Capturo.
                   Grátis para começar.
                 </p>
@@ -1232,7 +1261,7 @@ export default function LandingPage() {
                     />
                     <button
                       type="submit"
-                      className="h-12 px-6 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-200"
+                      className="h-12 px-6 rounded-xl font-bold text-sm whitespace-nowrap transition-all duration-200 w-full sm:w-auto"
                       style={{
                         background: 'linear-gradient(135deg, #00E5FF, #0066FF)',
                         color: '#080C14',
@@ -1284,7 +1313,7 @@ export default function LandingPage() {
           10. FOOTER
       ═══════════════════════════════════════════════ */}
       <footer
-        className="py-12 px-6 relative z-10"
+        className="py-12 px-4 sm:px-6 relative z-10"
         style={{ borderTop: '1px solid #1E2D45' }}
       >
         <div className="max-w-6xl mx-auto">

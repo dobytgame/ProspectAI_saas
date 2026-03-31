@@ -37,13 +37,13 @@ export default async function CampaignsPage() {
       <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-6 shrink-0">
-          <h1 className="text-lg font-semibold">Campanhas de Prospecção</h1>
+      <main className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+        <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-3 sm:px-6 shrink-0 gap-3">
+          <h1 className="text-base sm:text-lg font-semibold truncate">Campanhas de Prospecção</h1>
           <CreateCampaignDialog />
         </header>
 
-        <div className="flex-1 overflow-auto p-8">
+        <div className="flex-1 overflow-auto p-3 sm:p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {campaigns?.map((campaign) => (
               <CampaignCard key={campaign.id} campaign={campaign} />

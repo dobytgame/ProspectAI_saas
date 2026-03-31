@@ -2,12 +2,10 @@
 
 import { useState, useMemo } from 'react'
 import LeadMap from '@/components/LeadMap'
-import LeadSidebar from '@/components/LeadSidebar'
 import SearchForm from '@/components/SearchForm'
 import { StatCard } from '@/components/ui/StatCard'
-import { Users, Target, TrendingUp, Handshake, Info, Clock, ExternalLink } from 'lucide-react'
+import { Users, Target, TrendingUp, Handshake, Clock } from 'lucide-react'
 import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
 
 interface Lead {
   id: string;
@@ -32,9 +30,17 @@ interface Lead {
 interface DashboardContentProps {
   leads: Lead[];
   segment: string;
-  campaigns: { id: string; name: string }[];
-  pipelineStats?: any;
-  recentActivity?: any[];
+  pipelineStats?: {
+    total?: number;
+    contacted?: number;
+    interested?: number;
+    closed?: number;
+    avg_score?: number;
+  };
+  recentActivity?: Array<{
+    name: string;
+    status: string;
+  }>;
   currentPlan: string;
 }
 
@@ -45,9 +51,9 @@ const SCORE_RANGES = [
   { label: '🔴 Baixo (<40)', min: 0, max: 39 },
 ];
 
-export default function DashboardContent({ leads, segment, campaigns, pipelineStats = {}, recentActivity = [], currentPlan }: DashboardContentProps) {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedScoreRange, setSelectedScoreRange] = useState<number>(0)
+export default function DashboardContent({ leads, segment, pipelineStats = {}, recentActivity = [], currentPlan }: DashboardContentProps) {
+  const [selectedCategory] = useState<string>('all')
+  const [selectedScoreRange] = useState<number>(0)
 
   const filteredLeads = useMemo(() => {
     const range = SCORE_RANGES[selectedScoreRange]
@@ -67,9 +73,9 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
     : 0
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden p-6 space-y-6">
+    <div className="flex-1 flex flex-col overflow-auto md:overflow-hidden p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Animated Stats Row (4 Cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 shrink-0">
         <StatCard
           label="Leads Encontrados"
           value={totalLeads}
@@ -108,7 +114,7 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
         {/* Left Column: Funnel & Activity */}
         <div className="lg:col-span-1 flex flex-col gap-4 h-full">
           {/* Funnel Metrics */}
-          <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm">
+          <div className="bg-background rounded-2xl border border-border/40 p-4 sm:p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Target className="h-4 w-4 text-primary" />
               <h3 className="font-semibold text-sm">Funil de Conversão</h3>
@@ -146,7 +152,7 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
           </div>
 
           {/* Recent Activity Feed */}
-          <div className="bg-background rounded-2xl border border-border/40 p-5 shadow-sm flex-1 flex flex-col">
+          <div className="bg-background rounded-2xl border border-border/40 p-4 sm:p-5 shadow-sm flex-1 flex flex-col">
             <div className="flex items-center gap-2 mb-4">
               <Clock className="h-4 w-4 text-primary" />
               <h3 className="font-semibold text-sm">Atividade Recente</h3>
@@ -175,7 +181,7 @@ export default function DashboardContent({ leads, segment, campaigns, pipelineSt
 
         {/* Right Column: Map */}
         <div
-          className="lg:col-span-3 rounded-2xl overflow-hidden relative flex flex-col"
+          className="lg:col-span-3 rounded-2xl overflow-hidden relative flex flex-col min-h-[420px] md:min-h-0"
           style={{
             background: "var(--background-2)",
             border: "1px solid var(--border)",
