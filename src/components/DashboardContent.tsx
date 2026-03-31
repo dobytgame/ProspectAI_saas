@@ -72,6 +72,10 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
     ? Math.round(filteredLeads.reduce((a, c) => a + (c.score || 0), 0) / totalLeads) 
     : 0
   const avgScoreValue = pipelineStats?.avg_score ?? avgScore
+  const pipelineTotal = pipelineStats?.total ?? 0
+  const pipelineContacted = pipelineStats?.contacted ?? 0
+  const pipelineInterested = pipelineStats?.interested ?? 0
+  const pipelineClosed = pipelineStats?.closed ?? 0
 
   return (
     <div className="flex-1 flex flex-col overflow-auto md:overflow-hidden p-3 sm:p-6 space-y-4 sm:space-y-6">
@@ -103,8 +107,8 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
         />
         <StatCard
           label="Fechamentos (Won)"
-          value={pipelineStats?.closed || 0}
-          sub={pipelineStats?.total > 0 ? `${Math.round((pipelineStats?.closed / pipelineStats?.total) * 100)}% de conversão` : "0% de conversão"}
+          value={pipelineClosed}
+          sub={pipelineTotal > 0 ? `${Math.round((pipelineClosed / pipelineTotal) * 100)}% de conversão` : "0% de conversão"}
           color="var(--primary)"
           icon={<Handshake className="h-4 w-4" />}
           delay={240}
@@ -124,30 +128,30 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Descobertos</span>
-                  <span className="font-medium text-foreground">{pipelineStats?.total || 0}</span>
+                  <span className="font-medium text-foreground">{pipelineTotal}</span>
                 </div>
                 <Progress value={100} className="h-1.5 bg-muted/30 [&>div]:bg-muted-foreground/30" />
               </div>
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Contatados</span>
-                  <span className="font-medium text-purple-600">{pipelineStats?.contacted || 0}</span>
+                  <span className="font-medium text-purple-600">{pipelineContacted}</span>
                 </div>
-                <Progress value={pipelineStats?.total ? (pipelineStats.contacted / pipelineStats.total) * 100 : 0} className="h-1.5 bg-purple-100 [&>div]:bg-purple-600" />
+                <Progress value={pipelineTotal ? (pipelineContacted / pipelineTotal) * 100 : 0} className="h-1.5 bg-purple-100 [&>div]:bg-purple-600" />
               </div>
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Interessados</span>
-                  <span className="font-medium text-blue-600">{pipelineStats?.interested || 0}</span>
+                  <span className="font-medium text-blue-600">{pipelineInterested}</span>
                 </div>
-                <Progress value={pipelineStats?.contacted ? (pipelineStats.interested / pipelineStats.contacted) * 100 : 0} className="h-1.5 bg-blue-100 [&>div]:bg-blue-600" />
+                <Progress value={pipelineContacted ? (pipelineInterested / pipelineContacted) * 100 : 0} className="h-1.5 bg-blue-100 [&>div]:bg-blue-600" />
               </div>
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-muted-foreground">Fechados</span>
-                  <span className="font-medium text-green-600">{pipelineStats?.closed || 0}</span>
+                  <span className="font-medium text-green-600">{pipelineClosed}</span>
                 </div>
-                <Progress value={pipelineStats?.interested ? (pipelineStats.closed / pipelineStats.interested) * 100 : 0} className="h-1.5 bg-green-100 [&>div]:bg-green-600" />
+                <Progress value={pipelineInterested ? (pipelineClosed / pipelineInterested) * 100 : 0} className="h-1.5 bg-green-100 [&>div]:bg-green-600" />
               </div>
             </div>
           </div>
