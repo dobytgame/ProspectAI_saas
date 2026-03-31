@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { saveLeadNote, toggleLeadTag, generatePipelineMessage } from "@/app/(dashboard)/pipeline/actions"
-import { Building2, MessageSquare, Bot, MapPin, Star, History, Tag, Loader2, Send, Sparkles } from "lucide-react"
+import { Building2, MessageSquare, Bot, MapPin, Star, History, Tag, Loader2, Send, Sparkles, Copy, Check } from "lucide-react"
 
 interface KanbanLeadSheetProps {
   lead: any | null
@@ -27,6 +27,7 @@ export default function KanbanLeadSheet({ lead, isOpen, onClose }: KanbanLeadShe
   const [tagText, setTagText] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [copiedMessage, setCopiedMessage] = useState(false)
 
   if (!lead) return null
 
@@ -58,6 +59,19 @@ export default function KanbanLeadSheet({ lead, isOpen, onClose }: KanbanLeadShe
     try {
       await toggleLeadTag(lead.id, tag.trim())
       setTagText('')
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleCopyGeneratedMessage = async () => {
+    const message = lead?.metadata?.generated_message
+    if (!message) return
+
+    try {
+      await navigator.clipboard.writeText(message)
+      setCopiedMessage(true)
+      setTimeout(() => setCopiedMessage(false), 1800)
     } catch (e) {
       console.error(e)
     }
@@ -223,9 +237,19 @@ export default function KanbanLeadSheet({ lead, isOpen, onClose }: KanbanLeadShe
                     variant="outline" 
                     size="sm" 
                     className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => navigator.clipboard.writeText(lead.metadata.generated_message)}
+                    onClick={handleCopyGeneratedMessage}
                   >
-                    Copiar
+                    {copiedMessage ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Check className="h-3.5 w-3.5 text-green-600" />
+                        Copiado
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1">
+                        <Copy className="h-3.5 w-3.5" />
+                        Copiar
+                      </span>
+                    )}
                   </Button>
                 </div>
               ) : (

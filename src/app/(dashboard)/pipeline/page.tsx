@@ -6,6 +6,7 @@ import { Zap, Users, Columns3 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/Sidebar";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import LeadMap from "@/components/LeadMap";
 import SearchForm from "@/components/SearchForm";
 import { Globe } from "lucide-react";
@@ -56,7 +57,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
       <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+      <main className="flex-1 flex flex-col overflow-hidden pb-20 md:pb-0">
         <header className="min-h-14 bg-background border-b border-border/40 flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-6 py-2 sm:py-0 gap-2 shrink-0">
           <div className="flex items-center gap-2 sm:gap-4 text-sm font-medium min-w-0">
             <h1 className="text-base font-bold text-foreground tracking-tight underline decoration-primary/40 decoration-2 underline-offset-4 whitespace-nowrap">Pipeline</h1>
@@ -95,6 +96,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
           )}
         </div>
       </main>
+      <MobileBottomNav />
     </div>
   );
 }

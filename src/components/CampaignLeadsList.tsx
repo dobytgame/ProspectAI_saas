@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Sparkles, MessageCircle, Mail, Phone, Globe, CheckCircle2, AlertCircle, Loader2, Send } from "lucide-react";
+import { Sparkles, MessageCircle, Mail, Phone, Globe, CheckCircle2, AlertCircle, Loader2, Send, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -15,6 +15,7 @@ interface CampaignLeadsListProps {
 
 export default function CampaignLeadsList({ leads, campaign, campaignId }: CampaignLeadsListProps) {
   const [isGeneratingId, setIsGeneratingId] = useState<string | null>(null);
+  const [copiedLeadId, setCopiedLeadId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const handleGenerate = (leadId: string) => {
@@ -29,6 +30,16 @@ export default function CampaignLeadsList({ leads, campaign, campaignId }: Campa
     startTransition(async () => {
       await markAsContactedAction(leadId, campaignId);
     });
+  };
+
+  const handleCopyMessage = async (leadId: string, message: string) => {
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopiedLeadId(leadId);
+      setTimeout(() => setCopiedLeadId((prev) => (prev === leadId ? null : prev)), 1800);
+    } catch (error) {
+      console.error("Erro ao copiar mensagem:", error);
+    }
   };
 
   return (
@@ -93,16 +104,36 @@ export default function CampaignLeadsList({ leads, campaign, campaignId }: Campa
                         <p className="text-[10px] font-bold uppercase tracking-widest text-secondary flex items-center gap-1.5">
                           <Sparkles className="h-3.5 w-3.5" /> Script Sugerido pela IA
                         </p>
-                        <Button 
-                          onClick={() => handleGenerate(lead.id)}
-                          disabled={isThisGenerating}
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 text-[10px] px-2 text-muted-foreground hover:text-secondary hover:bg-secondary/5 gap-1.5"
-                        >
-                          {isThisGenerating ? <Loader2 className="h-3 w-3 animate-spin"/> : <Sparkles className="h-3 w-3" />} 
-                          Regenerar
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            onClick={() => handleCopyMessage(lead.id, lead.metadata.generated_message)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 text-[10px] px-2 text-muted-foreground hover:text-secondary hover:bg-secondary/5 gap-1.5"
+                          >
+                            {copiedLeadId === lead.id ? (
+                              <>
+                                <Check className="h-3 w-3 text-green-600" />
+                                Copiado
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                Copiar
+                              </>
+                            )}
+                          </Button>
+                          <Button 
+                            onClick={() => handleGenerate(lead.id)}
+                            disabled={isThisGenerating}
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 text-[10px] px-2 text-muted-foreground hover:text-secondary hover:bg-secondary/5 gap-1.5"
+                          >
+                            {isThisGenerating ? <Loader2 className="h-3 w-3 animate-spin"/> : <Sparkles className="h-3 w-3" />} 
+                            Regenerar
+                          </Button>
+                        </div>
                       </div>
                       <div className="flex-1 bg-muted/20 border border-border/30 rounded-xl p-4 text-sm leading-relaxed text-foreground/80 font-medium whitespace-pre-wrap">
                         {lead.metadata.generated_message}

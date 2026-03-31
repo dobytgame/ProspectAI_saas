@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 import LeadsTable from "@/components/LeadsTable";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +35,7 @@ export default async function LeadsPage() {
       <Sidebar userEmail={user.email} usage={usage} />
 
       {/* Main */}
-      <main className="flex-1 flex flex-col overflow-hidden pt-16 md:pt-0">
+      <main className="flex-1 flex flex-col overflow-hidden pb-20 md:pb-0">
         <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-3 sm:px-6 shrink-0">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center">
@@ -66,6 +67,7 @@ export default async function LeadsPage() {
           </div>
         </div>
       </main>
+      <MobileBottomNav />
     </div>
   );
 }
