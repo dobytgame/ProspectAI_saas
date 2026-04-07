@@ -21,18 +21,23 @@ interface CampaignKnowledgeOption {
   name: string
 }
 
+type CreateCampaignTriggerVariant = 'header' | 'empty'
+
 interface CreateCampaignDialogProps {
   currentPlan: string
   /** Quando true, "Nova Campanha" abre o modal de upgrade em vez do formulário */
   atCampaignLimit?: boolean
   /** Perfis com status completed — opcional na criação da campanha */
   knowledgeProfiles?: CampaignKnowledgeOption[]
+  /** `header`: botão compacto no topo. `empty`: destaque no estado vazio da lista */
+  triggerVariant?: CreateCampaignTriggerVariant
 }
 
 export default function CreateCampaignDialog({
   currentPlan,
   atCampaignLimit = false,
   knowledgeProfiles = [],
+  triggerVariant = 'header',
 }: CreateCampaignDialogProps) {
   const [open, setOpen] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
@@ -59,11 +64,25 @@ export default function CreateCampaignDialog({
     })
   }
 
-  return (
-    <>
+  const triggerButton =
+    triggerVariant === 'empty' ? (
+      <Button
+        type="button"
+        size="lg"
+        className="mt-6 gap-2 px-8 font-semibold shadow-md"
+        onClick={openCreateFlow}
+      >
+        <Plus className="h-5 w-5" /> Criar primeira campanha
+      </Button>
+    ) : (
       <Button size="sm" className="gap-2" onClick={openCreateFlow}>
         <Plus className="h-4 w-4" /> Nova Campanha
       </Button>
+    )
+
+  return (
+    <>
+      {triggerButton}
 
       <UpgradeModal
         isOpen={showUpgradeModal}

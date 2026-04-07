@@ -81,18 +81,20 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
           </div>
         </header>
 
-        <div className="flex-1 overflow-hidden p-3 sm:p-6 relative">
+        <div className="relative flex min-h-0 flex-1 flex-col p-3 sm:p-6">
           {view === 'map' ? (
-            <div className="h-full rounded-2xl overflow-hidden border border-border/40 relative shadow-2xl">
+            <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-border/40 shadow-2xl">
               <SearchForm segment={business.segment || ""} currentPlan={business.plan || 'free'} />
               <LeadMap leads={kanbanLeads} />
             </div>
           ) : (
-            <KanbanBoard 
-              initialLeads={kanbanLeads} 
-              onStatusChange={updateLeadStatus} 
-              plan={(business.plan || 'free') as PlanType}
-            />
+            <div className="flex min-h-0 flex-1 flex-col">
+              <KanbanBoard
+                initialLeads={kanbanLeads}
+                onStatusChange={updateLeadStatus}
+                plan={(business.plan || 'free') as PlanType}
+              />
+            </div>
           )}
         </div>
       </main>

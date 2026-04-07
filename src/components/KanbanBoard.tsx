@@ -20,13 +20,13 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { LeadScoreDisplay } from '@/components/ui/ScoreBadge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, GripVertical, MessageSquare, Bot, Search, Filter, Download, Upload } from 'lucide-react'
+import { MoreHorizontal, GripVertical, MessageSquare, Search, Download, Upload } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import LeadChat from './LeadChat'
 import KanbanLeadSheet from './KanbanLeadSheet'
 
 import { importLeads } from '@/app/(dashboard)/pipeline/actions'
@@ -55,17 +55,16 @@ interface KanbanBoardProps {
 }
 
 const STAGES = [
-  { id: 'new', title: 'Novo' },
-  { id: 'contacted', title: 'Contatado' },
-  { id: 'interested', title: 'Interessado' },
-  { id: 'negotiating', title: 'Negociação' },
-  { id: 'closed', title: 'Fechado' },
-]
+  { id: 'new', title: 'Novo', accent: 'border-l-sky-500/80 dark:border-l-sky-400/70' },
+  { id: 'contacted', title: 'Contatado', accent: 'border-l-violet-500/80 dark:border-l-violet-400/70' },
+  { id: 'interested', title: 'Interessado', accent: 'border-l-amber-500/85 dark:border-l-amber-400/75' },
+  { id: 'negotiating', title: 'Negociação', accent: 'border-l-orange-500/80 dark:border-l-orange-400/70' },
+  { id: 'closed', title: 'Fechado', accent: 'border-l-emerald-600/85 dark:border-l-emerald-400/75' },
+] as const
 
 export default function KanbanBoard({ initialLeads, onStatusChange, plan }: KanbanBoardProps) {
   const [leads, setLeads] = useState(initialLeads)
   const [activeId, setActiveId] = useState<string | null>(null)
-  const [activeChatLead, setActiveChatLead] = useState<Lead | null>(null)
   const [activeSheetLead, setActiveSheetLead] = useState<Lead | null>(null)
   const [search, setSearch] = useState('')
   const [filterTier, setFilterTier] = useState<string | null>(null)
@@ -220,6 +219,7 @@ export default function KanbanBoard({ initialLeads, onStatusChange, plan }: Kanb
   }
 
   return (
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col">
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
@@ -234,116 +234,141 @@ export default function KanbanBoard({ initialLeads, onStatusChange, plan }: Kanb
         description={upgradeDesc}
         currentPlan={plan}
       />
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nome ou segmento..."
-            className="pl-9 bg-white"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      <div className="flex min-h-0 flex-1 flex-col">
+        {/* Toolbar: altura fixa, tema consistente, responsivo */}
+        <div className="mb-4 shrink-0 space-y-3">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="relative w-full min-w-0 max-w-md">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por nome, segmento ou endereço..."
+                className="h-10 border-border/50 bg-background pl-9 shadow-sm transition-colors focus-visible:ring-primary/30"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept=".csv"
+                onChange={handleImportCSV}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-9 gap-2 border-border/50 bg-background shadow-sm hover:bg-muted/60"
+              >
+                <Upload className="h-4 w-4" />
+                Importar CSV
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                type="button"
+                onClick={exportToCSV}
+                className="h-9 gap-2 border-border/50 bg-background shadow-sm hover:bg-muted/60"
+              >
+                <Download className="h-4 w-4" />
+                Exportar CSV
+              </Button>
+              <select
+                className="h-9 min-w-[160px] flex-1 rounded-md border border-border/50 bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none sm:min-w-[180px]"
+                value={filterCampaign || ''}
+                onChange={(e) => setFilterCampaign(e.target.value || null)}
+                aria-label="Filtrar por campanha"
+              >
+                <option value="">Todas as campanhas</option>
+                {campaigns.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="h-9 min-w-[160px] flex-1 rounded-md border border-border/50 bg-background px-3 text-sm shadow-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-none sm:min-w-[180px]"
+                value={filterSegment || ''}
+                onChange={(e) => setFilterSegment(e.target.value || null)}
+                aria-label="Filtrar por segmento"
+              >
+                <option value="">Todos os segmentos</option>
+                {segments.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-border/40 pt-3">
+            <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Classe</span>
+            {(['A+', 'A', 'B', 'C'] as const).map((tier) => (
+              <Button
+                key={tier}
+                type="button"
+                variant={filterTier === tier ? 'secondary' : 'outline'}
+                size="sm"
+                onClick={() => setFilterTier(filterTier === tier ? null : tier)}
+                className="h-8 rounded-full px-3 text-xs font-semibold"
+              >
+                {tier}
+              </Button>
+            ))}
+            {filterTier && (
+              <Button type="button" variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setFilterTier(null)}>
+                Limpar filtro
+              </Button>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            accept=".csv" 
-            onChange={handleImportCSV} 
-          />
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-white border-border/40 hover:bg-muted/50 text-muted-foreground gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            Importar CSV
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={exportToCSV}
-            className="bg-white border-border/40 hover:bg-muted/50 text-muted-foreground gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Exportar CSV
-          </Button>
-          <Input
-            type="text"
-            placeholder="Tier..."
-            className="w-20 bg-white"
-            value={filterTier || ''}
-            onChange={(e) => setFilterTier(e.target.value.toUpperCase() || null)}
-            maxLength={2}
-          />
-          <select 
-            className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            value={filterCampaign || ''}
-            onChange={(e) => setFilterCampaign(e.target.value || null)}
-          >
-            <option value="">Todas Campanhas</option>
-            {campaigns.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <select 
-            className="flex h-10 w-[180px] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            value={filterSegment || ''}
-            onChange={(e) => setFilterSegment(e.target.value || null)}
-          >
-            <option value="">Todos Segmentos</option>
-            {segments.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <div className="flex gap-2">
-          {['A+', 'A', 'B', 'C'].map(tier => (
-            <Button
-              key={tier}
-              variant={filterTier === tier ? "secondary" : "outline"}
-              size="sm"
-              onClick={() => setFilterTier(filterTier === tier ? null : tier)}
-              className="h-9"
-            >
-              Tier {tier}
-            </Button>
+
+        {/* Colunas: ocupam todo o espaço vertical restante; scroll horizontal no quadro */}
+        <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto overflow-y-hidden pb-1 [scrollbar-gutter:stable]">
+          {STAGES.map((stage) => (
+            <DroppableColumn key={stage.id} stage={stage}>
+              <div className="flex shrink-0 items-center justify-between border-b border-border/40 bg-background/80 px-4 py-3 backdrop-blur-sm dark:bg-background/60">
+                <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
+                  {stage.title}
+                  <Badge variant="secondary" className="h-5 min-w-[1.25rem] justify-center px-1.5 text-[10px] font-bold tabular-nums">
+                    {filteredLeads.filter((l) => l.status === stage.id).length}
+                  </Badge>
+                </h3>
+                <button
+                  type="button"
+                  className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={`Opções da coluna ${stage.title}`}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-2">
+                <SortableContext
+                  id={stage.id}
+                  items={filteredLeads.filter((l) => l.status === stage.id).map((l) => l.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="flex flex-col gap-3 pb-2">
+                    {filteredLeads
+                      .filter((l) => l.status === stage.id)
+                      .map((lead) => (
+                        <SortableItem
+                          key={lead.id}
+                          lead={lead}
+                          onOpenSheet={() => setActiveSheetLead(lead)}
+                        />
+                      ))}
+                  </div>
+                </SortableContext>
+              </div>
+            </DroppableColumn>
           ))}
         </div>
       </div>
-
-      <div className="flex gap-4 h-full overflow-x-auto pb-4">
-        {STAGES.map((stage) => (
-          <DroppableColumn key={stage.id} stage={stage} leadsCount={filteredLeads.filter((l) => l.status === stage.id).length}>
-            <div className="p-4 flex items-center justify-between">
-              <h3 className="font-semibold text-sm flex items-center gap-2">
-                {stage.title}
-                <Badge variant="secondary" className="text-[10px] h-5">
-                  {filteredLeads.filter((l) => l.status === stage.id).length}
-                </Badge>
-              </h3>
-              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-            </div>
-
-            <div className="flex-1 p-2 space-y-3">
-              <SortableContext
-                id={stage.id}
-                items={filteredLeads.filter((l) => l.status === stage.id).map((l) => l.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                {filteredLeads
-                  .filter((l) => l.status === stage.id)
-                  .map((lead) => (
-                    <SortableItem key={lead.id} lead={lead} onOpenChat={() => setActiveChatLead(lead)} onOpenSheet={() => setActiveSheetLead(lead)} />
-                  ))}
-              </SortableContext>
-            </div>
-          </DroppableColumn>
-        ))}
-      </div>
       
-      {activeChatLead && (
-        <LeadChat lead={activeChatLead} onClose={() => setActiveChatLead(null)} />
-      )}
-
       <KanbanLeadSheet 
         lead={activeSheetLead ? (leads.find(l => l.id === activeSheetLead.id) || activeSheetLead) : null} 
         isOpen={!!activeSheetLead} 
@@ -358,27 +383,36 @@ export default function KanbanBoard({ initialLeads, onStatusChange, plan }: Kanb
         ) : null}
       </DragOverlay>
     </DndContext>
+    </div>
   )
 }
 
-function DroppableColumn({ stage, leadsCount, children }: { stage: any, leadsCount: number, children: React.ReactNode }) {
+function DroppableColumn({
+  stage,
+  children,
+}: {
+  stage: (typeof STAGES)[number]
+  children: React.ReactNode
+}) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
   })
 
   return (
-    <div 
-      ref={setNodeRef} 
-      className={`min-w-[300px] flex flex-col h-full rounded-xl border border-border/40 transition-colors ${
-        isOver ? 'bg-muted/40 border-primary/50' : 'bg-muted/20'
-      }`}
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'flex h-full min-h-0 w-[min(100%,300px)] min-w-[280px] shrink-0 flex-col self-stretch overflow-hidden rounded-xl border border-border/50 border-l-4 bg-muted/45 shadow-sm transition-[box-shadow,background-color] duration-200 dark:bg-muted/25',
+        stage.accent,
+        isOver && 'bg-primary/[0.07] shadow-md ring-2 ring-primary/25 dark:bg-primary/[0.12]'
+      )}
     >
       {children}
     </div>
   )
 }
 
-function SortableItem({ lead, onOpenChat, onOpenSheet }: { lead: Lead, onOpenChat: () => void, onOpenSheet: () => void }) {
+function SortableItem({ lead, onOpenSheet }: { lead: Lead; onOpenSheet: () => void }) {
   const {
     attributes,
     listeners,
@@ -396,23 +430,20 @@ function SortableItem({ lead, onOpenChat, onOpenSheet }: { lead: Lead, onOpenCha
 
   return (
     <div ref={setNodeRef} style={style}>
-      <LeadCard lead={lead} onOpenChat={onOpenChat} onOpenSheet={onOpenSheet} dndProps={{ ...attributes, ...listeners }} />
+      <LeadCard lead={lead} onOpenSheet={onOpenSheet} dndProps={{ ...attributes, ...listeners }} />
     </div>
   )
 }
 
-function LeadCard({ lead, isDragging, onOpenChat, onOpenSheet, dndProps }: { lead: Lead; isDragging?: boolean, onOpenChat?: () => void, onOpenSheet?: () => void, dndProps?: any }) {
+function LeadCard({ lead, isDragging, onOpenSheet, dndProps }: { lead: Lead; isDragging?: boolean; onOpenSheet?: () => void; dndProps?: any }) {
   const timeSinceActivity = lead.updated_at 
     ? Math.floor((new Date().getTime() - new Date(lead.updated_at).getTime()) / (1000 * 3600 * 24))
     : 0;
 
   return (
     <Card 
-      className={`group relative bg-background border-border/50 shadow-sm hover:shadow-md transition-shadow cursor-pointer ${isDragging ? 'shadow-xl border-primary ring-1 ring-primary' : ''}`}
-      onClick={(e) => {
-        // Only open sheet if we are not clicking a button inside (handled by stopPropagation on buttons)
-        onOpenSheet?.();
-      }}
+      className={`group relative cursor-pointer border-border/50 bg-background shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/25 hover:shadow-md ${isDragging ? 'shadow-xl border-primary ring-1 ring-primary' : ''}`}
+      onClick={() => onOpenSheet?.()}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
@@ -448,25 +479,21 @@ function LeadCard({ lead, isDragging, onOpenChat, onOpenSheet, dndProps }: { lea
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1">
-            {lead.phone && (
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600 hover:bg-green-50" onClick={(e) => { e.stopPropagation(); window.open(`https://wa.me/55${lead.phone?.replace(/\D/g,'')}`, '_blank'); }}>
-                <MessageSquare className="h-3 w-3" />
-              </Button>
-            )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="h-7 px-2 text-secondary hover:text-secondary hover:bg-secondary/10"
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                onOpenChat?.();
+          {lead.phone ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0 text-[#25D366] hover:bg-[#25D366]/10 dark:hover:bg-[#25D366]/15"
+              aria-label="Abrir WhatsApp"
+              onClick={(e) => {
+                e.stopPropagation()
+                window.open(`https://wa.me/55${lead.phone?.replace(/\D/g, '')}`, '_blank')
               }}
             >
-              <Bot className="h-3 w-3 mr-1" />
-              <span className="text-[10px] font-bold">IA</span>
+              <MessageSquare className="h-4 w-4" />
             </Button>
-          </div>
+          ) : null}
         </div>
       </CardContent>
     </Card>

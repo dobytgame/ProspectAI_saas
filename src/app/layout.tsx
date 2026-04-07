@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AppProviders from "@/components/AppProviders";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
@@ -42,7 +43,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${geist.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-mesh">{children}</body>
+      <body className="min-h-full flex flex-col font-sans bg-mesh">
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }
