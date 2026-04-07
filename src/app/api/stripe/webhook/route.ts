@@ -3,7 +3,9 @@
  * https://dashboard.stripe.com/webhooks → endpoint (ex.: https://www.capturo.digital/api/stripe/webhook)
  * Eventos: checkout.session.completed, customer.subscription.created, customer.subscription.updated, customer.subscription.deleted
  *
- * Variáveis: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, SUPABASE_SERVICE_ROLE_KEY,
+ * Variáveis: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+ * SUPABASE_SERVICE_ROLE_KEY (obrigatória na Vercel → Production; é a "service_role" do Supabase, não a anon),
+ * NEXT_PUBLIC_SUPABASE_URL,
  * e os Price IDs (NEXT_PUBLIC_STRIPE_PRICE_ID_* ou STRIPE_PRICE_ID_* — ver price-to-plan.ts).
  */
 import { NextResponse } from "next/server";
@@ -20,12 +22,18 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 function getSupabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  /** Só a service_role ignora RLS; anon não serve para este webhook. */
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
   if (!url) {
-    throw new Error("NEXT_PUBLIC_SUPABASE_URL ausente no servidor (webhook)");
+    throw new Error(
+      "Webhook Stripe: NEXT_PUBLIC_SUPABASE_URL ausente. Defina na Vercel (Production)."
+    );
   }
   if (!key) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY ausente no servidor (webhook)");
+    throw new Error(
+      "Webhook Stripe: SUPABASE_SERVICE_ROLE_KEY ausente (o SDK acusa \"supabaseKey is required\"). " +
+        "No Supabase: Settings → API → service_role (secret). Na Vercel: Settings → Environment Variables → Production → adicione SUPABASE_SERVICE_ROLE_KEY e faça redeploy."
+    );
   }
   return createClient(url, key);
 }
