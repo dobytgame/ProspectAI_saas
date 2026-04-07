@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { analyzeKnowledgeSource } from "@/lib/ai/claude";
 import { extractPdfPlainText } from "@/lib/pdf/extractPdfText";
+import { clearOnboardingKbSkippedFlag } from "@/lib/business/metadata-flags";
 import axios from "axios";
 
 export const runtime = "nodejs";
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const businessId = formData.get("business_id") as string;
-    const type = formData.get("type") as string; // 'url' or 'file'
+    const type = formData.get("type") as string; // 'url' | 'file' | 'manual'
     const url = formData.get("url") as string;
     const file = formData.get("file") as File;
 
@@ -35,6 +36,48 @@ export async function POST(request: Request) {
 
     if (!business) {
       return NextResponse.json({ error: "Business not found or unauthorized" }, { status: 404 });
+    }
+
+    if (type === "manual") {
+      const manualText = ((formData.get("manual_text") as string) || "").trim();
+      if (manualText.length < 20) {
+        return NextResponse.json(
+          { error: "Escreva pelo menos 20 caracteres sobre seu negócio." },
+          { status: 400 }
+        );
+      }
+      if (manualText.length > 50000) {
+        return NextResponse.json(
+          { error: "Texto muito longo. Use no máximo 50 mil caracteres." },
+          { status: 400 }
+        );
+      }
+
+      const { data: kbRecord, error: manualInsertError } = await supabase
+        .from("knowledge_bases")
+        .insert({
+          business_id: business.id,
+          type: "manual",
+          source: "Descrição manual",
+          status: "completed",
+          content: manualText.substring(0, 10000),
+          ai_feedback: manualText.substring(0, 12000),
+          metadata: { origin: "onboarding_manual" },
+        })
+        .select()
+        .single();
+
+      if (manualInsertError) {
+        console.error("Manual KB insert:", manualInsertError);
+        return NextResponse.json(
+          { error: "Não foi possível salvar o texto." },
+          { status: 500 }
+        );
+      }
+
+      await clearOnboardingKbSkippedFlag(supabase, business.id);
+
+      return NextResponse.json({ success: true, record: kbRecord });
     }
 
     let sourceName = "";
@@ -140,6 +183,8 @@ export async function POST(request: Request) {
         .single();
 
       if (updateError) throw updateError;
+
+      await clearOnboardingKbSkippedFlag(supabase, business.id);
 
       return NextResponse.json({ success: true, analysis, record: updatedRecord });
       

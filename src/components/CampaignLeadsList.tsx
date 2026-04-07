@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { generateMessageAction, markAsContactedAction } from "@/app/(dashboard)/campanhas/[id]/actions";
+import ExportMetaAudienceButton from "@/components/ExportMetaAudienceButton";
 
 interface CampaignLeadsListProps {
   leads: any[];
   campaign: any;
   campaignId: string;
+  currentPlan: string;
 }
 
-export default function CampaignLeadsList({ leads, campaign, campaignId }: CampaignLeadsListProps) {
+export default function CampaignLeadsList({ leads, campaign, campaignId, currentPlan }: CampaignLeadsListProps) {
   const [isGeneratingId, setIsGeneratingId] = useState<string | null>(null);
   const [copiedLeadId, setCopiedLeadId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -44,9 +46,17 @@ export default function CampaignLeadsList({ leads, campaign, campaignId }: Campa
 
   return (
     <div className="space-y-4">
-      <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2 px-2">
-        <Send className="h-4 w-4" /> Pipeline de Abordagem
-      </h2>
+      <div className="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-sm font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+          <Send className="h-4 w-4" /> Pipeline de Abordagem
+        </h2>
+        <ExportMetaAudienceButton
+          currentPlan={currentPlan}
+          campaignId={campaignId}
+          variant="secondary"
+          className="shrink-0 border-primary/25 bg-primary/5 hover:bg-primary/10"
+        />
+      </div>
       
       <div className="grid grid-cols-1 gap-4">
         {leads.map((lead) => {

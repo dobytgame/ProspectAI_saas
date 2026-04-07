@@ -5,7 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import CreateCampaignDialog from "@/components/campaigns/CreateCampaignDialog";
 import CampaignCard from "@/components/campaigns/CampaignCard";
-import { getPlanUsage, PlanType } from "@/utils/plan-limits";
+import { getPlanUsage, PlanType, PLAN_LIMITS } from "@/utils/plan-limits";
 
 export default async function CampaignsPage() {
   const supabase = await createClient();
@@ -25,13 +25,17 @@ export default async function CampaignsPage() {
     redirect("/onboarding");
   }
 
-  const usage = await getPlanUsage(supabase, business.id, (business.plan || 'free') as PlanType);
+  const plan = (business.plan || "free") as PlanType;
+  const usage = await getPlanUsage(supabase, business.id, plan);
 
   const { data: campaigns } = await supabase
     .from("campaigns")
     .select("*, leads:leads(count)")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
+
+  const atCampaignLimit =
+    (campaigns?.length ?? 0) >= PLAN_LIMITS[plan].maxCampaigns;
 
   return (
     <div className="flex h-screen bg-muted/30 font-sans text-foreground">
@@ -41,7 +45,10 @@ export default async function CampaignsPage() {
       <main className="flex-1 flex flex-col overflow-hidden pb-20 md:pb-0">
         <header className="h-14 bg-background border-b border-border/40 flex items-center justify-between px-3 sm:px-6 shrink-0 gap-3">
           <h1 className="text-base sm:text-lg font-semibold truncate">Campanhas de Prospecção</h1>
-          <CreateCampaignDialog />
+          <CreateCampaignDialog
+            currentPlan={plan}
+            atCampaignLimit={atCampaignLimit}
+          />
         </header>
 
         <div className="flex-1 overflow-auto p-3 sm:p-6 md:p-8">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { trainAgent } from "@/lib/ai/claude";
+import { mergeOnboardingKbSkippedMetadata } from "@/lib/business/metadata-flags";
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const businessId = body.business_id;
+    const skippedEmptyKb = body.skipped_empty_kb === true;
 
     if (!businessId) {
       return NextResponse.json({ error: "Business ID is required" }, { status: 400 });
@@ -39,6 +41,8 @@ export async function POST(request: Request) {
 
     if (kbError) throw kbError;
 
+    const completedKbCount = knowledgeItems?.length ?? 0;
+
     // 3. Concatenate Feedback
     let extraContext = "";
     if (knowledgeItems && knowledgeItems.length > 0) {
@@ -59,13 +63,20 @@ export async function POST(request: Request) {
       extraContext: extraContext,
     });
 
-    // 5. Update Business ICP
+    // 5. Update Business ICP + metadata (banner "IA básica" no dashboard)
+    const metadata = mergeOnboardingKbSkippedMetadata(
+      business.metadata,
+      completedKbCount,
+      skippedEmptyKb
+    );
+
     const { error: updateError } = await supabase
       .from("businesses")
       .update({
         segment: aiProfile.niche,
         icp: aiProfile.icp,
         tone: aiProfile.suggested_tone,
+        metadata,
       })
       .eq("id", business.id);
 

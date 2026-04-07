@@ -1,20 +1,13 @@
 import { NextResponse } from 'next/server';
 import { createClient } from "@/utils/supabase/server";
-import { getSystemPrompt } from "@/lib/ai/prompts";
-import Anthropic from "@anthropic-ai/sdk";
+import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/evolution";
 import { sendEmail } from "@/lib/emails/resend";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-});
+import { assertCronAuthorized } from "@/lib/cron/verify-cron-request";
 
 export async function GET(req: Request) {
-  // Simple "Auth" check for Cron (should use a secret in prod)
-  const authHeader = req.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = assertCronAuthorized(req);
+  if (denied) return denied;
 
   const supabase = await createClient();
 
@@ -71,14 +64,17 @@ export async function GET(req: Request) {
       `;
 
       try {
-        const aiResponse = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20240620",
+        const aiResponse = await openai.chat.completions.create({
+          model: OPENAI_MODEL_FLAGSHIP,
           max_tokens: 300,
-          system: systemPrompt,
-          messages: [{ role: "user", content: "Gere um follow-up curto e gentil." }],
+          temperature: 0.65,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: "Gere um follow-up curto e gentil." },
+          ],
         });
 
-        const followMessage = aiResponse.content[0].type === 'text' ? aiResponse.content[0].text : '';
+        const followMessage = aiResponse.choices[0]?.message?.content?.trim() || "";
         const integrations = campaign.business.metadata?.integrations || {};
 
         // 4. Send via Channel

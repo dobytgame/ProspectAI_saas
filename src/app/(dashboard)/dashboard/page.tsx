@@ -93,6 +93,11 @@ export default async function DashboardPage() {
           pipelineStats={pipelineData || {}}
           recentActivity={recentActivity || []}
           currentPlan={business.plan || 'free'}
+          showIcpBasicBanner={
+            typeof business.metadata === 'object' &&
+            business.metadata !== null &&
+            (business.metadata as Record<string, unknown>).onboarding_kb_skipped === true
+          }
         />
       </main>
       <MobileBottomNav />

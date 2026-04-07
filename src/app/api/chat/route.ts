@@ -1,29 +1,24 @@
-import { NextResponse } from 'next/server'
-import Anthropic from "@anthropic-ai/sdk";
+import { NextResponse } from "next/server";
+import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { createClient } from "@/utils/supabase/server";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-});
+import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 
 export async function POST(req: Request) {
   try {
-    const { message, leadId, history = [] } = await req.json()
-    const supabase = await createClient()
+    const { message, leadId, history = [] } = await req.json();
+    const supabase = await createClient();
 
-    // 1. Get Lead and Business details
     const { data: lead } = await supabase
       .from("leads")
       .select("*, business:businesses(*, agents(config))")
       .eq("id", leadId)
-      .single()
+      .single();
 
-    if (!lead) return NextResponse.json({ reply: "Lead não encontrado." })
+    if (!lead) return NextResponse.json({ reply: "Lead não encontrado." });
 
-    const business = lead.business
-    const agentConfig = business?.agents?.[0]?.config || {}
+    const business = lead.business;
+    const agentConfig = business?.agents?.[0]?.config || {};
 
-    // 2. Prepare Context
     const systemPrompt = `
       Você é o Agente Capturo, um assessor comercial altamente experiente.
       Seu objetivo é ajudar o usuário a prospectar a empresa: ${lead.name}.
@@ -41,7 +36,7 @@ export async function POST(req: Request) {
       - Endereço: ${lead.address}
       - Score de Qualificação: ${lead.score}/100
       - Razão da Nota: ${lead.metadata?.reasoning}
-      - Avaliação: ${lead.metadata?.rating || 'N/A'} estrelas
+      - Avaliação: ${lead.metadata?.rating || "N/A"} estrelas
       
       INSTRUÇÕES:
       - Seja consultivo, direto e profissional conforme o tom de voz.
@@ -49,30 +44,32 @@ export async function POST(req: Request) {
       - Sugira abordagens baseadas nos gatilhos de compra e pontos fracos (pain points).
     `;
 
-    // 3. Call Claude
-    const messages = [
-      ...history.slice(-10).map((h: any) => ({
-        role: h.role === 'assistant' ? 'assistant' : 'user',
-        content: h.content
+    const messages: ChatCompletionMessageParam[] = [
+      { role: "system", content: systemPrompt },
+      ...history.slice(-10).map((h: { role: string; content: string }) => ({
+        role: h.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        content: h.content,
       })),
-      { role: "user", content: message }
+      { role: "user", content: message },
     ];
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5",
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL_FLAGSHIP,
       max_tokens: 1000,
-      system: systemPrompt,
-      messages: messages as any,
+      temperature: 0.7,
+      messages,
     });
 
-    const content = response.content[0];
-    const reply = content.type === "text"
-      ? content.text
-      : "Não consegui gerar uma resposta.";
+    const reply =
+      response.choices[0]?.message?.content?.trim() ||
+      "Não consegui gerar uma resposta.";
 
-    return NextResponse.json({ reply })
+    return NextResponse.json({ reply });
   } catch (error) {
-    console.error("Chat error:", error)
-    return NextResponse.json({ reply: "Erro ao processar conversa." }, { status: 500 })
+    console.error("Chat error:", error);
+    return NextResponse.json(
+      { reply: "Erro ao processar conversa." },
+      { status: 500 }
+    );
   }
 }

@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capturo — Diagnóstico & Guia de Lançamento</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080C14;--surf:#0D1420;--surf2:#111827;
+  --b:#1E2D45;--bh:#2D4060;
+  --cyan:#00E5FF;--cD:rgba(0,229,255,.09);--cB:rgba(0,229,255,.22);
+  --green:#00FFA3;--gD:rgba(0,255,163,.09);
+  --yellow:#FFD600;--yD:rgba(255,214,0,.09);
+  --red:#FF4D6D;--rD:rgba(255,77,109,.09);
+  --purple:#A855F7;--pD:rgba(168,85,247,.09);
+  --orange:#FF8C42;
+  --text:#E2EAF4;--muted:#6B7FA8;--dim:#3D4F6E;
+  --mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6}
+
+.layout{display:flex;min-height:100vh}
+.sidenav{width:220px;flex-shrink:0;position:sticky;top:0;height:100vh;background:var(--surf);border-right:1px solid var(--b);display:flex;flex-direction:column;padding:24px 0;overflow-y:auto}
+.main{flex:1;max-width:860px;padding:48px 40px 100px;overflow-y:auto}
+
+.nav-logo{padding:0 20px 24px;border-bottom:1px solid var(--b);margin-bottom:16px}
+.nav-logo-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:800}
+.nav-logo-name span{color:var(--cyan)}
+.nav-logo-sub{font-size:10px;color:var(--dim);margin-top:2px}
+.nav-sec{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:12px 20px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 20px;font-size:12px;color:var(--muted);cursor:pointer;border-left:2px solid transparent;transition:all .15s;text-decoration:none}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.active{color:var(--cyan);border-left-color:var(--cyan);background:var(--cD)}
+.nav-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+
+.section{margin-bottom:64px;scroll-margin-top:32px}
+.eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+.section-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text);margin-bottom:6px;line-height:1.2}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.7;max-width:680px}
+.divider{height:1px;background:linear-gradient(90deg,transparent,var(--b),transparent);margin:56px 0}
+
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap}
+.b-cyan{background:var(--cD);color:var(--cyan);border:1px solid var(--cB)}
+.b-green{background:var(--gD);color:var(--green);border:1px solid rgba(0,255,163,.22)}
+.b-yellow{background:var(--yD);color:var(--yellow);border:1px solid rgba(255,214,0,.22)}
+.b-red{background:var(--rD);color:var(--red);border:1px solid rgba(255,77,109,.22)}
+.b-purple{background:var(--pD);color:var(--purple);border:1px solid rgba(168,85,247,.22)}
+.b-gray{background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--b)}
+.b-orange{background:rgba(255,140,66,.09);color:var(--orange);border:1px solid rgba(255,140,66,.22)}
+
+.card{background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:20px 22px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+
+/* Status pill */
+.status-pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.s-done{background:var(--gD);color:var(--green);border:1px solid rgba(0,255,163,.25)}
+.s-partial{background:var(--yD);color:var(--yellow);border:1px solid rgba(255,214,0,.25)}
+.s-miss{background:var(--rD);color:var(--red);border:1px solid rgba(255,77,109,.25)}
+.s-new{background:var(--cD);color:var(--cyan);border:1px solid var(--cB)}
+
+/* Audit row */
+.audit-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid rgba(30,45,69,.4)}
+.audit-row:last-child{border-bottom:none;padding-bottom:0}
+.audit-icon{font-size:16px;flex-shrink:0;margin-top:1px;width:24px;text-align:center}
+.audit-content{flex:1;min-width:0}
+.audit-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.audit-sub{font-size:12px;color:var(--muted);line-height:1.5}
+.audit-right{flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+
+/* Code */
+.code-block{background:#050810;border:1px solid var(--b);border-radius:12px;overflow:hidden;margin:12px 0}
+.code-header{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--b);background:rgba(255,255,255,.02)}
+.code-file{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.copy-btn{font-size:10px;padding:3px 10px;border-radius:6px;background:var(--surf2);border:1px solid var(--b);color:var(--muted);cursor:pointer;transition:all .15s}
+.copy-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.copy-btn.ok{color:var(--green);border-color:var(--green)}
+pre{padding:16px;overflow-x:auto;font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#A8D8EA;white-space:pre}
+.kw{color:#C792EA}.str{color:#C3E88D}.cmt{color:#4A6072;font-style:italic}.fn{color:#82AAFF}.num{color:#F78C6C}.hl{background:rgba(0,229,255,.07);display:block;margin:0 -16px;padding:0 16px}
+
+/* Alert */
+.alert{display:flex;gap:12px;padding:14px 16px;border-radius:12px;margin:12px 0}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-body{flex:1;font-size:12px;line-height:1.6}
+.alert-title{font-weight:600;margin-bottom:3px}
+.alert-info{background:var(--cD);border:1px solid var(--cB)}
+.alert-info .alert-title{color:var(--cyan)}
+.alert-ok{background:var(--gD);border:1px solid rgba(0,255,163,.22)}
+.alert-ok .alert-title{color:var(--green)}
+.alert-warn{background:var(--yD);border:1px solid rgba(255,214,0,.22)}
+.alert-warn .alert-title{color:var(--yellow)}
+.alert-danger{background:var(--rD);border:1px solid rgba(255,77,109,.22)}
+.alert-danger .alert-title{color:var(--red)}
+
+/* Feature score card */
+.feat-card{background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
+.feat-score{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;line-height:1;flex-shrink:0;width:44px;text-align:center}
+.feat-content{flex:1}
+.feat-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.feat-sub{font-size:12px;color:var(--muted);line-height:1.5}
+.feat-bar{height:3px;background:var(--b);border-radius:2px;margin-top:8px;overflow:hidden}
+.feat-fill{height:100%;border-radius:2px}
+
+/* Sprint card */
+.sprint{border-radius:16px;overflow:hidden;border:1px solid var(--b);margin-bottom:12px}
+.sprint-header{padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+.sprint-title{font-size:14px;font-weight:700;color:var(--text)}
+.sprint-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.sprint-body{padding:0 18px 16px}
+.task{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid rgba(30,45,69,.3)}
+.task:last-child{border-bottom:none}
+.task-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--b);flex-shrink:0;margin-top:2px}
+.task-text{flex:1;font-size:12px;color:var(--muted);line-height:1.5}
+.task-text strong{color:var(--text);font-weight:500}
+.task-est{font-size:10px;color:var(--dim);flex-shrink:0}
+
+/* Metrics */
+.metric{background:var(--surf);border:1px solid var(--b);border-radius:14px;padding:16px 18px;text-align:center}
+.metric-val{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1;margin:4px 0 3px}
+.metric-label{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* Table */
+.tw{border:1px solid var(--b);border-radius:12px;overflow:hidden;margin:12px 0}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:10px 14px;border-bottom:1px solid var(--b);background:var(--surf2)}
+td{padding:10px 14px;font-size:12px;border-bottom:1px solid rgba(30,45,69,.5);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.015)}
+
+footer{margin-top:80px;padding-top:24px;border-top:1px solid var(--b);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+footer p{font-size:11px;color:var(--dim)}
+@media(max-width:768px){.sidenav{display:none}.main{padding:32px 20px 60px}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- NAV -->
+<nav class="sidenav">
+  <div class="nav-logo">
+    <div class="nav-logo-name">captur<span>o</span></div>
+    <div class="nav-logo-sub">Diagnóstico & Guia de Lançamento</div>
+  </div>
+  <div class="nav-sec">Diagnóstico</div>
+  <a class="nav-item active" href="#s0"><div class="nav-dot" style="background:var(--cyan)"></div>Estado atual</a>
+  <a class="nav-item" href="#s0-inv"><div class="nav-dot" style="background:var(--purple)"></div>Inventário Fase 0</a>
+  <a class="nav-item" href="#s1"><div class="nav-dot" style="background:var(--green)"></div>O que está pronto</a>
+  <a class="nav-item" href="#s2"><div class="nav-dot" style="background:var(--red)"></div>Gaps críticos</a>
+
+  <div class="nav-sec">Correções Urgentes</div>
+  <a class="nav-item" href="#s3"><div class="nav-dot" style="background:var(--red)"></div>Bug: limite 20 leads</a>
+  <a class="nav-item" href="#s4"><div class="nav-dot" style="background:var(--red)"></div>Onboarding melhorado</a>
+
+  <div class="nav-sec">Para Ir ao Ar</div>
+  <a class="nav-item" href="#s5"><div class="nav-dot" style="background:var(--green)"></div>Stack IA (OpenAI)</a>
+  <a class="nav-item" href="#s6"><div class="nav-dot" style="background:var(--yellow)"></div>Stripe & billing</a>
+  <a class="nav-item" href="#s7"><div class="nav-dot" style="background:var(--yellow)"></div>WhatsApp & email</a>
+  <a class="nav-item" href="#s8"><div class="nav-dot" style="background:var(--yellow)"></div>Busca por múltiplos nichos</a>
+
+  <div class="nav-sec">Produto & Lançamento</div>
+  <a class="nav-item" href="#s9"><div class="nav-dot" style="background:var(--purple)"></div>Roadmap de sprints</a>
+  <a class="nav-item" href="#s10"><div class="nav-dot" style="background:var(--purple)"></div>Checklist launch</a>
+  <a class="nav-item" href="#s11"><div class="nav-dot" style="background:var(--orange)"></div>GTM: primeiros clientes</a>
+</nav>
+
+<main class="main">
+
+<!-- HEADER -->
+<div style="margin-bottom:48px">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px">
+    <div>
+      <div style="font-size:11px;color:var(--dim);margin-bottom:8px;font-family:var(--mono)">capturo.com.br · Análise completa do codebase · Abril 2026 · Fase 0 sincronizada com o repo</div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:30px;font-weight:800;line-height:1.15;margin-bottom:8px">Diagnóstico Completo<br><span style="color:var(--cyan)">& Guia de Lançamento</span></h1>
+      <p style="font-size:13px;color:var(--muted);line-height:1.7;max-width:580px">Análise de 68 arquivos, 6 migrations SQL, todos os fluxos de produto. O projeto está mais avançado do que parece — faltam poucos ajustes para ir ao ar e captar os primeiros clientes.</p>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+        <span class="badge b-gray">68 arquivos</span>
+        <span class="badge b-gray">6 migrations</span>
+        <span class="badge b-cyan">MVP avançado</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-ok">
+    <div class="alert-icon">🚀</div>
+    <div class="alert-body">
+      <div class="alert-title">Veredicto geral: produto está ~75% pronto para lançamento</div>
+      Stripe (checkout com metadata + <code style="font-family:var(--mono);font-size:11px">client_reference_id</code>), webhook com mapeamento price→plano, rotas cron com <code style="font-family:var(--mono);font-size:11px">CRON_SECRET</code> (Bearer ou <code style="font-family:var(--mono);font-size:11px">X-Cron-Secret</code>; Hobby = agendador externo; Pro+ = opcional <code style="font-family:var(--mono);font-size:11px">vercel.json</code> crons), Places com delay 3s e retries, <code style="font-family:var(--mono);font-size:11px">maxPagesPerSearch</code> nos planos, onboarding Pro = 1.000 leads — <strong>Fase 1 feita no código</strong>. Próximas prioridades: <strong>validar billing e crons</strong>, <strong>banner “IA básica” no dashboard</strong> (quem pulou Step 2), landing SEO/OG.
+    </div>
+  </div>
+</div>
+
+<!-- ══ S0 — ESTADO ATUAL ════════════════════════════════ -->
+<section class="section" id="s0">
+  <div class="eyebrow">Diagnóstico geral</div>
+  <div class="section-title">Onde o projeto está hoje</div>
+
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="metric"><div class="metric-label">Completude do produto</div><div class="metric-val" style="color:var(--cyan)">75%</div><div style="font-size:10px;color:var(--dim);margin-top:3px">MVP funcional</div></div>
+    <div class="metric"><div class="metric-label">Funcionalidades únicas</div><div class="metric-val" style="color:var(--green)">12</div><div style="font-size:10px;color:var(--dim);margin-top:3px">vs concorrência</div></div>
+    <div class="metric"><div class="metric-label">Bugs críticos</div><div class="metric-val" style="color:var(--red)">3</div><div style="font-size:10px;color:var(--dim);margin-top:3px">bloqueiam usuário</div></div>
+    <div class="metric"><div class="metric-label">Para ir ao ar</div><div class="metric-val" style="color:var(--yellow)">~2 semanas</div><div style="font-size:10px;color:var(--dim);margin-top:3px">de trabalho focado</div></div>
+    <div class="metric"><div class="metric-label">Infra de planos</div><div class="metric-val" style="color:var(--green)">✓</div><div style="font-size:10px;color:var(--dim);margin-top:3px">Stripe + limites</div></div>
+    <div class="metric"><div class="metric-label">IA em produção</div><div class="metric-val" style="color:var(--green)">✓</div><div style="font-size:10px;color:var(--dim);margin-top:3px">OpenAI gpt-4o / mini</div></div>
+  </div>
+</section>
+
+<!-- ══ S0-inv — INVENTÁRIO FASE 0 (DOC × CÓDIGO) ═══════ -->
+<section class="section" id="s0-inv">
+  <div class="eyebrow">Fase 0 executada</div>
+  <div class="section-title">Inventário: guia × estado real do repositório</div>
+  <div class="section-sub">Checagem objetiva (arquivos em <code style="font-family:var(--mono);font-size:11px">ProspectAI_saas</code>). Use isto como fonte única até a próxima revisão.</div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--b)"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Item · Evidência · Status</div></div>
+    <div style="padding:8px 0">
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Stack LLM só OpenAI</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">src/lib/ai/openai-client.ts</code> — modelos <code style="font-family:var(--mono);font-size:10px">gpt-4o</code> (principal) e <code style="font-family:var(--mono);font-size:10px">gpt-4o-mini</code> (free em generate-message). SDK Anthropic removido do <code style="font-family:var(--mono);font-size:10px">package.json</code>. Env: <strong>OPENAI_API_KEY</strong>.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">OK</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Landing pública</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">src/app/page.tsx</code> — página longa (hero, features, pricing, FAQ). O guia antigo citava só redirect; hoje há marketing completo. Revisar SEO/OG em Fase 2.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">OK</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Checkout Stripe grava businessId</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">api/stripe/checkout/route.ts</code> — <code style="font-family:var(--mono);font-size:10px">metadata: { userId, businessId }</code>. Price IDs via <code style="font-family:var(--mono);font-size:10px">NEXT_PUBLIC_STRIPE_PRICE_ID_*</code> no <code style="font-family:var(--mono);font-size:10px">PricingGrid.tsx</code>.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">OK</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Webhook Stripe + plano por price ID</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">api/stripe/webhook/route.ts</code> usa <code style="font-family:var(--mono);font-size:10px">metadata.businessId</code> com fallback <code style="font-family:var(--mono);font-size:10px">client_reference_id</code>; <code style="font-family:var(--mono);font-size:10px">price-to-plan.ts</code> mapeia <code style="font-family:var(--mono);font-size:10px">NEXT_PUBLIC_STRIPE_PRICE_ID_*</code>. <strong>Validar</strong> com eventos reais no Stripe CLI / dashboard.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">Fase 1</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Crons (Hobby vs Pro)</div>
+          <div class="audit-sub"><strong>Vercel Hobby:</strong> sem Cron integrado — agendar fora (ex.: cron-job.org) com GET + <code style="font-family:var(--mono);font-size:10px">Authorization: Bearer CRON_SECRET</code> ou header <code style="font-family:var(--mono);font-size:10px">X-Cron-Secret</code>. <strong>Vercel Pro+:</strong> renomear o exemplo abaixo para <code style="font-family:var(--mono);font-size:10px">vercel.json</code> se quiser crons na plataforma. Dev local: <code style="font-family:var(--mono);font-size:10px">CRON_SKIP_AUTH=true</code> (só com <code style="font-family:var(--mono);font-size:10px">NODE_ENV=development</code>).</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">Fase 1</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Google Places — paginação</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">places.ts</code>: delay 3s, timeout 15s, até 3 retries em <code style="font-family:var(--mono);font-size:10px">INVALID_REQUEST</code>, log por página, <code style="font-family:var(--mono);font-size:10px">language=pt-BR</code>. <code style="font-family:var(--mono);font-size:10px">lead-actions.ts</code> usa <code style="font-family:var(--mono);font-size:10px">PLAN_LIMITS[plan].maxPagesPerSearch</code> (scale = 5 páginas).</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">Fase 1</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Limites de plano (Pro) + copy</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">plan-limits.ts</code> + <code style="font-family:var(--mono);font-size:10px">PricingGrid</code> + <code style="font-family:var(--mono);font-size:10px">onboarding/page.tsx</code> Step 3: Pro = <strong>1.000</strong> leads/mês.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">OK</span></div>
+      </div>
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">✓</div>
+        <div class="audit-content">
+          <div class="audit-title">Auth do cron follow-up</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">follow-up/route.ts</code>: <code style="font-family:var(--mono);font-size:10px">Authorization: Bearer CRON_SECRET</code> obrigatório (igual a <code style="font-family:var(--mono);font-size:10px">reset-limits</code>).</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">Fase 1</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-info" style="margin-top:16px">
+    <div class="alert-icon">📌</div>
+    <div class="alert-body">
+      <div class="alert-title">Próximo passo (Fase 2)</div>
+      Validar webhook e crons em staging; banner dashboard para quem pulou o Step 2; refinar landing (SEO/OG). Onboarding Step 2: textarea manual + tipo <code style="font-family:var(--mono);font-size:11px">manual</code> na API + &quot;Pular por agora&quot;. Fase 1 (código) concluída: Stripe webhook, cron auth flexível (<code style="font-family:var(--mono);font-size:11px">CRON_SECRET</code> / Hobby = externo), Places, <code style="font-family:var(--mono);font-size:11px">maxPagesPerSearch</code>, copy Pro 1.000.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S1 — O QUE ESTÁ PRONTO ══════════════════════════ -->
+<section class="section" id="s1">
+  <div class="eyebrow">Inventário de funcionalidades</div>
+  <div class="section-title">O que já está implementado</div>
+  <div class="section-sub">Surpresa positiva: o projeto tem muito mais do que parecia. Estas funcionalidades estão no código e funcionam.</div>
+
+  <div style="display:flex;flex-direction:column;gap:8px">
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Sistema de Planos + Stripe completo</div>
+        <div class="feat-sub">Checkout, webhook, upgrade/downgrade, cron de reset mensal de leads, <code style="font-family:var(--mono);font-size:10px">PLAN_LIMITS</code> por tipo, função SQL de incremento atômico. <strong>Está funcionando.</strong></div>
+        <div class="feat-bar"><div class="feat-fill" style="width:90%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Knowledge Base multi-fonte (URL + PDF)</div>
+        <div class="feat-sub">Pipeline completo: extração de texto → análise IA → feedback por fonte → síntese para DNA de vendas. Interface no onboarding Step 2 mostrando histórico de fontes. <strong>Único no mercado BR.</strong></div>
+        <div class="feat-bar"><div class="feat-fill" style="width:85%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Onboarding 3-step com IA</div>
+        <div class="feat-sub">Step 1: nome + tom. Step 2: alimentar IA (URL/PDF com feedback em tempo real). Step 3: escolha de plano. Flow bem construído — problema é UX no Step 2 que pode desanimar (veja seção de melhorias).</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:70%;background:var(--yellow)"></div></div>
+      </div>
+      <span class="status-pill s-partial">Melhorar UX</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Prospecção por Google Maps (multi-página)</div>
+        <div class="feat-sub">Paginação implementada: 1 página (free) vs 3 páginas (pago) = até 60 leads. Geocodificação, enriquecimento com telefone/website, scoring com IA. O <strong>bug é outro</strong> — não é a lógica de páginas, é o limite por plano não refletir os planos reais.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:80%;background:var(--yellow)"></div></div>
+      </div>
+      <span class="status-pill s-partial">Fix needed</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Kanban Pipeline com Sheet de detalhes</div>
+        <div class="feat-sub">KanbanLeadSheet completo: abas de contato/notas/tags/IA. Salvar notas, toggle de tags, gerar mensagem com IA diretamente do pipeline. Drag & drop entre colunas.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:85%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Integração WhatsApp (Evolution API)</div>
+        <div class="feat-sub"><code style="font-family:var(--mono);font-size:10px">src/lib/whatsapp/evolution.ts</code> implementado. Configuração por usuário nas Settings (URL + key + instância). Falta: ativar o envio na UI e testar com instância real.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:60%;background:var(--yellow)"></div></div>
+      </div>
+      <span class="status-pill s-partial">Configurar & ativar</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Follow-up automático (cron)</div>
+        <div class="feat-sub"><code style="font-family:var(--mono);font-size:10px">api/cron/follow-up/route.ts</code> e reset mensal existem. No Hobby: agendar URLs com <code style="font-family:var(--mono);font-size:10px">CRON_SECRET</code>; no Pro+: opcional <code style="font-family:var(--mono);font-size:10px">vercel.json</code>. Testar fluxo D+1/D+3/D+7.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:55%;background:var(--yellow)"></div></div>
+      </div>
+      <span class="status-pill s-partial">Configurar Vercel</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Email com Resend</div>
+        <div class="feat-sub"><code style="font-family:var(--mono);font-size:10px">src/lib/emails/resend.ts</code> implementado. Configuração por usuário nas Settings (chave Resend). Falta: templates de email e ativar envio na UI de campanhas.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:50%;background:var(--yellow)"></div></div>
+      </div>
+      <span class="status-pill s-partial">Finalizar templates</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Dynamic ICP + Settings completo</div>
+        <div class="feat-sub"><code style="font-family:var(--mono);font-size:10px">lib/ai/dynamic-icp.ts</code> existe. Settings tem tabs para integrações (Evolution, Resend), base de conhecimento e configurações de negócio. KnowledgeBaseManager reusável.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:75%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Mobile Bottom Nav</div>
+        <div class="feat-sub"><code style="font-family:var(--mono);font-size:10px">MobileBottomNav.tsx</code> implementado. O produto já é responsivo — vantagem enorme para closers que trabalham no celular.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:80%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">SidebarUsage com progresso de leads</div>
+        <div class="feat-sub">Barra de progresso de leads usados no mês com cores de urgência (verde → amarelo → vermelho). Link direto para upgrade quando perto do limite.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:90%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green)">✓</div>
+      <div class="feat-content">
+        <div class="feat-title">Página de Upgrade com PricingGrid</div>
+        <div class="feat-sub">Componente <code style="font-family:var(--mono);font-size:10px">PricingGrid.tsx</code> com planos, botões de checkout Stripe, plano atual destacado. Rota <code>/upgrade</code> completa com sidebar e contexto do usuário.</div>
+        <div class="feat-bar"><div class="feat-fill" style="width:85%;background:var(--green)"></div></div>
+      </div>
+      <span class="status-pill s-done">Pronto</span>
+    </div>
+
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S2 — GAPS CRÍTICOS ════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="eyebrow">Gaps identificados</div>
+  <div class="section-title">O que bloqueia o lançamento</div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="padding:14px 20px;border-bottom:1px solid var(--b)"><div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Ordenado por severidade</div></div>
+    <div style="padding:8px 0">
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🔴</div>
+        <div class="audit-content">
+          <div class="audit-title">Bug: limite real de leads é ~20 apesar do plano</div>
+          <div class="audit-sub">O Google Places API retorna 20 resultados por página. A lógica de <code style="font-family:var(--mono);font-size:10px">maxPages</code> existe (1 página free, 3 pagas em <code style="font-family:var(--mono);font-size:10px">lead-actions.ts</code>) mas o token de paginação pode falhar (delay ~2s). Há ainda <strong>inconsistência de copy</strong>: onboarding Step 3 cita <strong>2.000</strong> leads/mês para Pro; <code style="font-family:var(--mono);font-size:10px">PLAN_LIMITS</code> e <code style="font-family:var(--mono);font-size:10px">PricingGrid</code> usam <strong>1.000</strong>.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-miss">Crítico</span><span style="font-size:10px;color:var(--dim)">30 min fix</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🟢</div>
+        <div class="audit-content">
+          <div class="audit-title">Stack IA: OpenAI unificada (resolvido)</div>
+          <div class="audit-sub">Decisão de produto: <strong>somente OpenAI</strong>. Cliente em <code style="font-family:var(--mono);font-size:10px">openai-client.ts</code>; rotas de chat, follow-up, ICP dinâmico e geração de mensagem migradas. Nome <code style="font-family:var(--mono);font-size:10px">claude.ts</code> mantido por compatibilidade de imports. Não reinstalar Anthropic salvo mudança de estratégia.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-done">OK</span><span style="font-size:10px;color:var(--dim)">Fase 0</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🔴</div>
+        <div class="audit-content">
+          <div class="audit-title">Onboarding Step 2 — destravado</div>
+          <div class="audit-sub">Há textarea &quot;descreva seu negócio&quot; (<code style="font-family:var(--mono);font-size:10px">type=manual</code> em <code style="font-family:var(--mono);font-size:10px">api/knowledge/add</code>), botão <strong>Pular por agora</strong> chama síntese só com nome/tom. Processamento URL/PDF continua síncrono (atenção a timeout serverless).</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-miss">Crítico</span><span style="font-size:10px;color:var(--dim)">3h fix</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🟡</div>
+        <div class="audit-content">
+          <div class="audit-title">Webhook Stripe não usa client_reference_id — usa businessId do metadata</div>
+          <div class="audit-sub">O checkout cria a sessão com <code>metadata: { businessId }</code> mas o webhook tenta ler <code>session.client_reference_id</code> (que é null). O upgrade pós-pagamento pode não funcionar em produção.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-partial">Alta prioridade</span><span style="font-size:10px;color:var(--dim)">15 min fix</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🟡</div>
+        <div class="audit-content">
+          <div class="audit-title">Cron jobs não configurados no Vercel</div>
+          <div class="audit-sub">Rotas <code>/api/cron/follow-up</code> e <code>/api/cron/reset-limits</code>: no Hobby não use <code>vercel.json</code> crons — configure um agendador externo com o mesmo segredo; no Pro+ pode usar o JSON de exemplo do guia.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-partial">Alta prioridade</span><span style="font-size:10px;color:var(--dim)">30 min</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🟡</div>
+        <div class="audit-content">
+          <div class="audit-title">Busca limitada a 1 nicho por campanha — usuário quer múltiplos</div>
+          <div class="audit-sub">SearchForm aceita 1 query + 1 região. Para prospectar "restaurantes" e "pizzarias" na mesma região, o usuário precisa fazer 2 buscas. Adicionar suporte a múltiplos nichos em lote aumenta muito o volume e a percepção de valor.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-partial">Alta prioridade</span><span style="font-size:10px;color:var(--dim)">4h</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🟡</div>
+        <div class="audit-content">
+          <div class="audit-title">Stripe Price IDs — variáveis de ambiente</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">PricingGrid.tsx</code> usa <code style="font-family:var(--mono);font-size:10px">NEXT_PUBLIC_STRIPE_PRICE_ID_*</code>. Se não estiverem definidas em produção, checkout falha. Criar preços no Dashboard e preencher env (não são placeholders fixos no código).</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-partial">Alta prioridade</span><span style="font-size:10px;color:var(--dim)">1h</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🟢</div>
+        <div class="audit-content">
+          <div class="audit-title">Landing pública — já existe</div>
+          <div class="audit-sub"><code style="font-family:var(--mono);font-size:10px">src/app/page.tsx</code> é uma landing completa (não é só redirect). Pendência: <strong>refino</strong> — SEO, OG, performance e alinhamento de copy com o produto atual.</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-partial">Refinar</span><span style="font-size:10px;color:var(--dim)">Fase 2</span></div>
+      </div>
+
+      <div class="audit-row" style="padding:14px 20px">
+        <div class="audit-icon">🔵</div>
+        <div class="audit-content">
+          <div class="audit-title">Sem feedback visual de progresso durante prospecção</div>
+          <div class="audit-sub">A busca pode levar 30-90 segundos (Maps API + enriquecimento + IA para cada lead). O usuário não sabe se está funcionando. Precisa de loading state com steps visíveis: "Buscando... Enriquecendo... Qualificando com IA..."</div>
+        </div>
+        <div class="audit-right"><span class="status-pill s-new">Criar</span><span style="font-size:10px;color:var(--dim)">2h</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S3 — BUG: LIMITE 20 LEADS ════════════════════════ -->
+<section class="section" id="s3">
+  <div class="eyebrow">Correção urgente #1</div>
+  <div class="section-title">Fix: Busca de mais leads por campanha</div>
+  <div class="section-sub">Foco: paginação Maps + alinhar mensagem do Pro (<strong>onboarding</strong> menciona 2.000 leads/mês; <strong>código e pricing</strong> usam 1.000). Escolher um número, atualizar todos os ecrãs e o <code style="font-family:var(--mono);font-size:11px">PLAN_LIMITS</code> em conjunto.</div>
+
+  <div class="alert alert-warn">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">
+      <div class="alert-title">O que está acontecendo</div>
+      1. Google Places TextSearch retorna max 20 por página com <code>next_page_token</code><br>
+      2. O token só fica ativo ~2s após a resposta — o código já tem delay mas pode não ser suficiente em alguns casos<br>
+      3. Para planos pagos, o código já busca 3 páginas (até 60 leads) — mas o usuário pode não perceber isso<br>
+      4. Onboarding Step 3: "2.000 leads/mês" (Pro) vs <code>PLAN_LIMITS</code> + <code>PricingGrid</code> = 1.000 — alinhar produto e UI
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/lib/maps/places.ts — fix paginação robusta + logging</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="kw">export async function</span> <span class="fn">searchPlaces</span>(
+  query: string, location: string,
+  radius: number = <span class="num">5000</span>, maxPages: number = <span class="num">3</span>
+) {
+  <span class="kw">if</span> (!GOOGLE_MAPS_API_KEY) <span class="kw">throw new</span> Error(<span class="str">"GOOGLE_MAPS_API_KEY não configurada."</span>);
+
+  <span class="kw">let</span> allResults: any[] = [];
+  <span class="kw">let</span> nextToken: string | null = null;
+  <span class="kw">let</span> pagesFetched = <span class="num">0</span>;
+  <span class="kw">let</span> consecutiveErrors = <span class="num">0</span>;
+
+  <span class="kw">do</span> {
+    <span class="kw">try</span> {
+      <span class="cmt">// Token precisa de 2-3s para ativar — aumentar para 3s para ser seguro</span>
+      <span class="kw">if</span> (nextToken) <span class="kw">await</span> <span class="kw">new</span> Promise(r => setTimeout(r, <span class="num">3000</span>));
+
+      <span class="kw">const</span> url = nextToken
+        ? <span class="str">`https://maps.googleapis.com/maps/api/place/textsearch/json?pagetoken=${nextToken}&key=${GOOGLE_MAPS_API_KEY}`</span>
+        : <span class="str">`https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&location=${location}&radius=${radius}&key=${GOOGLE_MAPS_API_KEY}&language=pt-BR`</span>;
+
+      <span class="kw">const</span> { data } = <span class="kw">await</span> axios.get(url, { timeout: <span class="num">15000</span> });
+      <span class="kw">const</span> { results = [], next_page_token, status } = data;
+
+      <span class="kw">if</span> (status === <span class="str">"INVALID_REQUEST"</span> && nextToken) {
+        <span class="cmt">// Token ainda não ativo — retry com delay maior</span>
+        consecutiveErrors++;
+        <span class="kw">if</span> (consecutiveErrors >= <span class="num">2</span>) <span class="kw">break</span>; <span class="cmt">// desistir após 2 retries</span>
+        <span class="kw">await</span> <span class="kw">new</span> Promise(r => setTimeout(r, <span class="num">3000</span>));
+        <span class="kw">continue</span>;
+      }
+
+      <span class="kw">if</span> (status !== <span class="str">"OK"</span> && status !== <span class="str">"ZERO_RESULTS"</span>) {
+        console.error(<span class="str">"Places API status:"</span>, status);
+        <span class="kw">break</span>;
+      }
+
+      consecutiveErrors = <span class="num">0</span>;
+      allResults = [...allResults, ...results];
+      nextToken = next_page_token || null;
+      pagesFetched++;
+
+      console.log(<span class="str">`[Places] Página ${pagesFetched}: +${results.length} (total: ${allResults.length})`</span>);
+
+    } <span class="kw">catch</span> (err) {
+      console.error(<span class="str">"Places page error:"</span>, err);
+      consecutiveErrors++;
+      <span class="kw">if</span> (consecutiveErrors >= <span class="num">2</span>) <span class="kw">break</span>;
+    }
+
+  } <span class="kw">while</span> (nextToken && pagesFetched < maxPages);
+
+  console.log(<span class="str">`[Places] Total: ${allResults.length} resultados em ${pagesFetched} páginas`</span>);
+  <span class="kw">return</span> allResults.map((p: any) => ({
+    name: p.name, address: p.formatted_address, place_id: p.place_id,
+    rating: p.rating, user_ratings_total: p.user_ratings_total,
+    lat: p.geometry.location.lat, lng: p.geometry.location.lng,
+    types: p.types, business_status: p.business_status,
+  }));
+}
+</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/utils/plan-limits.ts — corrigir limites para refletir os planos reais</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="kw">export const</span> PLAN_LIMITS: Record&lt;PlanType, PlanLimits&gt; = {
+  free: {
+    leadsPerMonth: <span class="num">100</span>,   <span class="cmt">// 5 buscas × 20 resultados</span>
+    maxCampaigns: <span class="num">1</span>,
+    maxAgents: <span class="num">1</span>,
+    maxPagesPerSearch: <span class="num">1</span>,  <span class="cmt">// NOVO: limita páginas do Maps</span>
+    features: [<span class="str">'maps_view'</span>, <span class="str">'email_support'</span>]
+  },
+  starter: {
+    leadsPerMonth: <span class="num">300</span>,   <span class="cmt">// 5 buscas × 60 resultados</span>
+    maxCampaigns: <span class="num">3</span>,
+    maxAgents: <span class="num">1</span>,
+    maxPagesPerSearch: <span class="num">3</span>,  <span class="cmt">// NOVO: até 60 por busca</span>
+    features: [<span class="str">'maps_view'</span>, <span class="str">'email_support'</span>, <span class="str">'ai_messages'</span>, <span class="str">'can_export_csv'</span>]
+  },
+  pro: {
+    leadsPerMonth: <span class="num">2000</span>,  <span class="cmt">// CORRIGIDO: era 1000, agora 2000</span>
+    maxCampaigns: <span class="num">100</span>,
+    maxAgents: <span class="num">3</span>,
+    maxPagesPerSearch: <span class="num">3</span>,  <span class="cmt">// 60 por busca</span>
+    features: [<span class="str">'maps_view'</span>, <span class="str">'email_support'</span>, <span class="str">'premium_messages'</span>,
+               <span class="str">'can_export_csv'</span>, <span class="str">'can_import_csv'</span>, <span class="str">'crm_followup'</span>]
+  },
+  scale: {
+    leadsPerMonth: <span class="num">5000</span>,
+    maxCampaigns: <span class="num">100</span>,
+    maxAgents: <span class="num">5</span>,
+    maxPagesPerSearch: <span class="num">5</span>,  <span class="cmt">// até 100 por busca (com 5 páginas)</span>
+    features: [<span class="str">'maps_view'</span>, <span class="str">'email_support'</span>, <span class="str">'premium_messages'</span>,
+               <span class="str">'can_export_csv'</span>, <span class="str">'can_import_csv'</span>, <span class="str">'crm_followup'</span>,
+               <span class="str">'dynamic_icp'</span>, <span class="str">'ab_testing'</span>, <span class="str">'enrichment'</span>, <span class="str">'vip_support'</span>]
+  }
+};
+<span class="cmt">// Em lead-actions.ts: substituir `maxPages` por PLAN_LIMITS[plan].maxPagesPerSearch</span>
+</pre>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">Progress bar durante a busca — melhora muito a UX</div>
+      A busca leva 30-90s. Adicionar no <code>SearchForm.tsx</code> um estado de progresso com mensagens: "🔍 Buscando no Google Maps... (página 1/3)" → "📞 Enriquecendo contatos..." → "🧠 Qualificando com IA..." → "✓ 47 leads encontrados!" Isso evita que o usuário ache que travou.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S4 — ONBOARDING MELHORADO ════════════════════════ -->
+<section class="section" id="s4">
+  <div class="eyebrow">Correção urgente #2</div>
+  <div class="section-title">Onboarding: destravar o Step 2</div>
+  <div class="section-sub">O onboarding atual é bom mas tem 1 problema crítico: o usuário que não tem site ou PDF fica bloqueado no Step 2. A solução é adicionar um 3º input: descrição manual com textarea.</div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card" style="border-left:3px solid var(--red)">
+      <div class="card-title" style="color:var(--red)">Problema atual</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+        <li style="font-size:12px;color:var(--muted)">✗ Botão "Sintetizar" desabilitado sem KB</li>
+        <li style="font-size:12px;color:var(--muted)">✗ Usuário sem site fica preso para sempre</li>
+        <li style="font-size:12px;color:var(--muted)">✗ Processamento síncrono → timeout em serverless</li>
+        <li style="font-size:12px;color:var(--muted)">✗ Sem indicação de quanto tempo vai demorar</li>
+        <li style="font-size:12px;color:var(--muted)">✗ Sem opção de "pular" e completar depois</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left:3px solid var(--green)">
+      <div class="card-title" style="color:var(--green)">Solução</div>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:6px">
+        <li style="font-size:12px;color:var(--muted)">✓ Adicionar 3ª aba: "Descrever manualmente"</li>
+        <li style="font-size:12px;color:var(--muted)">✓ Habilitar "Sintetizar" com qualquer das 3 fontes</li>
+        <li style="font-size:12px;color:var(--muted)">✓ Botão "Pular por agora" → vai para Step 3</li>
+        <li style="font-size:12px;color:var(--muted)">✓ Loading com estimativa de tempo ("~30 segundos")</li>
+        <li style="font-size:12px;color:var(--muted)">✓ Mensagem de incentivo: "Quanto mais você alimentar, melhor a IA vende"</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/app/(dashboard)/onboarding/page.tsx — adicionar aba "Descrever" e botão Pular</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="cmt">// 1. Adicionar estado para descrição manual</span>
+<span class="kw">const</span> [manualDesc, setManualDesc] = useState(<span class="str">''</span>);
+
+<span class="cmt">// 2. No CardContent do Step 2, adicionar 3ª aba ANTES dos inputs de URL/File:</span>
+<span class="cmt">{/* Aba manual — adicionar como primeira opção */}</span>
+&lt;div className=<span class="str">"space-y-3 bg-muted/20 p-5 rounded-2xl border border-border/40"</span>&gt;
+  &lt;Label className=<span class="str">"flex items-center gap-2 text-xs uppercase font-black tracking-widest text-primary"</span>&gt;
+    &lt;Sparkles className=<span class="str">"h-4 w-4"</span> /&gt; Descrever Manualmente (mais rápido)
+  &lt;/Label&gt;
+  &lt;Textarea
+    placeholder=<span class="str">"Descreva o que você faz, para quem vende e seus principais diferenciais..."</span>
+    value={manualDesc}
+    onChange={e => setManualDesc(e.target.value)}
+    rows={4}
+    className=<span class="str">"bg-background/50 border-border/40 font-medium resize-none"</span>
+  /&gt;
+  &lt;p className=<span class="str">"text-[10px] text-muted-foreground"</span>&gt;
+    Mínimo 50 palavras para a IA gerar um ICP preciso.
+  &lt;/p&gt;
+&lt;/div&gt;
+
+<span class="cmt">// 3. Passar manualDesc para handleSynthesize</span>
+<span class="kw">const</span> <span class="fn">handleSynthesize</span> = <span class="kw">async</span> () => {
+  <span class="kw">if</span> (!businessId) <span class="kw">return</span>;
+  <span class="kw">const</span> hasKB = kbItems.length > <span class="num">0</span>;
+  <span class="kw">const</span> hasManual = manualDesc.trim().split(<span class="str">" "</span>).length >= <span class="num">10</span>;
+  <span class="kw">if</span> (!hasKB && !hasManual) {
+    setErrorMsg(<span class="str">"Adicione pelo menos uma fonte ou escreva uma descrição."</span>);
+    <span class="kw">return</span>;
+  }
+  <span class="kw">const</span> resp = <span class="kw">await</span> fetch(<span class="str">"/api/knowledge/synthesize"</span>, {
+    method: <span class="str">"POST"</span>,
+    headers: { <span class="str">"Content-Type"</span>: <span class="str">"application/json"</span> },
+    body: JSON.stringify({ business_id: businessId, manual_description: manualDesc || undefined })
+  });
+  <span class="cmt">// ... resto igual</span>
+};
+
+<span class="cmt">// 4. Habilitar botão quando tem qualquer fonte</span>
+<span class="kw">const</span> canSynthesize = kbItems.length > <span class="num">0</span> || manualDesc.trim().split(<span class="str">" "</span>).length >= <span class="num">10</span>;
+
+<span class="cmt">// 5. Botão Pular (ANTES do CardFooter com o botão principal)</span>
+&lt;div className=<span class="str">"text-center mt-2"</span>&gt;
+  &lt;button
+    type=<span class="str">"button"</span>
+    onClick={() => setStep(3)}
+    className=<span class="str">"text-xs text-muted-foreground underline hover:text-foreground transition-colors"</span>
+  &gt;
+    Pular por agora → treinar depois nas Configurações
+  &lt;/button&gt;
+&lt;/div&gt;
+</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/app/api/knowledge/synthesize/route.ts — aceitar manual_description</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="cmt">// Após buscar os knowledge bases (linha ~40), adicionar:</span>
+<span class="kw">const</span> manualDescription = body.manual_description;
+
+<span class="kw">if</span> (manualDescription) {
+  extraContext += <span class="str">`\nDESCRIÇÃO MANUAL DO USUÁRIO:\n"${manualDescription}"\n\n`</span>;
+}
+
+<span class="cmt">// O trainAgent já usa extraContext — não precisa mudar mais nada</span>
+</pre>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">Adicionar na Settings o mesmo KnowledgeBaseManager</div>
+      Você já tem o componente <code>KnowledgeBaseManager.tsx</code> nas Settings. Isso é perfeito — usuário que "pulou" o Step 2 pode completar o treinamento depois nas Configurações. Adicionar um banner no dashboard: "Sua IA está em modo básico. <strong>Alimente-a agora para resultados melhores →</strong>"
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S5 — STACK IA (OPENAI) ═══════════════════════════ -->
+<section class="section" id="s5">
+  <div class="eyebrow">Decisão de produto · Fase 0</div>
+  <div class="section-title">Inteligência artificial: só OpenAI</div>
+  <div class="section-sub">O Capturo usa <strong>um único fornecedor</strong> de LLM. O pacote <code>@anthropic-ai/sdk</code> foi removido; todo o tráfego passa pelo SDK <code>openai</code> e pela chave <strong>OPENAI_API_KEY</strong>.</div>
+
+  <div class="card">
+    <div class="card-title">Onde está no código</div>
+    <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--muted)">
+      <li><strong style="color:var(--text)">Cliente e modelos:</strong> <code style="font-family:var(--mono);font-size:10px">src/lib/ai/openai-client.ts</code> — constantes <code style="font-family:var(--mono);font-size:10px">OPENAI_MODEL_FLAGSHIP</code> (<code style="font-family:var(--mono);font-size:10px">gpt-4o</code>) e <code style="font-family:var(--mono);font-size:10px">OPENAI_MODEL_FAST</code> (<code style="font-family:var(--mono);font-size:10px">gpt-4o-mini</code>).</li>
+      <li><strong style="color:var(--text)">Núcleo de prospecção / agente:</strong> <code style="font-family:var(--mono);font-size:10px">src/lib/ai/claude.ts</code> (nome histórico) — perfil, treino, scoring, mensagens, knowledge.</li>
+      <li><strong style="color:var(--text)">APIs:</strong> <code style="font-family:var(--mono);font-size:10px">api/chat</code>, <code style="font-family:var(--mono);font-size:10px">api/ai/generate-message</code>, <code style="font-family:var(--mono);font-size:10px">api/cron/follow-up</code>, <code style="font-family:var(--mono);font-size:10px">lib/ai/dynamic-icp.ts</code>, visão em PDF em <code style="font-family:var(--mono);font-size:10px">extractPdfVision.ts</code>.</li>
+    </ul>
+  </div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">Marketing e documentação</div>
+      Atualize qualquer copy “Powered by Claude” para <strong>OpenAI (GPT-4o)</strong> onde fizer sentido. Para mudar modelos no futuro, edite só <code style="font-family:var(--mono);font-size:11px">openai-client.ts</code>.
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S6 — STRIPE ════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="eyebrow">Para ir ao ar — Billing</div>
+  <div class="section-title">Stripe: 3 correções para funcionar</div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/app/api/stripe/webhook/route.ts — fix client_reference_id</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="kw">if</span> (event.type === <span class="str">'checkout.session.completed'</span>) {
+  <span class="kw">const</span> session = event.data.object <span class="kw">as</span> Stripe.Checkout.Session;
+  
+  <span class="cmt">// FIX: ler do metadata.businessId (não de client_reference_id)</span>
+  <span class="kw">const</span> businessId = session.metadata?.businessId <span class="cmt">// ← CORRETO</span>
+    || session.client_reference_id;              <span class="cmt">// ← fallback</span>
+  
+  <span class="kw">const</span> customerId = session.customer <span class="kw">as</span> string;
+  <span class="kw">const</span> subscriptionId = session.subscription <span class="kw">as</span> string;
+
+  <span class="cmt">// Determinar plano pelo priceId</span>
+  <span class="kw">const</span> lineItems = <span class="kw">await</span> stripe.checkout.sessions.listLineItems(session.id);
+  <span class="kw">const</span> priceId = lineItems.data[<span class="num">0</span>]?.price?.id || <span class="str">''</span>;
+  
+  <span class="cmt">// Mapear priceId para plano</span>
+  <span class="kw">const</span> PRICE_TO_PLAN: Record&lt;string, string&gt; = {
+    [process.env.STRIPE_PRICE_STARTER!]: <span class="str">'starter'</span>,
+    [process.env.STRIPE_PRICE_PRO!]:     <span class="str">'pro'</span>,
+    [process.env.STRIPE_PRICE_SCALE!]:   <span class="str">'scale'</span>,
+  };
+  <span class="kw">const</span> plan = PRICE_TO_PLAN[priceId] || <span class="str">'pro'</span>;
+
+  <span class="kw">if</span> (businessId) {
+    <span class="kw">await</span> supabaseAdmin.from(<span class="str">'businesses'</span>).update({
+      plan, stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    }).eq(<span class="str">'id'</span>, businessId);
+  }
+}
+</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">vercel.json — só Vercel Pro+ (Cron integrado). Hobby: ignore; use agendador externo.</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre>{
+  <span class="str">"crons"</span>: [
+    {
+      <span class="str">"path"</span>: <span class="str">"/api/cron/follow-up"</span>,
+      <span class="str">"schedule"</span>: <span class="str">"0 9 * * *"</span>  <span class="cmt">// 9h UTC — ajuste ao fuso</span>
+    },
+    {
+      <span class="str">"path"</span>: <span class="str">"/api/cron/reset-limits"</span>,
+      <span class="str">"schedule"</span>: <span class="str">"0 0 1 * *"</span>  <span class="cmt">// dia 1, 00:00 UTC</span>
+    }
+  ]
+}
+</pre>
+    <div class="code-header" style="margin-top:12px"><span class="code-file">Hobby — exemplo curl (cron-job.org / GitHub Actions)</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre>curl -sS -H <span class="str">"Authorization: Bearer $CRON_SECRET"</span> \
+  <span class="str">"https://SEU_DOMINIO/api/cron/follow-up"</span>
+
+curl -sS -H <span class="str">"Authorization: Bearer $CRON_SECRET"</span> \
+  <span class="str">"https://SEU_DOMINIO/api/cron/reset-limits"</span>
+</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">.env.local — variáveis que faltam</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="cmt"># IA (obrigatório)</span>
+OPENAI_API_KEY=sk-...
+
+<span class="cmt"># Stripe</span>
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PRICE_STARTER=price_...  <span class="cmt"># criar no dashboard Stripe</span>
+STRIPE_PRICE_PRO=price_...
+STRIPE_PRICE_SCALE=price_...
+
+<span class="cmt"># App</span>
+NEXT_PUBLIC_APP_URL=https://capturo.com.br
+SUPABASE_SERVICE_ROLE_KEY=eyJ...  <span class="cmt"># para o webhook Stripe</span>
+
+<span class="cmt"># Segurança do cron (obrigatório em produção)</span>
+CRON_SECRET=um-segredo-aleatorio-forte
+
+<span class="cmt"># Só desenvolvimento local — nunca em produção</span>
+<span class="cmt"># CRON_SKIP_AUTH=true</span>
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S7 — WHATSAPP & EMAIL ════════════════════════════ -->
+<section class="section" id="s7">
+  <div class="eyebrow">Para ir ao ar — Canais</div>
+  <div class="section-title">Ativar envio real de WhatsApp e Email</div>
+
+  <div class="alert alert-info">
+    <div class="alert-icon">💡</div>
+    <div class="alert-body">
+      <div class="alert-title">O código já está lá — falta ligar a tomada</div>
+      <code>src/lib/whatsapp/evolution.ts</code> e <code>src/lib/emails/resend.ts</code> já estão implementados. O que falta é chamar essas funções quando o usuário clica em "Enviar" na interface de campanhas e na geração de mensagem do pipeline.
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/app/(dashboard)/campanhas/[id]/actions.ts — usar Evolution API</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="kw">import</span> { sendWhatsAppMessage } <span class="kw">from</span> <span class="str">"@/lib/whatsapp/evolution"</span>;
+<span class="kw">import</span> { sendEmail } <span class="kw">from</span> <span class="str">"@/lib/emails/resend"</span>;
+
+<span class="kw">export async function</span> <span class="fn">sendCampaignMessage</span>(leadId: string, campaignId: string) {
+  <span class="kw">const</span> supabase = <span class="kw">await</span> createClient();
+  
+  <span class="cmt">// Buscar dados completos</span>
+  <span class="kw">const</span> { data: lead } = <span class="kw">await</span> supabase
+    .from(<span class="str">"leads"</span>)
+    .select(<span class="str">"*, campaigns(*, businesses(*, agents(config), metadata))"</span>)
+    .eq(<span class="str">"id"</span>, leadId).single();
+
+  <span class="kw">const</span> campaign = lead?.campaigns;
+  <span class="kw">const</span> business = campaign?.businesses;
+  <span class="kw">const</span> integrations = business?.metadata?.integrations || {};
+
+  <span class="cmt">// Gerar mensagem com IA</span>
+  <span class="kw">const</span> message = <span class="kw">await</span> generateOutreachMessage(
+    lead, business, campaign, business.agents?.[0]?.config
+  );
+
+  <span class="cmt">// Enviar pelo canal correto</span>
+  <span class="kw">if</span> (campaign.channel === <span class="str">'whatsapp'</span> && lead.phone) {
+    <span class="kw">const</span> ev = integrations.evolution;
+    <span class="kw">if</span> (ev?.url && ev?.key && ev?.instance) {
+      <span class="kw">await</span> sendWhatsAppMessage({
+        to: lead.phone, message,
+        evolutionUrl: ev.url, apiKey: ev.key, instance: ev.instance,
+      });
+    }
+  } <span class="kw">else if</span> (campaign.channel === <span class="str">'email'</span>) {
+    <span class="kw">const</span> resendKey = integrations.resend?.key;
+    <span class="kw">if</span> (resendKey && lead.email) {
+      <span class="kw">await</span> sendEmail({ to: lead.email, subject: <span class="str">"..."</span>, body: message, resendKey });
+    }
+  }
+
+  <span class="cmt">// Salvar mensagem e atualizar status</span>
+  <span class="kw">await</span> supabase.from(<span class="str">"leads"</span>)
+    .update({ 
+      status: <span class="str">'contacted'</span>,
+      metadata: { ...lead.metadata, last_message: message, contacted_at: <span class="kw">new</span> Date().toISOString() }
+    })
+    .eq(<span class="str">"id"</span>, leadId);
+}
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S8 — MULTI-NICHO ═══════════════════════════════════ -->
+<section class="section" id="s8">
+  <div class="eyebrow">Para ir ao ar — Volume</div>
+  <div class="section-title">Busca por múltiplos nichos em lote</div>
+  <div class="section-sub">Hoje o usuário busca 1 nicho por vez. Adicionar suporte a múltiplos aumenta o volume percebido e é fácil de implementar reutilizando a lógica existente.</div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-file">src/components/SearchForm.tsx — campo de múltiplos nichos</span><button class="copy-btn" onclick="copyCode(this)">Copiar</button></div>
+<pre><span class="cmt">// Substituir o campo "query" por chips de múltiplos nichos</span>
+<span class="kw">const</span> [niches, setNiches] = useState&lt;string[]&gt;([]);
+<span class="kw">const</span> [nicheInput, setNicheInput] = useState(<span class="str">''</span>);
+
+<span class="kw">const</span> <span class="fn">addNiche</span> = () => {
+  <span class="kw">const</span> val = nicheInput.trim();
+  <span class="kw">if</span> (val && !niches.includes(val) && niches.length < <span class="num">5</span>) {
+    setNiches(prev => [...prev, val]);
+    setNicheInput(<span class="str">''</span>);
+  }
+};
+
+<span class="cmt">// No JSX:</span>
+&lt;div className=<span class="str">"space-y-2"</span>&gt;
+  &lt;Label&gt;Nichos para buscar (até 5)&lt;/Label&gt;
+  &lt;div className=<span class="str">"flex gap-2"</span>&gt;
+    &lt;Input
+      value={nicheInput}
+      onChange={e => setNicheInput(e.target.value)}
+      onKeyDown={e => e.key === <span class="str">'Enter'</span> && addNiche()}
+      placeholder=<span class="str">"Ex: Restaurantes, Academias..."</span>
+    /&gt;
+    &lt;Button type=<span class="str">"button"</span> onClick={addNiche}&gt;+&lt;/Button&gt;
+  &lt;/div&gt;
+  &lt;div className=<span class="str">"flex flex-wrap gap-2 mt-2"</span>&gt;
+    {niches.map(n => (
+      &lt;span key={n} className=<span class="str">"badge"</span>&gt;
+        {n}
+        &lt;button onClick={() => setNiches(prev => prev.filter(x => x !== n))}&gt;×&lt;/button&gt;
+      &lt;/span&gt;
+    ))}
+  &lt;/div&gt;
+&lt;/div&gt;
+
+<span class="cmt">// No submit, chamar searchLeadsAction para cada nicho em sequência:</span>
+<span class="kw">for</span> (<span class="kw">const</span> niche <span class="kw">of</span> niches) {
+  <span class="kw">await</span> searchLeadsAction(niche, region, campaignId);
+}
+</pre>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S9 — ROADMAP DE SPRINTS ══════════════════════════ -->
+<section class="section" id="s9">
+  <div class="eyebrow">Roadmap de execução</div>
+  <div class="section-title">3 sprints para ir ao ar</div>
+
+  <!-- Sprint 1 -->
+  <div class="sprint" style="border-color:var(--red)">
+    <div class="sprint-header" style="background:var(--rD)">
+      <div>
+        <div class="sprint-title" style="color:var(--red)">🔴 Sprint 1 — Estabilização (Semana 1)</div>
+        <div class="sprint-sub">Corrigir o que está quebrado antes de mostrar para qualquer cliente</div>
+      </div>
+      <span class="badge b-red">~16h de trabalho</span>
+    </div>
+    <div class="sprint-body">
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Fix lead-actions.ts</strong> — <code>PLAN_LIMITS[plan].maxPagesPerSearch</code> <span style="color:var(--green)">(feito · Fase 1)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Fix places.ts</strong> — delay 3s, retries, timeout, logs <span style="color:var(--green)">(feito · Fase 1)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Alinhar limite Pro</strong> — onboarding + <code style="font-family:var(--mono);font-size:10px">maxPagesPerSearch</code> em <code style="font-family:var(--mono);font-size:10px">plan-limits</code> <span style="color:var(--green)">(feito · Fase 1)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>OpenAI unificada</strong> — <code style="font-family:var(--mono);font-size:10px">openai-client.ts</code>; sem Anthropic no bundle <span style="color:var(--green)">(feito · Fase 0)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Fix Stripe webhook</strong> — metadata + price→plano <span style="color:var(--green)">(feito · Fase 1)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Crons adaptáveis</strong> — auth com <code style="font-family:var(--mono);font-size:10px">CRON_SECRET</code>; Hobby = agendador externo; Pro+ = opcional <code style="font-family:var(--mono);font-size:10px">vercel.json</code> <span style="color:var(--green)">(feito · Fase 1)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Onboarding Step 2</strong> — textarea manual + API <code style="font-family:var(--mono);font-size:10px">manual</code> + Pular <span style="color:var(--green)">(feito)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Progress bar na busca</strong> — loading com steps visíveis durante prospecção</div><div class="task-est">2h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Configure .env.local</strong> — OPENAI_API_KEY, NEXT_PUBLIC_STRIPE_PRICE_ID_*, STRIPE_*, CRON_SECRET</div><div class="task-est">1h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Criar produtos no Stripe Dashboard</strong> — Starter R$97, Pro R$197, Scale R$397 (mensal e anual)</div><div class="task-est">1h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Configurar Evolution API</strong> — criar instância WhatsApp e testar envio</div><div class="task-est">2h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Configurar Resend</strong> — domínio, SPF/DKIM, template básico de email</div><div class="task-est">2h</div></div>
+    </div>
+  </div>
+
+  <!-- Sprint 2 -->
+  <div class="sprint" style="border-color:var(--yellow)">
+    <div class="sprint-header" style="background:var(--yD)">
+      <div>
+        <div class="sprint-title" style="color:var(--yellow)">🟡 Sprint 2 — Produto Completo (Semana 2)</div>
+        <div class="sprint-sub">Fechar os gaps de UX e funcionalidades que os primeiros clientes vão sentir falta</div>
+      </div>
+      <span class="badge b-yellow">~20h de trabalho</span>
+    </div>
+    <div class="sprint-body">
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Ativar envio WhatsApp/Email</strong> — ligar Evolution e Resend na UI de campanhas</div><div class="task-est">4h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Multi-nicho na busca</strong> — chips de nichos + busca em lote</div><div class="task-est">3h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Landing page</strong> — refinar <code style="font-family:var(--mono);font-size:10px">page.tsx</code> (SEO, OG, performance, copy)</div><div class="task-est">3h</div></div>
+      <div class="task"><div class="task-box" style="border-color:var(--green);background:rgba(0,255,163,.12)"></div><div class="task-text"><strong>Banner no Dashboard</strong> — <code style="font-family:var(--mono);font-size:10px">metadata.onboarding_kb_skipped</code> + CTA Configurações <span style="color:var(--green)">(feito)</span></div><div class="task-est">—</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Dashboard analytics</strong> — FunnelBar com taxas de conversão + 4 StatCards</div><div class="task-est">3h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Testar cron de follow-up</strong> — validar que D+1/D+3/D+7 funciona corretamente</div><div class="task-est">2h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Testar fluxo completo de pagamento</strong> — do onboarding ao upgrade ao uso do plano</div><div class="task-est">1h</div></div>
+    </div>
+  </div>
+
+  <!-- Sprint 3 -->
+  <div class="sprint" style="border-color:var(--green)">
+    <div class="sprint-header" style="background:var(--gD)">
+      <div>
+        <div class="sprint-title" style="color:var(--green)">🟢 Sprint 3 — Lançamento (Semana 3)</div>
+        <div class="sprint-sub">Primeiros usuários reais e ajustes baseados em feedback</div>
+      </div>
+      <span class="badge b-green">Deploy & GTM</span>
+    </div>
+    <div class="sprint-body">
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Deploy em produção</strong> — Vercel + domínio capturo.com.br + env vars de produção</div><div class="task-est">2h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>5 beta users</strong> — testers do ICP (agências, closers) — feedback intensivo</div><div class="task-est">Semana</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Configurar analytics</strong> — PostHog ou Plausible para entender onde os usuários travam</div><div class="task-est">2h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Criar carrossel Instagram</strong> — 7 slides do produto (já temos o template)</div><div class="task-est">2h</div></div>
+      <div class="task"><div class="task-box"></div><div class="task-text"><strong>Postar em grupos</strong> — WhatsApp de closers, LinkedIn, comunidades de agências</div><div class="task-est">Ongoing</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S10 — CHECKLIST LAUNCH ════════════════════════════ -->
+<section class="section" id="s10">
+  <div class="eyebrow">Pré-lançamento</div>
+  <div class="section-title">Checklist de launch — 40 itens</div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title" style="color:var(--red)">🔴 Bloqueadores (não lançar sem isso)</div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.45);background:rgba(0,255,163,.12);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--green)">✓</div><span><strong>Código:</strong> webhook Stripe + price→plano — <strong style="color:var(--yellow)">validar</strong> com Stripe CLI / eventos reais antes do go-live</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.45);background:rgba(0,255,163,.12);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--green)">✓</div><span><strong>Código:</strong> cron auth + Hobby/Pro documentados — <strong style="color:var(--yellow)">configurar</strong> agendador externo (Hobby) ou <code style="font-family:var(--mono);font-size:10px">vercel.json</code> (Pro+)</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.45);background:rgba(0,255,163,.12);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--green)">✓</div><span><strong>Código:</strong> Places (3s, retries, <code style="font-family:var(--mono);font-size:10px">maxPagesPerSearch</code>) — testar em produção com API key real</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.45);background:rgba(0,255,163,.12);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--green)">✓</div><span>Onboarding Step 2: manual + pular <span style="color:var(--green)">(código)</span> — opcional: banner no dashboard</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,77,109,.4);flex-shrink:0;margin-top:1px"></div><span><code style="font-family:var(--mono);font-size:10px">OPENAI_API_KEY</code> em produção</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,77,109,.4);flex-shrink:0;margin-top:1px"></div><span>Produtos/preços Stripe + <code style="font-family:var(--mono);font-size:10px">NEXT_PUBLIC_STRIPE_PRICE_ID_*</code> + <code style="font-family:var(--mono);font-size:10px">STRIPE_WEBHOOK_SECRET</code></span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,77,109,.4);flex-shrink:0;margin-top:1px"></div><span>Evolution API configurada e testada (se WhatsApp for canal)</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.45);background:rgba(0,255,163,.12);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--green)">✓</div><span>Copy e <code style="font-family:var(--mono);font-size:10px">PLAN_LIMITS</code> alinhados (Pro 1.000) — confirmar produtos Stripe batem com env</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--yellow)">🟡 Alta prioridade (antes dos primeiros clientes)</div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Refinar landing: SEO, OG, performance (<code style="font-family:var(--mono);font-size:10px">page.tsx</code>)</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Progress bar durante prospecção</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Banner dashboard (IA básica → alimentar KB)</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Multi-nicho na busca</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Envio WhatsApp/Email ativo na UI de campanhas</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Resend com domínio verificado</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Analytics (PostHog / Plausible)</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Reset mensal de leads testado</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Email de boas-vindas pós-signup</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(255,214,0,.4);flex-shrink:0;margin-top:1px"></div><span>Política de privacidade e Termos</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--cyan)">🔵 Bom ter no lançamento</div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Dashboard analytics com funil</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Follow-up automático funcionando</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Kanban cards enriquecidos</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Export CSV de leads</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Chat do agente com histórico</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Favicon e meta tags OG corretos</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>404 page customizada</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Modo escuro/claro toggle</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Suporte via WhatsApp no footer</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,229,255,.3);flex-shrink:0;margin-top:1px"></div><span>Depoimento / case beta</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="color:var(--green)">🟢 Pós-lançamento (próximos 30 dias)</div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px">
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>A/B testing de mensagens</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>ICP dinâmico com mais dados de conversão</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>Enriquecimento via website</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>API pública para integrações</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>Import CSV de leads</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>Multi-usuário / workspace</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>HubSpot / Pipedrive</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>Programa de afiliados</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>PWA mobile</span></div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--muted);align-items:flex-start"><div style="width:14px;height:14px;border-radius:3px;border:1.5px solid rgba(0,255,163,.3);flex-shrink:0;margin-top:1px"></div><span>Notificações via WhatsApp</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ S11 — GTM: PRIMEIROS CLIENTES ════════════════════ -->
+<section class="section" id="s11">
+  <div class="eyebrow">Go-to-market</div>
+  <div class="section-title">Como conseguir os primeiros 20 clientes</div>
+  <div class="section-sub">Não precisa de ads pagos para os primeiros clientes. O ICP está claro — agências digitais e closers autônomos. Canais de custo zero com alta conversão:</div>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--cyan);font-size:20px">01</div>
+      <div class="feat-content">
+        <div class="feat-title">Dogfooding — use o Capturo para prospectar clientes do Capturo</div>
+        <div class="feat-sub">Configure o agente com ICP = "agências de marketing digital, consultores de vendas, closers". Busque no Google Maps em São Paulo, Rio e Curitiba. Use as mensagens geradas pelo produto para prospectar os primeiros usuários. Demonstra o produto em ação.</div>
+      </div>
+      <span class="status-pill s-done">Hoje</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--green);font-size:20px">02</div>
+      <div class="feat-content">
+        <div class="feat-title">Grupos de WhatsApp de closers e SDRs</div>
+        <div class="feat-sub">Entrar em 5-10 grupos de vendas B2B no WhatsApp (existem centenas com 100-500 membros). Apresentar o produto como membro da comunidade, não como anúncio. "Fiz uma ferramenta que uso para prospectar — quem quiser testar grátis, só falar." Taxa de conversão altíssima.</div>
+      </div>
+      <span class="status-pill s-done">Semana 1</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--yellow);font-size:20px">03</div>
+      <div class="feat-content">
+        <div class="feat-title">Carrossel Instagram + Reels demonstrando o produto</div>
+        <div class="feat-sub">1 vídeo de 60s mostrando: "Configurei o agente, busquei restaurantes em SP, 47 leads em 3 minutos, cada um com mensagem personalizada — veja o resultado." Conteúdo orgânico de demonstração converte muito melhor que anúncio. Use os 7 slides do carrossel que já criamos.</div>
+      </div>
+      <span class="status-pill s-partial">Semana 2</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--purple);font-size:20px">04</div>
+      <div class="feat-content">
+        <div class="feat-title">Parceria com 1 influencer de vendas B2B</div>
+        <div class="feat-sub">Abordagem direta para criadores de conteúdo sobre vendas e prospecção (YouTube, LinkedIn, Instagram). Oferta: acesso Pro grátis + 20% de comissão por indicação. 1 creator ativo com 10k seguidores qualificados pode trazer 30-50 usuários em uma semana.</div>
+      </div>
+      <span class="status-pill s-partial">Semana 2-3</span>
+    </div>
+
+    <div class="feat-card">
+      <div class="feat-score" style="color:var(--orange);font-size:20px">05</div>
+      <div class="feat-content">
+        <div class="feat-title">LinkedIn: posts semanais com dados de prospecção real</div>
+        <div class="feat-sub">"Testei prospectar [nicho] em [cidade] com IA. Resultado: X leads qualificados, Y% com telefone, mensagem gerada em 8 segundos." Posts com dados reais do produto geram curiosidade e leads orgânicos. 1 post por semana é suficiente para começar a construir audiência.</div>
+      </div>
+      <span class="status-pill s-new">Semana 3+</span>
+    </div>
+
+  </div>
+
+  <div class="alert alert-ok" style="margin-top:16px">
+    <div class="alert-icon">🎯</div>
+    <div class="alert-body">
+      <div class="alert-title">Meta realista de primeiros 30 dias pós-lançamento</div>
+      50 cadastros grátis → 8 conversões para plano pago (conversão 16%) → <strong>MRR inicial ~R$ 1.000</strong> (mix Free/Starter/Pro). Com 3 meses de execução consistente nos 5 canais acima, 30-50 clientes pagantes e MRR de R$ 5.000-8.000 é alcançável sem investimento em ads.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Capturo · Diagnóstico & Guia de Lançamento · Abril 2026</p>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <span class="badge b-cyan">68 arquivos analisados</span>
+    <span class="badge b-gray">6 migrations SQL</span>
+    <span class="badge b-gray">~2 semanas para lançar</span>
+  </div>
+  <p>capturo.com.br</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting){
+      const id = e.target.id;
+      navItems.forEach(n => n.classList.toggle('active', n.getAttribute('href')==='#'+id));
+    }
+  });
+}, {threshold:.3}).observe && sections.forEach(s => new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(e.isIntersecting) navItems.forEach(n => n.classList.toggle('active', n.getAttribute('href')==='#'+e.target.id));
+  });
+},{threshold:.3}).observe(s));
+
+function copyCode(btn){
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(()=>{
+    btn.textContent='Copiado ✓';btn.classList.add('ok');
+    setTimeout(()=>{btn.textContent='Copiar';btn.classList.remove('ok')},2000);
+  });
+}
+</script>
+</body>
+</html>

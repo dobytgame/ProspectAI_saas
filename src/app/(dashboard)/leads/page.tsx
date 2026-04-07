@@ -63,7 +63,7 @@ export default async function LeadsPage() {
               </p>
             </div>
             
-            <LeadsTable />
+            <LeadsTable currentPlan={business.plan || "free"} />
           </div>
         </div>
       </main>

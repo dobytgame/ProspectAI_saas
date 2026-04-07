@@ -16,14 +16,14 @@
 
 - **Core:** Next.js (App Router, Server Actions, Turbopack)
 - **Banco de Dados:** Supabase (Auth, Postgres, RLS)
-- **IA:** OpenAI API (GPT-4o-mini)
+- **IA:** OpenAI API — **gpt-4o** (tarefas principais: scoring, agente, chat, ICP dinâmico, visão em PDF) e **gpt-4o-mini** (mensagens rápidas no plano free)
 - **Maps:** Google Maps Places SDK & Geocoding API
 - **UI:** Tailwind CSS, shadcn/ui, Lucide Icons
 
 ## 🚀 Como Iniciar
 
 1. **Configuração de Env:**
-   - Preencha as chaves no `.env.local` (Supabase, OpenAI, Google Maps).
+   - Preencha as chaves no `.env.local` (Supabase, **OPENAI_API_KEY**, Google Maps). Não é necessária chave Anthropic.
 2. **Setup do Banco:**
    - Execute as migrações em `supabase/migrations`.
    - **IMPORTANTE:** Rode o SQL `ALTER TABLE public.businesses ADD COLUMN IF NOT EXISTS website TEXT;` no seu painel Supabase.

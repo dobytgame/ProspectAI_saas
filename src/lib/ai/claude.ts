@@ -1,10 +1,5 @@
-import OpenAI from "openai";
-
-// Mantivemos o nome do arquivo (claude.ts) para não quebrar os imports, 
-// mas agora o motor por trás de tudo é a OpenAI (gpt-4o).
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Nome histórico do arquivo (imports em actions); motor: OpenAI.
+import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 
 // Helper para extrair JSON limpo do response
 function parseJSON(text: string): any {
@@ -37,7 +32,7 @@ export async function extractBusinessProfile(description: string) {
   `;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: OPENAI_MODEL_FLAGSHIP,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" }
   });
@@ -120,7 +115,7 @@ IMPORTANTE: A primeira frase DEVE mencionar algo específico sobre o ${lead.name
 Escreva APENAS a mensagem. Sem explicações, sem comentários, sem notas.`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: OPENAI_MODEL_FLAGSHIP,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
@@ -210,7 +205,7 @@ Retorne EXCLUSIVAMENTE JSON válido (sem markdown, sem comentários):
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: OPENAI_MODEL_FLAGSHIP,
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
@@ -266,7 +261,7 @@ Retorne EXCLUSIVAMENTE um JSON no formato:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: OPENAI_MODEL_FLAGSHIP,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" }
   });
@@ -315,7 +310,7 @@ Retorne APENAS JSON no seguinte formato:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: OPENAI_MODEL_FLAGSHIP,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" }
   });
@@ -365,7 +360,7 @@ Retorne APENAS JSON no formato:
 }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o",
+    model: OPENAI_MODEL_FLAGSHIP,
     messages: [{ role: "user", content: prompt }],
     response_format: { type: "json_object" }
   });

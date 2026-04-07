@@ -12,20 +12,39 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, Mail, MessageCircle, Loader2 } from 'lucide-react'
 import { createCampaignAction } from '@/app/(dashboard)/campanhas/actions'
+import UpgradeModal from '@/components/UpgradeModal'
+import { isPlanLimitError } from '@/utils/plan-limits'
 
-export default function CreateCampaignDialog() {
+interface CreateCampaignDialogProps {
+  currentPlan: string
+  /** Quando true, "Nova Campanha" abre o modal de upgrade em vez do formulário */
+  atCampaignLimit?: boolean
+}
+
+export default function CreateCampaignDialog({
+  currentPlan,
+  atCampaignLimit = false,
+}: CreateCampaignDialogProps) {
   const [open, setOpen] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  const [limitError, setLimitError] = useState(false)
+  function openCreateFlow() {
+    if (atCampaignLimit) {
+      setShowUpgradeModal(true)
+      return
+    }
+    setOpen(true)
+  }
 
   function handleSubmit(formData: FormData) {
     startTransition(async () => {
-      setLimitError(false)
       const result = await createCampaignAction(formData)
-      if (result?.error === "LIMIT_REACHED_CAMPAIGNS") {
-        setLimitError(true)
-      } else if (!result?.error) {
+      const err = result?.error
+      if (err && isPlanLimitError(err)) {
+        setOpen(false)
+        setShowUpgradeModal(true)
+      } else if (!err) {
         setOpen(false)
       }
     })
@@ -33,9 +52,17 @@ export default function CreateCampaignDialog() {
 
   return (
     <>
-      <Button size="sm" className="gap-2" onClick={() => setOpen(true)}>
+      <Button size="sm" className="gap-2" onClick={openCreateFlow}>
         <Plus className="h-4 w-4" /> Nova Campanha
       </Button>
+
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        currentPlan={currentPlan}
+        title="Limite de campanhas"
+        description="Você atingiu o número máximo de campanhas do seu plano. Faça upgrade para criar mais campanhas e escalar a prospecção."
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
@@ -47,14 +74,6 @@ export default function CreateCampaignDialog() {
           </DialogHeader>
 
           <form action={handleSubmit} className="space-y-4">
-            {limitError && (
-              <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-lg border border-destructive/20 flex flex-col gap-2">
-                <span>Você atingiu o limite de 3 campanhas do Plano Grátis.</span>
-                <Button type="button" size="sm" variant="default" className="w-max bg-primary hover:bg-primary/90" onClick={() => window.location.href = '/upgrade'}>
-                  Fazer Upgrade para o Pro
-                </Button>
-              </div>
-            )}
             <div className="space-y-2">
               <label htmlFor="campaign-name" className="text-sm font-medium">
                 Nome da campanha <span className="text-destructive">*</span>

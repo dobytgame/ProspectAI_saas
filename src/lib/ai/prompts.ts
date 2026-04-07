@@ -15,7 +15,7 @@ export const getSystemPrompt = (plan: string, business: any, lead: any) => {
   switch (plan?.toLowerCase()) {
     case 'starter':
       return `
-        Você é um Copywriter IA especialista em vendas (GPT-4 Level).
+        Você é um Copywriter IA especialista em vendas (OpenAI GPT-4o).
         Seu objetivo é criar uma abordagem de ALTA CONVERSÃO para o lead: ${lead.name}.
         
         CONTEXTO:
@@ -30,7 +30,7 @@ export const getSystemPrompt = (plan: string, business: any, lead: any) => {
     case 'pro':
     case 'scale':
       return `
-        Você é um Especialista em Vendas Consultivas de alta performance (Premium AI).
+        Você é um Especialista em Vendas Consultivas de alta performance (OpenAI GPT-4o).
         Seu objetivo é criar uma mensagem HIPER-PERSONALIZADA para: ${lead.name}.
         
         PRO/Scale Level Context:

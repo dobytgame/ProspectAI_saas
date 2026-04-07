@@ -1,12 +1,8 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@/utils/supabase/server";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.CLAUDE_API_KEY,
-});
+import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 
 export async function updateLearnedICP(businessId: string) {
-  const supabase = await createClient()
+  const supabase = await createClient();
 
   // 1. Get recent successful leads
   const { data: closedLeads } = await supabase
@@ -15,19 +11,19 @@ export async function updateLearnedICP(businessId: string) {
     .eq("business_id", businessId)
     .eq("status", "closed")
     .order("updated_at", { ascending: false })
-    .limit(10)
+    .limit(10);
 
-  if (!closedLeads || closedLeads.length < 3) return // Need some data to learn
+  if (!closedLeads || closedLeads.length < 3) return; // Need some data to learn
 
   // 2. Format leads for AI
-  const leadsContext = closedLeads.map(l => ({
+  const leadsContext = closedLeads.map((l) => ({
     name: l.name,
     segment: l.segment,
     score: l.score,
-    reasoning: l.metadata?.reasoning
-  }))
+    reasoning: l.metadata?.reasoning,
+  }));
 
-  const systemPrompt = `
+  const userPrompt = `
     Você é um cientista de dados e especialista em ICP (Ideal Customer Profile).
     Sua tarefa é analisar o padrão dos leads que foram "FECHADOS" com sucesso e extrair insights.
     
@@ -46,33 +42,55 @@ export async function updateLearnedICP(businessId: string) {
       "winning_arguments": [],
       "ideal_profile_summary": "resumo de 2 frases"
     }
-  `
+  `;
 
   try {
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620",
-      max_tokens: 1000,
-      system: systemPrompt,
-      messages: [{ role: "user", content: "Analise os padrões e gere o ICP aprendido." }],
+    const response = await openai.chat.completions.create({
+      model: OPENAI_MODEL_FLAGSHIP,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Você responde somente com JSON válido, sem markdown, seguindo o schema pedido pelo usuário.",
+        },
+        { role: "user", content: userPrompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.4,
     });
 
-    const content = response.content[0];
-    if (content.type === "text") {
-      const insights = JSON.parse(content.text);
-      
-      // 3. Update business metadata or learned_icp field
-      await supabase
-        .from("businesses")
-        .update({ 
-          metadata: { 
-            learned_icp: insights,
-            last_icp_update: new Date().toISOString()
-          } 
-        })
-        .eq("id", businessId);
-        
-      return insights;
-    }
+    const text = response.choices[0]?.message?.content;
+    if (!text) return;
+
+    const insights = JSON.parse(text) as {
+      top_segments?: unknown;
+      winning_arguments?: unknown;
+      ideal_profile_summary?: string;
+    };
+
+    const { data: row } = await supabase
+      .from("businesses")
+      .select("metadata")
+      .eq("id", businessId)
+      .single();
+
+    const prevMeta =
+      row?.metadata && typeof row.metadata === "object" && !Array.isArray(row.metadata)
+        ? (row.metadata as Record<string, unknown>)
+        : {};
+
+    await supabase
+      .from("businesses")
+      .update({
+        metadata: {
+          ...prevMeta,
+          learned_icp: insights,
+          last_icp_update: new Date().toISOString(),
+        },
+      })
+      .eq("id", businessId);
+
+    return insights;
   } catch (error) {
     console.error("Dynamic ICP Error:", error);
   }

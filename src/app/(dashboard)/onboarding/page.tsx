@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Zap, Sparkles, Building2, Globe, FileText, Loader2, MessageCircle, CheckCircle2, ArrowRight, BrainCircuit, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Sparkles, Building2, Globe, FileText, Loader2, MessageCircle, CheckCircle2, ArrowRight, BrainCircuit, X, PenLine } from "lucide-react";
 import { createBusinessCore, finalizeOnboarding } from "./actions";
 
 // Tone Options
@@ -31,6 +32,7 @@ export default function OnboardingMultiStep() {
   const [fileInput, setFileInput] = useState<File | null>(null);
   const [kbItems, setKbItems] = useState<any[]>([]); // histórico de fontes
   const [processingItems, setProcessingItems] = useState<string[]>([]); // fontes em proc.
+  const [manualText, setManualText] = useState("");
 
   // Step 3: Plan
   const [selectedPlan, setSelectedPlan] = useState("free");
@@ -103,31 +105,72 @@ export default function OnboardingMultiStep() {
     }
   };
 
-  // Handle Synthesize (Move to Step 3)
-  const handleSynthesize = async () => {
+  const completedKbCount = kbItems.filter((i) => i.status === "completed").length;
+
+  const handleAddManual = async () => {
     if (!businessId) return;
-    
+    const t = manualText.trim();
+    if (t.length < 20) {
+      setErrorMsg("Use pelo menos 20 caracteres na descrição manual.");
+      return;
+    }
+    setErrorMsg("");
+    const processId = Date.now().toString();
+    setProcessingItems((prev) => [...prev, processId]);
+    const fd = new FormData();
+    fd.append("business_id", businessId);
+    fd.append("type", "manual");
+    fd.append("manual_text", t);
+    try {
+      const resp = await fetch("/api/knowledge/add", { method: "POST", body: fd });
+      const data = await resp.json();
+      setProcessingItems((prev) => prev.filter((p) => p !== processId));
+      if (data.success) {
+        setKbItems((prev) => [...prev, data.record]);
+        setManualText("");
+      } else {
+        setErrorMsg(data.error || "Erro ao salvar o texto.");
+      }
+    } catch {
+      setProcessingItems((prev) => prev.filter((p) => p !== processId));
+      setErrorMsg("Falha de rede ao salvar a descrição.");
+    }
+  };
+
+  /** Gera ICP + agente a partir das fontes (ou só nome/tom se não houver fontes). */
+  const runSynthesizeToStep3 = async (opts?: { skippedEmptyKb?: boolean }) => {
+    if (!businessId) return;
+
     setIsLoading(true);
+    setErrorMsg("");
     try {
       const resp = await fetch("/api/knowledge/synthesize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business_id: businessId })
+        body: JSON.stringify({
+          business_id: businessId,
+          skipped_empty_kb: opts?.skippedEmptyKb === true,
+        }),
       });
 
       const data = await resp.json();
       setIsLoading(false);
-      
+
       if (data.success) {
-        setStep(3); // Avança pra planos
+        setStep(3);
       } else {
-        alert(data.error || "Erro ao sintetizar conhecimento.");
+        setErrorMsg(data.error || "Erro ao sintetizar conhecimento.");
       }
-    } catch (err) {
+    } catch {
       setIsLoading(false);
-      alert("Falha na síntese do ICP Mestre.");
+      setErrorMsg("Falha na síntese do ICP Mestre.");
     }
   };
+
+  const handleSynthesize = () => runSynthesizeToStep3();
+
+  /** Sem site/PDF: segue com perfil mínimo (IA usa nome + tom da empresa). */
+  const handleSkipKnowledge = () => runSynthesizeToStep3({ skippedEmptyKb: true });
 
   // Handle Finish (Step 3)
   const handleFinish = async (e: React.FormEvent) => {
@@ -240,7 +283,7 @@ export default function OnboardingMultiStep() {
                     <BrainCircuit className="h-8 w-8 text-primary" /> Alimente sua IA
                   </CardTitle>
                   <CardDescription className="text-base font-medium mt-2 max-w-lg">
-                    Adicione links de sites ou documentos sobre serviços e diferenciais. A IA extrairá e aprenderá tudo o que precisa para vender como você.
+                    Adicione site, PDF ou uma descrição em texto. Sem isso, você pode <strong>pular</strong> — a IA monta um perfil básico só com o nome e o tom da empresa (dá para enriquecer depois nas configurações).
                   </CardDescription>
                 </div>
               </div>
@@ -251,6 +294,37 @@ export default function OnboardingMultiStep() {
                   {errorMsg}
                 </div>
               )}
+
+              {/* Descrição manual */}
+              <div className="space-y-3 bg-muted/15 p-5 rounded-2xl border border-primary/25">
+                <Label className="flex items-center gap-2 text-xs uppercase font-black tracking-widest text-primary">
+                  <PenLine className="h-4 w-4" /> Ou descreva seu negócio em texto
+                </Label>
+                <Textarea
+                  value={manualText}
+                  onChange={(e) => setManualText(e.target.value)}
+                  placeholder="Ex: Somos uma agência de tráfego pago em São Paulo. Atendemos e-commerces de moda e beleza. Nosso diferencial é criativo + performance com relatórios semanais..."
+                  rows={5}
+                  disabled={processingItems.length > 0}
+                  className="bg-background/50 border-border/40 rounded-xl text-sm font-medium resize-y min-h-[120px]"
+                />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[10px] text-muted-foreground font-medium">
+                    Mínimo 20 caracteres. Vira uma fonte na memória da IA como a URL ou o PDF.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleAddManual}
+                    disabled={
+                      manualText.trim().length < 20 || processingItems.length > 0
+                    }
+                    className="h-10 font-bold rounded-lg"
+                  >
+                    Adicionar à memória
+                  </Button>
+                </div>
+              </div>
               
               {/* Inputs */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-8 border-b border-border/40">
@@ -314,7 +388,9 @@ export default function OnboardingMultiStep() {
                   <div className="text-center py-12 px-4 border-2 border-dashed border-border/40 rounded-2xl bg-muted/10">
                     <Sparkles className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
                     <p className="text-sm font-bold text-muted-foreground">Sua base está vazia.</p>
-                    <p className="text-xs font-medium text-muted-foreground/60 mt-1">Adicione pelo menos 1 fonte acima para treinar sua IA.</p>
+                    <p className="text-xs font-medium text-muted-foreground/60 mt-1 max-w-md mx-auto">
+                      Adicione URL, arquivo ou texto manual — ou use <strong className="text-foreground/80">Pular por agora</strong> abaixo para gerar um perfil inicial mínimo.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted-foreground/20">
@@ -355,10 +431,14 @@ export default function OnboardingMultiStep() {
                 )}
               </div>
             </CardContent>
-            <CardFooter className="px-8 pb-8 pt-4">
+            <CardFooter className="px-8 pb-8 pt-4 flex flex-col gap-3">
               <Button 
                 onClick={handleSynthesize}
-                disabled={isLoading || (kbItems.length === 0 && processingItems.length === 0) || processingItems.length > 0}
+                disabled={
+                  isLoading ||
+                  processingItems.length > 0 ||
+                  completedKbCount === 0
+                }
                 className="w-full h-14 bg-primary text-black hover:bg-primary/90 text-sm font-black rounded-xl shadow-xl flex items-center justify-center gap-2 group relative overflow-hidden"
               >
                 {isLoading ? (
@@ -367,6 +447,18 @@ export default function OnboardingMultiStep() {
                   <>SINTETIZAR & TREINAR AGENTE MESTRE <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></>
                 )}
               </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSkipKnowledge}
+                disabled={isLoading || processingItems.length > 0}
+                className="w-full h-11 rounded-xl text-sm font-bold border-border/60 text-muted-foreground hover:text-foreground"
+              >
+                Pular por agora — perfil básico
+              </Button>
+              <p className="text-[11px] text-center text-muted-foreground font-medium leading-relaxed">
+                Com fontes na memória, use o botão principal para um ICP mais rico. Sem fontes, &quot;Pular&quot; usa só o nome e o tom definidos no passo 1.
+              </p>
             </CardFooter>
           </Card>
         )}
@@ -418,7 +510,7 @@ export default function OnboardingMultiStep() {
                       <p className="text-sm text-muted-foreground font-medium">A máquina de vendas completa, ilimitada.</p>
                     </div>
                     <div className="space-y-3 flex-1 mb-8">
-                      <div className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 className="h-4 w-4 text-secondary" /> 2.000 Leads / mês</div>
+                      <div className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 className="h-4 w-4 text-secondary" /> 1.000 Leads / mês</div>
                       <div className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 className="h-4 w-4 text-secondary" /> Campanhas Ilimitadas</div>
                       <div className="flex items-center gap-2 text-sm font-bold"><CheckCircle2 className="h-4 w-4 text-secondary" /> Exportação Ilimitada</div>
                     </div>

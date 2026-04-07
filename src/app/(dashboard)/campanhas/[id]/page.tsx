@@ -96,17 +96,23 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                   </h3>
                   <p className="text-[11px] text-muted-foreground italic">Encontre novos estabelecimentos na região para enviar seu script.</p>
                 </div>
-                <SearchForm 
-                  segment={campaign.business?.segment || ""} 
-                  campaignId={id} 
-                  isFloating={false} 
+                <SearchForm
+                  segment={campaign.business?.segment || ""}
+                  campaignId={id}
+                  isFloating={false}
                   currentPlan={campaign.business?.plan || 'free'}
+                  discoveryState={campaign.discovery_state ?? null}
                 />
               </div>
             </div>
 
             {/* Campaign Pipeline (Client Component) */}
-            <CampaignLeadsList leads={leads || []} campaign={campaign} campaignId={id} />
+            <CampaignLeadsList
+              leads={leads || []}
+              campaign={campaign}
+              campaignId={id}
+              currentPlan={campaign.business?.plan || "free"}
+            />
           </div>
         </div>
       </main>

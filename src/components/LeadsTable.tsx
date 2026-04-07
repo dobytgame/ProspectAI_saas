@@ -9,6 +9,7 @@ import { Search, Trash2, ChevronLeft, ChevronRight, Phone, Globe, MapPin, Buildi
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/Toast'
 import { DeleteLeadsDialog } from '@/components/DeleteLeadsDialog'
+import ExportMetaAudienceButton from '@/components/ExportMetaAudienceButton'
 import { cn } from '@/lib/utils'
 
 interface Lead {
@@ -23,7 +24,7 @@ interface Lead {
   created_at: string
 }
 
-export default function LeadsTable() {
+export default function LeadsTable({ currentPlan }: { currentPlan: string }) {
   const [leads, setLeads] = useState<Lead[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -134,16 +135,28 @@ export default function LeadsTable() {
           </div>
         </div>
         
-        {selectedIds.length > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={() => openDeleteDialog()}
-            className="h-11 px-6 font-black gap-2 shadow-lg shadow-red-500/20 active:scale-95 transition-all rounded-xl"
-          >
-            <Trash2 className="h-4 w-4" />
-            Excluir ({selectedIds.length})
-          </Button>
-        )}
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+          <ExportMetaAudienceButton
+            currentPlan={currentPlan}
+            cityFilter={cityFilter}
+            segmentFilter={segmentFilter}
+            selectedLeadIds={
+              selectedIds.length > 0 ? selectedIds : undefined
+            }
+            className="h-11 w-full rounded-xl sm:w-auto"
+            size="default"
+          />
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => openDeleteDialog()}
+              className="h-11 px-6 font-black gap-2 shadow-lg shadow-red-500/20 active:scale-95 transition-all rounded-xl"
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir ({selectedIds.length})
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="bg-background rounded-2xl border border-border/40 shadow-sm overflow-hidden">

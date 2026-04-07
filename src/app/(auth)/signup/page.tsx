@@ -1,12 +1,24 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signup, signInWithGoogle } from "@/app/(auth)/actions";
 
-export default function SignupPage() {
+export const metadata: Metadata = {
+  title: "Criar conta",
+  description: "Cadastro Capturo — prospecção com IA, Maps e WhatsApp.",
+};
+
+type Props = {
+  searchParams?: Promise<{ email?: string }>;
+};
+
+export default async function SignupPage({ searchParams }: Props) {
+  const sp = searchParams ? await searchParams : {};
+  const emailPrefill = sp.email?.trim() ?? "";
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
       <Card className="w-full max-w-md shadow-lg border-border/50 bg-background/80 backdrop-blur-sm">
@@ -27,7 +39,16 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
-              <Input id="email" name="email" type="email" placeholder="nome@exemplo.com" required className="bg-background/50" />
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder="nome@exemplo.com"
+                required
+                className="bg-background/50"
+                defaultValue={emailPrefill}
+                autoComplete="email"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>

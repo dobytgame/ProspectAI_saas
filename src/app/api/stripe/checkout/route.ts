@@ -45,6 +45,7 @@ export async function POST(req: Request) {
       mode: 'subscription',
       success_url: `${APP_URL}/dashboard?checkout=success`,
       cancel_url: `${APP_URL}/upgrade?checkout=cancel`,
+      client_reference_id: business.id,
       metadata: {
         userId: user.id,
         businessId: business.id,

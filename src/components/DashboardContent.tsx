@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import LeadMap from '@/components/LeadMap'
 import SearchForm from '@/components/SearchForm'
 import { StatCard } from '@/components/ui/StatCard'
-import { Users, Target, TrendingUp, Handshake, Clock } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Users, Target, TrendingUp, Handshake, Clock, Sparkles, ArrowRight } from 'lucide-react'
 import { Progress } from "@/components/ui/progress"
 
 interface Lead {
@@ -42,6 +44,8 @@ interface DashboardContentProps {
     status: string;
   }>;
   currentPlan: string;
+  /** True quando o usuário pulou a base de conhecimento no onboarding (metadata). */
+  showIcpBasicBanner?: boolean;
 }
 
 const SCORE_RANGES = [
@@ -51,7 +55,7 @@ const SCORE_RANGES = [
   { label: '🔴 Baixo (<40)', min: 0, max: 39 },
 ];
 
-export default function DashboardContent({ leads, segment, pipelineStats = {}, recentActivity = [], currentPlan }: DashboardContentProps) {
+export default function DashboardContent({ leads, segment, pipelineStats = {}, recentActivity = [], currentPlan, showIcpBasicBanner = false }: DashboardContentProps) {
   const [selectedCategory] = useState<string>('all')
   const [selectedScoreRange] = useState<number>(0)
 
@@ -79,6 +83,46 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
 
   return (
     <div className="flex-1 flex flex-col overflow-auto md:overflow-hidden p-3 sm:p-6 space-y-4 sm:space-y-6">
+      {showIcpBasicBanner && (
+        <div
+          className="shrink-0 rounded-2xl border px-4 py-3 sm:px-5 sm:py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          style={{
+            borderColor: "rgba(0, 229, 255, 0.35)",
+            background:
+              "linear-gradient(135deg, rgba(0,229,255,0.08) 0%, rgba(0,102,255,0.06) 100%)",
+            boxShadow: "0 0 24px rgba(0,229,255,0.08)",
+          }}
+        >
+          <div className="flex gap-3 min-w-0">
+            <div
+              className="shrink-0 h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: "var(--primary-dim)", color: "var(--primary)" }}
+            >
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-foreground leading-snug">
+                Sua IA está em modo básico
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                Você entrou sem site, PDF ou texto na base. Adicione fontes em{" "}
+                <strong className="text-foreground/90">Configurações → Negócio &amp; IA</strong> e
+                rode a síntese para mensagens e scores mais alinhados ao seu negócio.
+              </p>
+            </div>
+          </div>
+          <Button
+            asChild
+            className="shrink-0 h-10 font-bold rounded-xl bg-primary text-black hover:bg-primary/90 shadow-md shadow-primary/20"
+          >
+            <Link href="/settings" className="inline-flex items-center gap-2">
+              Alimentar a IA agora
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
+
       {/* Animated Stats Row (4 Cards) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 shrink-0">
         <StatCard

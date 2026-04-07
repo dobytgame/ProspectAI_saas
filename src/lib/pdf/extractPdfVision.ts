@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 
 const CHUNK_SIZE = 3;
 
@@ -69,7 +70,7 @@ export async function extractPdfTextViaVision(
     }
 
     const res = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: OPENAI_MODEL_FLAGSHIP,
       messages: [{ role: "user", content: userContent }],
       max_tokens: 8192,
     });
