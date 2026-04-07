@@ -43,8 +43,11 @@ export default function KnowledgeBaseManager({ businessId, initialItems }: { bus
       setProcessingItems(prev => prev.filter(p => p !== processId));
 
       if (data.success) {
-        setKbItems(prev => [data.record, ...prev]);
+        setKbItems((prev) => [data.record, ...prev]);
       } else {
+        if (data.record) {
+          setKbItems((prev) => [data.record, ...prev]);
+        }
         alert(data.error || "Erro ao processar fonte.");
       }
     } catch (err) {
@@ -95,7 +98,7 @@ export default function KnowledgeBaseManager({ businessId, initialItems }: { bus
           <BrainCircuit className="h-5 w-5" /> Base de Conhecimento Ativa
         </h3>
         <p className="text-xs text-muted-foreground font-medium mt-1">
-          Adicione materiais para enriquecer a inteligência do Agente e depois clique em Retreinar.
+          Envie PDF ou .txt (mesmo fluxo do onboarding). O arquivo fica no Storage do Supabase; depois clique em Retreinar.
         </p>
       </div>
 
@@ -127,13 +130,13 @@ export default function KnowledgeBaseManager({ businessId, initialItems }: { bus
         {/* File Input */}
         <div className="space-y-3 bg-muted/20 p-5 rounded-2xl border border-border/40">
           <Label className="flex items-center gap-2 text-xs uppercase font-black tracking-widest text-primary">
-            <FileText className="h-4 w-4" /> Enviar PDF/Doc
+            <FileText className="h-4 w-4" /> PDF ou .txt
           </Label>
           <div className="flex gap-2 items-center">
-            <Input 
-              type="file" 
-              accept=".pdf,.txt,.doc,.docx"
-              onChange={e => setFileInput(e.target.files?.[0] || null)}
+            <Input
+              type="file"
+              accept=".pdf,.txt"
+              onChange={(e) => setFileInput(e.target.files?.[0] || null)}
               className="bg-background/50 border-border/40 h-11 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 cursor-pointer w-full text-xs"
             />
             <Button 
@@ -165,8 +168,20 @@ export default function KnowledgeBaseManager({ businessId, initialItems }: { bus
               <CheckCircle2 className="h-5 w-5 text-green-500" />
             </div>
             <div className="space-y-2 w-full pr-10 relative">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black tracking-wider text-muted-foreground uppercase">{item.type} • {String(item.source).substring(0,40)}</span>
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-xs font-black tracking-wider text-muted-foreground uppercase">
+                  {item.type} • {String(item.source).substring(0, 40)}
+                </span>
+                {item.metadata?.storage_path && item.status === "completed" && (
+                  <span className="text-[10px] font-bold uppercase text-primary/80 bg-primary/10 px-2 py-0.5 rounded">
+                    Arquivo no storage
+                  </span>
+                )}
+                {item.metadata?.storage_upload_error && (
+                  <span className="text-[10px] font-bold uppercase text-amber-500/90 bg-amber-500/10 px-2 py-0.5 rounded">
+                    Storage indisponível
+                  </span>
+                )}
               </div>
               <p className="text-sm font-medium text-foreground leading-relaxed italic border-l-2 border-primary/50 pl-3">"{item.ai_feedback}"</p>
               

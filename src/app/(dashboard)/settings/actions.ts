@@ -1,6 +1,7 @@
-'use server'
+"use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { createServiceRoleClient } from "@/utils/supabase/service-role";
 import { revalidatePath } from "next/cache";
 
 export type SettingsSaveState =
@@ -125,19 +126,39 @@ export async function saveProfileSettings(
 
 export async function removeKnowledgeBaseItem(id: string, businessId: string) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) return false;
 
   try {
-    const { error } = await supabase
+    const { data: row, error: fetchErr } = await supabase
       .from("knowledge_bases")
-      .delete()
+      .select("metadata")
       .eq("id", id)
-      .eq("business_id", businessId);
+      .eq("business_id", businessId)
+      .single();
+
+    if (fetchErr || !row) return false;
+
+    const meta = row.metadata && typeof row.metadata === "object" ? row.metadata as Record<string, unknown> : {};
+    const bucket = typeof meta.storage_bucket === "string" ? meta.storage_bucket : "knowledge_base";
+    const path = typeof meta.storage_path === "string" ? meta.storage_path : null;
+
+    if (path) {
+      try {
+        const admin = createServiceRoleClient();
+        await admin.storage.from(bucket).remove([path]);
+      } catch (e) {
+        console.error("removeKnowledgeBaseItem storage:", e);
+      }
+    }
+
+    const { error } = await supabase.from("knowledge_bases").delete().eq("id", id).eq("business_id", businessId);
 
     if (error) throw error;
-    
+
     return true;
   } catch (err) {
     console.error("Delete KB error:", err);

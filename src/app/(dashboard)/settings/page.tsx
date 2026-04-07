@@ -37,7 +37,7 @@ export default async function SettingsPage() {
 
   const { data: knowledgeItems } = await supabase
     .from("knowledge_bases")
-    .select("id, type, source, ai_feedback, status")
+    .select("id, type, source, ai_feedback, status, metadata")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
 

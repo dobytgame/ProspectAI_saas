@@ -361,7 +361,7 @@ export default function OnboardingMultiStep() {
                   <div className="flex gap-2 items-center">
                     <Input 
                       type="file" 
-                      accept=".pdf,.txt,.doc,.docx"
+                      accept=".pdf,.txt"
                       onChange={e => setFileInput(e.target.files?.[0] || null)}
                       className="bg-background/50 border-border/40 h-11 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 cursor-pointer"
                     />
