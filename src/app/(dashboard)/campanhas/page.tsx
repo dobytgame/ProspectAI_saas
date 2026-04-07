@@ -28,6 +28,13 @@ export default async function CampaignsPage() {
   const plan = (business.plan || "free") as PlanType;
   const usage = await getPlanUsage(supabase, business.id, plan);
 
+  const { data: completedKnowledgeProfiles } = await supabase
+    .from("knowledge_profiles")
+    .select("id, name")
+    .eq("business_id", business.id)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false });
+
   const { data: campaigns } = await supabase
     .from("campaigns")
     .select("*, leads:leads(count)")
@@ -48,6 +55,7 @@ export default async function CampaignsPage() {
           <CreateCampaignDialog
             currentPlan={plan}
             atCampaignLimit={atCampaignLimit}
+            knowledgeProfiles={completedKnowledgeProfiles || []}
           />
         </header>
 

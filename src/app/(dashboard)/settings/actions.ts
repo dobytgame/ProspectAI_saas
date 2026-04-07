@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { createServiceRoleClient } from "@/utils/supabase/service-role";
+import { removeKnowledgeStoragePaths } from "@/lib/knowledge/storage-upload";
 import { revalidatePath } from "next/cache";
 
 export type SettingsSaveState =
@@ -164,4 +165,58 @@ export async function removeKnowledgeBaseItem(id: string, businessId: string) {
     console.error("Delete KB error:", err);
     return false;
   }
+}
+
+export async function deleteKnowledgeProfileAction(profileId: string, businessId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { ok: false as const, message: "Não autorizado." };
+
+  const { data: biz } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("id", businessId)
+    .single();
+
+  if (!biz) return { ok: false as const, message: "Negócio não encontrado." };
+
+  const { data: row, error: fetchErr } = await supabase
+    .from("knowledge_profiles")
+    .select("metadata")
+    .eq("id", profileId)
+    .eq("business_id", businessId)
+    .single();
+
+  if (fetchErr || !row) return { ok: false as const, message: "Perfil não encontrado." };
+
+  const meta =
+    row.metadata && typeof row.metadata === "object" ? (row.metadata as Record<string, unknown>) : {};
+  const uploads = Array.isArray(meta.uploads) ? meta.uploads : [];
+  const paths: string[] = [];
+  for (const u of uploads) {
+    if (u && typeof u === "object" && typeof (u as { storage_path?: string }).storage_path === "string") {
+      paths.push((u as { storage_path: string }).storage_path);
+    }
+  }
+
+  await removeKnowledgeStoragePaths(paths);
+
+  const { error: delErr } = await supabase
+    .from("knowledge_profiles")
+    .delete()
+    .eq("id", profileId)
+    .eq("business_id", businessId);
+
+  if (delErr) {
+    console.error("deleteKnowledgeProfileAction:", delErr);
+    return { ok: false as const, message: delErr.message || "Não foi possível excluir." };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath("/campanhas");
+  return { ok: true as const };
 }

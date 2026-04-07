@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Building2, Sparkles, Save, ShieldCheck, Globe, Info, AlertTriangle } from "lucide-react";
 import { getPlanUsage, PlanType } from "@/utils/plan-limits";
 import KnowledgeBaseManager from "./KnowledgeBaseManager";
+import KnowledgeProfilesManager from "./KnowledgeProfilesManager";
 import {
   BusinessSettingsForm,
   ProfileSettingsForm,
@@ -38,6 +39,12 @@ export default async function SettingsPage() {
   const { data: knowledgeItems } = await supabase
     .from("knowledge_bases")
     .select("id, type, source, ai_feedback, status, metadata")
+    .eq("business_id", business.id)
+    .order("created_at", { ascending: false });
+
+  const { data: knowledgeProfiles } = await supabase
+    .from("knowledge_profiles")
+    .select("id, name, status, source_summary, ai_feedback, created_at")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
 
@@ -163,6 +170,12 @@ export default async function SettingsPage() {
                     </div>
 
                     <KnowledgeBaseManager businessId={business.id} initialItems={knowledgeItems || []} />
+
+                    <KnowledgeProfilesManager
+                      businessId={business.id}
+                      plan={(business.plan || "free") as PlanType}
+                      initialProfiles={knowledgeProfiles || []}
+                    />
                   </CardContent>
                   <CardFooter className="p-8 bg-muted/20 border-t border-border/40 backdrop-blur-md flex justify-end">
                     <SettingsSubmitButton

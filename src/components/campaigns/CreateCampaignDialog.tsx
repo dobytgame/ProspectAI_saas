@@ -15,15 +15,23 @@ import { createCampaignAction } from '@/app/(dashboard)/campanhas/actions'
 import UpgradeModal from '@/components/UpgradeModal'
 import { isPlanLimitError } from '@/utils/plan-limits'
 
+interface CampaignKnowledgeOption {
+  id: string
+  name: string
+}
+
 interface CreateCampaignDialogProps {
   currentPlan: string
   /** Quando true, "Nova Campanha" abre o modal de upgrade em vez do formulário */
   atCampaignLimit?: boolean
+  /** Perfis com status completed — opcional na criação da campanha */
+  knowledgeProfiles?: CampaignKnowledgeOption[]
 }
 
 export default function CreateCampaignDialog({
   currentPlan,
   atCampaignLimit = false,
+  knowledgeProfiles = [],
 }: CreateCampaignDialogProps) {
   const [open, setOpen] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
@@ -101,6 +109,30 @@ export default function CreateCampaignDialog({
                 className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors resize-none"
               />
             </div>
+
+            {knowledgeProfiles.length > 0 && (
+              <div className="space-y-2">
+                <label htmlFor="knowledge_profile_id" className="text-sm font-medium">
+                  Perfil de conhecimento (opcional)
+                </label>
+                <select
+                  id="knowledge_profile_id"
+                  name="knowledge_profile_id"
+                  defaultValue=""
+                  className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                >
+                  <option value="">Nenhum — usar só o ICP do negócio</option>
+                  {knowledgeProfiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Mensagens geradas usarão o briefing deste perfil quando houver.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Canal</label>

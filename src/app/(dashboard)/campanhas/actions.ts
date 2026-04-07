@@ -31,6 +31,27 @@ export async function createCampaignAction(formData: FormData) {
   const name = formData.get('name') as string;
   const description = formData.get('description') as string;
   const channel = formData.get('channel') as string;
+  const rawKp = formData.get("knowledge_profile_id");
+  const kpCandidate =
+    typeof rawKp === "string" && rawKp.trim().length > 0 ? rawKp.trim() : null;
+
+  let knowledge_profile_id: string | null = null;
+  if (kpCandidate) {
+    const { data: kp } = await supabase
+      .from("knowledge_profiles")
+      .select("id")
+      .eq("id", kpCandidate)
+      .eq("business_id", business.id)
+      .eq("status", "completed")
+      .maybeSingle();
+    if (!kp) {
+      return {
+        error:
+          "Perfil de conhecimento inválido, não encontrado ou ainda em processamento.",
+      };
+    }
+    knowledge_profile_id = kpCandidate;
+  }
 
   const { error } = await supabase
     .from("campaigns")
@@ -39,7 +60,8 @@ export async function createCampaignAction(formData: FormData) {
       name,
       description,
       channel,
-      status: 'active'
+      status: 'active',
+      knowledge_profile_id,
     });
 
   if (error) return { error: error.message };

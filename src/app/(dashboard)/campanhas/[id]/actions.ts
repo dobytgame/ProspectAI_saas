@@ -9,7 +9,7 @@ export async function generateAllAction(campaignId: string) {
   
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("*, business:businesses(*, agents(config))")
+    .select("*, business:businesses(*, agents(config)), knowledge_profile:knowledge_profiles(*)")
     .eq("id", campaignId)
     .single();
 
@@ -45,7 +45,7 @@ export async function generateMessageAction(leadId: string, campaignId: string) 
 
   const { data: campaign } = await supabase
     .from("campaigns")
-    .select("*, business:businesses(*, agents(config))")
+    .select("*, business:businesses(*, agents(config)), knowledge_profile:knowledge_profiles(*)")
     .eq("id", campaignId)
     .single();
 

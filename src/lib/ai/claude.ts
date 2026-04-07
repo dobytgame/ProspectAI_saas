@@ -55,6 +55,69 @@ export async function extractBusinessProfile(description: string) {
  * Usa persona de vendas, ângulo recomendado pelo scoring e tom calibrado.
  * Cada mensagem é única, específica e soa como escrita por um humano expert.
  */
+export type CampaignKnowledgeProfileStructured = {
+  campaign_brief: string;
+  talking_points: string[];
+  value_props: string[];
+  avoid: string[];
+  insight_summary: string;
+};
+
+/**
+ * Sintetiza um briefing de campanha a partir de texto livre + URL + arquivos combinados.
+ */
+export async function synthesizeCampaignKnowledgeProfile(
+  combinedSourceText: string,
+  businessName: string,
+  profileName: string
+): Promise<CampaignKnowledgeProfileStructured> {
+  const snippet = combinedSourceText.replace(/\s+/g, " ").trim().substring(0, 45000);
+
+  const prompt = `Você é um estrategista de vendas B2B. O usuário cadastrou um PERFIL DE CONHECIMENTO para personalizar mensagens de uma campanha de prospecção.
+
+Empresa: "${businessName}"
+Nome do perfil: "${profileName}"
+
+Fontes combinadas (texto livre, site e/ou arquivos). Use APENAS informações presentes no material; não invente produtos, preços, clientes ou resultados que não apareçam.
+
+<<<MATERIAL>>>
+${snippet}
+<<<FIM>>>
+
+Tarefa: produza um briefing acionável para a IA gerar mensagens personalizadas nesta campanha.
+
+Retorne EXCLUSIVAMENTE JSON válido (sem markdown):
+{
+  "campaign_brief": "4 a 8 parágrafos curtos em português: oferta, público desta campanha, dores, diferenciais, tom sugerido, o que destacar ao abordar um lead.",
+  "talking_points": ["até 12 bullets curtos"],
+  "value_props": ["até 8 propostas de valor concretas"],
+  "avoid": ["até 8 coisas que a mensagem NÃO deve dizer ou prometer"],
+  "insight_summary": "2 a 4 frases resumindo o que foi entendido das fontes"
+}`;
+
+  const response = await openai.chat.completions.create({
+    model: OPENAI_MODEL_FLAGSHIP,
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+  });
+
+  const content = response.choices[0].message.content;
+  if (!content) throw new Error("Resposta vazia da IA ao sintetizar perfil.");
+
+  const parsed = parseJSON(content) as Record<string, unknown>;
+  const tp = parsed.talking_points;
+  const vp = parsed.value_props;
+  const av = parsed.avoid;
+
+  return {
+    campaign_brief: String(parsed.campaign_brief ?? "").trim(),
+    talking_points: Array.isArray(tp) ? tp.map((x) => String(x)) : [],
+    value_props: Array.isArray(vp) ? vp.map((x) => String(x)) : [],
+    avoid: Array.isArray(av) ? av.map((x) => String(x)) : [],
+    insight_summary: String(parsed.insight_summary ?? "").trim(),
+  };
+}
+
 export async function generateOutreachMessage(
   lead: any, business: any, campaign: any, agentConfig?: any
 ) {
@@ -64,6 +127,20 @@ export async function generateOutreachMessage(
   const recommendedAngle = lead.metadata?.recommended_angle || angles[0] || '';
   const objections = agentConfig?.objection_handling || {};
   const neverSay = persona.never_say || [];
+
+  const kp = campaign?.knowledge_profile;
+  const kpBlock =
+    kp &&
+    typeof kp === "object" &&
+    !Array.isArray(kp) &&
+    kp.status === "completed" &&
+    typeof kp.campaign_brief === "string" &&
+    kp.campaign_brief.trim().length > 0
+      ? `\nBRIEF DO PERFIL DE CONHECIMENTO "${kp.name || ""}" (use para ângulo e personalização; alinhe ao ICP e não invente fatos fora deste brief):\n${kp.campaign_brief.trim()}\n` +
+        (Array.isArray(kp.structured?.talking_points) && kp.structured.talking_points.length
+          ? `Pontos de conversa sugeridos: ${kp.structured.talking_points.slice(0, 10).join(" | ")}\n`
+          : "")
+      : "";
 
   const systemPrompt = `Você é ${persona.name || business.name}, ${persona.role || 'Consultor de Vendas'}.
 Sua personalidade: ${persona.personality || business.tone}.
@@ -81,7 +158,7 @@ ${neverSay.map((s: string, i: number) => `${i+1}. NUNCA diga: "${s}"`).join('\n'
 CONTEXTO DA CAMPANHA:
 Canal: ${campaign.channel.toUpperCase()}
 Objetivo: ${campaign.name} — ${campaign.description}
-
+${kpBlock}
 DADOS DO LEAD (use para personalizar):
 - Empresa: ${lead.name}
 - Endereço: ${lead.address}
