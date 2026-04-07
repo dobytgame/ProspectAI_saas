@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@/utils/supabase/server';
+import { resolvePublicAppUrl } from '@/lib/public-app-url';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_123', {
   apiVersion: '2023-10-16' as any,
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Price ID is required' }, { status: 400 });
     }
 
-    const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const APP_URL = resolvePublicAppUrl(req);
 
     const session = await stripe.checkout.sessions.create({
       customer: business.stripe_customer_id || undefined,
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
         },
       ],
       mode: 'subscription',
+      allow_promotion_codes: true,
       success_url: `${APP_URL}/dashboard?checkout=success`,
       cancel_url: `${APP_URL}/upgrade?checkout=cancel`,
       client_reference_id: business.id,

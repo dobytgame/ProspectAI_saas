@@ -26,6 +26,10 @@ export default function UpgradeClientButton({
         body: JSON.stringify({ priceId }),
       })
       const data = await res.json()
+      if (!res.ok) {
+        console.error('Checkout:', data.error || res.statusText)
+        return
+      }
       if (data.url) {
         window.location.href = data.url
       }

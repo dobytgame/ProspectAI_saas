@@ -18,8 +18,8 @@ export default function SidebarUsage({ used, total, planName, isExpanded }: Side
   if (!isExpanded) {
     return (
       <div className="flex justify-center mt-auto py-4 border-t border-border/40 relative group/usage">
-        <Link 
-          href="/settings" 
+        <Link
+          href="/upgrade"
           className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 ${percentage > 90 ? 'bg-red-500/10 text-red-500' : 'bg-primary/10 text-primary'} hover:scale-110 active:scale-95`}
         >
           <Zap className="h-5 w-5 fill-current" />
@@ -57,7 +57,7 @@ export default function SidebarUsage({ used, total, planName, isExpanded }: Side
         
         <Progress value={percentage} className="h-1.5" indicatorClassName={colorClass} />
         
-        <Link href="/settings" className="mt-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all duration-200 group">
+        <Link href="/upgrade" className="mt-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all duration-200 group">
           <Zap className="h-3.5 w-3.5 text-primary group-hover:scale-110 transition-transform fill-primary/20" />
           <span className="text-[11px] font-black tracking-tight text-primary">UPGRADE</span>
         </Link>

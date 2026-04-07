@@ -1,3 +1,8 @@
+/**
+ * Webhook Stripe — configure no Dashboard em:
+ * https://dashboard.stripe.com/webhooks → endpoint (ex.: https://www.capturo.digital/api/stripe/webhook)
+ * Eventos: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted
+ */
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
