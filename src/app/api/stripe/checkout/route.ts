@@ -52,6 +52,13 @@ export async function POST(req: Request) {
         userId: user.id,
         businessId: business.id,
       },
+      /** Repete na assinatura: webhooks de subscription leem metadata mesmo se a session falhar. */
+      subscription_data: {
+        metadata: {
+          userId: user.id,
+          businessId: business.id,
+        },
+      },
     });
 
     return NextResponse.json({ url: session.url });
