@@ -1,19 +1,15 @@
 import OpenAI from "openai";
+import { getDocumentProxy, renderPageAsImage } from "unpdf";
+
 import { OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 
 const CHUNK_SIZE = 3;
 
-/** Opções passadas ao construtor PDFParse (cMap, fontes, etc.). */
-export type PdfParseLoadOptions = Record<string, unknown>;
-
 /**
- * PDF escaneado / só imagem: renderiza páginas e transcreve com GPT-4o (visão).
+ * PDF escaneado / só imagem: renderiza páginas com `@napi-rs/canvas` + unpdf e transcreve com GPT-4o (visão).
  * Controlado por PDF_VISION_MAX_PAGES (default 8) e DISABLE_PDF_VISION=1 para desligar.
  */
-export async function extractPdfTextViaVision(
-  buffer: Buffer,
-  loadOpts: PdfParseLoadOptions
-): Promise<string | null> {
+export async function extractPdfTextViaVision(buffer: Buffer): Promise<string | null> {
   if (process.env.DISABLE_PDF_VISION === "1") return null;
   if (!process.env.OPENAI_API_KEY?.trim()) return null;
 
@@ -22,24 +18,24 @@ export async function extractPdfTextViaVision(
     20
   );
 
-  const { PDFParse } = await import("pdf-parse");
-  const parser = new PDFParse({
-    data: new Uint8Array(buffer),
-    ...loadOpts,
-  });
-
-  let dataUrls: string[] = [];
+  const uint8 = new Uint8Array(buffer);
+  const pdf = await getDocumentProxy(uint8);
+  const dataUrls: string[] = [];
 
   try {
-    const shot = await parser.getScreenshot({
-      first: maxPages,
-      desiredWidth: 1200,
-      imageDataUrl: true,
-      imageBuffer: false,
-    });
-    dataUrls = shot.pages.map((p) => p.dataUrl).filter((u) => u.startsWith("data:image"));
+    const n = Math.min(pdf.numPages, maxPages);
+    for (let p = 1; p <= n; p++) {
+      const url = await renderPageAsImage(pdf, p, {
+        toDataURL: true,
+        width: 1200,
+        canvasImport: () => import("@napi-rs/canvas"),
+      });
+      if (typeof url === "string" && url.startsWith("data:image")) {
+        dataUrls.push(url);
+      }
+    }
   } finally {
-    await parser.destroy();
+    await pdf.destroy();
   }
 
   if (dataUrls.length === 0) return null;
