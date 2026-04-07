@@ -22,6 +22,7 @@ import {
 import { CSS } from '@dnd-kit/utilities'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { LeadScoreDisplay } from '@/components/ui/ScoreBadge'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal, GripVertical, MessageSquare, Bot, Search, Filter, Download, Upload } from 'lucide-react'
 import { Input } from '@/components/ui/input'
@@ -421,12 +422,6 @@ function LeadCard({ lead, isDragging, onOpenChat, onOpenSheet, dndProps }: { lea
           </div>
         </div>
         
-        {lead.metadata?.tier && (
-          <Badge variant="outline" className="mb-2 text-[10px] font-bold border-secondary/20 text-secondary bg-secondary/5">
-            Tier {lead.metadata.tier}
-          </Badge>
-        )}
-        
         {lead.metadata?.tags && lead.metadata.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mb-3">
             {lead.metadata.tags.map((tag: string) => (
@@ -439,9 +434,14 @@ function LeadCard({ lead, isDragging, onOpenChat, onOpenSheet, dndProps }: { lea
         
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center gap-2">
-            <Badge className={`${(lead.score || 0) > 70 ? 'bg-green-500' : 'bg-amber-500'} text-white text-[10px] h-5 px-1.5 border-none shadow-sm`}>
-              {lead.score || 0}
-            </Badge>
+            <LeadScoreDisplay
+              score={lead.score || 0}
+              tier={lead.metadata?.tier}
+              priority={lead.metadata?.priority}
+              reasoning={lead.metadata?.reasoning}
+              variant="compact"
+              className="max-w-[min(100%,10.5rem)]"
+            />
             {timeSinceActivity >= 0 && (
               <span className="text-[10px] text-muted-foreground font-medium">
                 {timeSinceActivity === 0 ? 'Hoje' : `${timeSinceActivity}d atrás`}

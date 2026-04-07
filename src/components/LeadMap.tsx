@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api'
+import { getScorePresentation } from '@/lib/leads/score-presentation'
 
 const containerStyle = {
   width: '100%',
@@ -25,6 +26,11 @@ interface Lead {
   status?: string;
   rating?: number | null;
   reasoning?: string;
+  metadata?: {
+    tier?: string;
+    priority?: string;
+    reasoning?: string;
+  };
 }
 
 interface LeadMapProps {
@@ -35,12 +41,6 @@ function getScoreColor(score: number) {
   if (score >= 70) return '#22c55e'; // green
   if (score >= 40) return '#eab308'; // yellow
   return '#ef4444'; // red
-}
-
-function getScoreLabel(score: number) {
-  if (score >= 70) return 'Qualificado';
-  if (score >= 40) return 'Potencial';
-  return 'Baixo';
 }
 
 function getStatusLabel(status: string) {
@@ -151,7 +151,14 @@ export default function LeadMap({ leads }: LeadMapProps) {
         )
       })}
 
-      {selectedLead && selectedLead.lat && selectedLead.lng && (
+      {selectedLead && selectedLead.lat && selectedLead.lng && (() => {
+        const sc = selectedLead.score || 0
+        const pres = getScorePresentation(sc, {
+          tier: selectedLead.metadata?.tier,
+          priority: selectedLead.metadata?.priority,
+        })
+        const reasoningText = selectedLead.reasoning?.trim() || selectedLead.metadata?.reasoning?.trim()
+        return (
         <InfoWindow
           position={{ lat: selectedLead.lat, lng: selectedLead.lng }}
           onCloseClick={() => setSelectedLead(null)}
@@ -181,8 +188,8 @@ export default function LeadMap({ leads }: LeadMapProps) {
                   letterSpacing: '0.8px',
                   padding: '2px 8px',
                   borderRadius: '4px',
-                  backgroundColor: getScoreColor(selectedLead.score || 0) + '18',
-                  color: getScoreColor(selectedLead.score || 0),
+                  backgroundColor: getScoreColor(sc) + '18',
+                  color: getScoreColor(sc),
                 }}>
                   {getStatusLabel(selectedLead.status || 'new')}
                 </span>
@@ -191,19 +198,19 @@ export default function LeadMap({ leads }: LeadMapProps) {
                 minWidth: '52px',
                 height: '52px',
                 borderRadius: '12px',
-                background: `linear-gradient(135deg, ${getScoreColor(selectedLead.score || 0)}22, ${getScoreColor(selectedLead.score || 0)}44)`,
-                border: `2px solid ${getScoreColor(selectedLead.score || 0)}`,
+                background: `linear-gradient(135deg, ${getScoreColor(sc)}22, ${getScoreColor(sc)}44)`,
+                border: `2px solid ${getScoreColor(sc)}`,
                 display: 'flex',
                 flexDirection: 'column' as const,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginLeft: '12px',
               }}>
-                <span style={{ fontSize: '18px', fontWeight: 800, color: getScoreColor(selectedLead.score || 0), lineHeight: 1 }}>
-                  {selectedLead.score || 0}
+                <span style={{ fontSize: '18px', fontWeight: 800, color: getScoreColor(sc), lineHeight: 1 }}>
+                  {sc}
                 </span>
-                <span style={{ fontSize: '8px', fontWeight: 600, color: getScoreColor(selectedLead.score || 0), textTransform: 'uppercase' as const, letterSpacing: '0.5px' }}>
-                  {getScoreLabel(selectedLead.score || 0)}
+                <span style={{ fontSize: '8px', fontWeight: 600, color: getScoreColor(sc), textAlign: 'center' as const, lineHeight: 1.15, padding: '0 4px', letterSpacing: '0.2px' }}>
+                  {pres.shortLabel}
                 </span>
               </div>
             </div>
@@ -242,24 +249,25 @@ export default function LeadMap({ leads }: LeadMapProps) {
             </div>
 
             {/* AI Reasoning */}
-            {selectedLead.reasoning && (
+            {reasoningText && (
               <div style={{
                 backgroundColor: '#f1f5f9',
                 borderRadius: '8px',
                 padding: '10px 12px',
-                borderLeft: `3px solid ${getScoreColor(selectedLead.score || 0)}`,
+                borderLeft: `3px solid ${getScoreColor(sc)}`,
               }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.8px', color: '#94a3b8', marginBottom: '4px' }}>
                   🤖 Análise da IA
                 </div>
                 <p style={{ margin: 0, fontSize: '12px', color: '#475569', lineHeight: 1.5, fontStyle: 'italic' }}>
-                  "{selectedLead.reasoning}"
+                  &ldquo;{reasoningText}&rdquo;
                 </p>
               </div>
             )}
           </div>
         </InfoWindow>
-      )}
+        )
+      })()}
     </GoogleMap>
   )
 }

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { Sparkles, MessageCircle, Mail, Phone, Globe, CheckCircle2, AlertCircle, Loader2, Send, Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { LeadScoreDisplay } from "@/components/ui/ScoreBadge";
 import Link from "next/link";
 import { generateMessageAction, markAsContactedAction } from "@/app/(dashboard)/campanhas/[id]/actions";
 import ExportMetaAudienceButton from "@/components/ExportMetaAudienceButton";
@@ -71,12 +72,14 @@ export default function CampaignLeadsList({ leads, campaign, campaignId, current
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <h4 className="font-black text-base tracking-tight">{lead.name}</h4>
-                      <Badge className={`${
-                        lead.score >= 70 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]' : 
-                        lead.score >= 40 ? 'bg-amber-500' : 'bg-red-400'
-                      } text-white border-none text-[10px] h-5 px-1.5`}>
-                        {lead.score}
-                      </Badge>
+                      <LeadScoreDisplay
+                        score={lead.score ?? 0}
+                        tier={lead.metadata?.tier}
+                        priority={lead.metadata?.priority}
+                        reasoning={lead.metadata?.reasoning}
+                        variant="compact"
+                        className="shrink-0 max-w-[min(100%,11.5rem)]"
+                      />
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1">
                       {lead.phone && <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-1"><Phone className="h-3 w-3" /> {lead.phone}</span>}

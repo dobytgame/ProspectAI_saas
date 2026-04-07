@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search, Trash2, ChevronLeft, ChevronRight, Phone, Globe, MapPin, Building2, Loader2, AlertCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { LeadScoreDisplay } from '@/components/ui/ScoreBadge'
 import { useToast } from '@/components/ui/Toast'
 import { DeleteLeadsDialog } from '@/components/DeleteLeadsDialog'
 import ExportMetaAudienceButton from '@/components/ExportMetaAudienceButton'
-import { cn } from '@/lib/utils'
-
 interface Lead {
   id: string
   name: string
@@ -22,6 +21,11 @@ interface Lead {
   score: number
   status: string
   created_at: string
+  metadata?: {
+    tier?: string
+    priority?: string
+    reasoning?: string
+  } | null
 }
 
 export default function LeadsTable({ currentPlan }: { currentPlan: string }) {
@@ -238,13 +242,16 @@ export default function LeadsTable({ currentPlan }: { currentPlan: string }) {
                       </div>
                     </td>
                     <td className="p-4 text-center">
-                      <Badge className={cn(
-                        "font-black text-[10px] h-6 px-2",
-                        lead.score >= 70 ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.3)]" : 
-                        lead.score >= 40 ? "bg-amber-500" : "bg-red-400"
-                      )}>
-                        {lead.score || 0}
-                      </Badge>
+                      <div className="flex justify-center">
+                        <LeadScoreDisplay
+                          score={lead.score || 0}
+                          tier={lead.metadata?.tier}
+                          priority={lead.metadata?.priority}
+                          reasoning={lead.metadata?.reasoning}
+                          variant="compact"
+                          className="max-w-[168px]"
+                        />
+                      </div>
                     </td>
                     <td className="p-4 text-right">
                       <Button 

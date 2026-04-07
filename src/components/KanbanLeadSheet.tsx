@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { LeadScoreDisplay } from "@/components/ui/ScoreBadge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -97,14 +98,14 @@ export default function KanbanLeadSheet({ lead, isOpen, onClose }: KanbanLeadShe
             <div>
               <div className="flex items-start justify-between gap-4">
                 <SheetTitle className="text-xl leading-tight">{lead.name}</SheetTitle>
-                <div className="flex gap-2">
-                  <Badge variant="outline" className="border-primary/30 bg-primary/5 text-primary">
-                    Tier {lead.metadata?.tier || 'C'}
-                  </Badge>
-                  <Badge className={`${(lead.score || 0) > 70 ? 'bg-green-500' : 'bg-amber-500'} text-white border-none shadow-sm`}>
-                    Score: {lead.score || 0}
-                  </Badge>
-                </div>
+                <LeadScoreDisplay
+                  score={lead.score || 0}
+                  tier={lead.metadata?.tier}
+                  priority={lead.metadata?.priority}
+                  reasoning={lead.metadata?.reasoning}
+                  variant="block"
+                  className="shrink-0"
+                />
               </div>
               <SheetDescription className="mt-2 flex flex-wrap gap-2 text-xs">
                 {lead.campaign_name && (

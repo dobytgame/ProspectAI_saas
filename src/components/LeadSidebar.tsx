@@ -2,6 +2,7 @@
 
 import { useMemo, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { LeadScoreDisplay } from '@/components/ui/ScoreBadge'
 import { TrendingUp, Filter, SlidersHorizontal, Tag, Phone, Globe, PlusCircle, Loader2 } from 'lucide-react'
 import { assignLeadToCampaignAction } from '@/app/(dashboard)/campanhas/actions'
 
@@ -19,6 +20,8 @@ interface Lead {
     reasoning?: string;
     search_query?: string;
     rating?: number | null;
+    tier?: string;
+    priority?: string;
   };
 }
 
@@ -157,12 +160,14 @@ export default function LeadSidebar({
                 <span className="text-sm font-medium leading-tight group-hover:text-primary transition-colors line-clamp-1 flex-1 mr-2">
                   {lead.name}
                 </span>
-                <Badge className={`${
-                  (lead.score || 0) >= 70 ? 'bg-green-500' : 
-                  (lead.score || 0) >= 40 ? 'bg-amber-500' : 'bg-red-400'
-                } text-white text-[10px] h-5 px-1.5 shrink-0`}>
-                  {lead.score}
-                </Badge>
+                <LeadScoreDisplay
+                  score={lead.score || 0}
+                  tier={lead.metadata?.tier}
+                  priority={lead.metadata?.priority}
+                  reasoning={lead.metadata?.reasoning}
+                  variant="compact"
+                  className="shrink-0 max-w-[min(100%,11rem)]"
+                />
               </div>
 
               {/* Contact Info */}

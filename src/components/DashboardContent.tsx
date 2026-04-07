@@ -26,6 +26,8 @@ interface Lead {
     reasoning?: string;
     search_query?: string;
     rating?: number | null;
+    tier?: string;
+    priority?: string;
   };
 }
 
@@ -250,6 +252,11 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
             status: l.status,
             rating: l.rating,
             reasoning: l.reasoning,
+            metadata: {
+              tier: l.metadata?.tier,
+              priority: l.metadata?.priority,
+              reasoning: l.metadata?.reasoning || l.reasoning,
+            },
           }))} />
         </div>
       </div>

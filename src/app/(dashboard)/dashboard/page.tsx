@@ -63,6 +63,8 @@ export default async function DashboardPage() {
       reasoning: l.metadata?.reasoning || '',
       search_query: l.metadata?.search_query || l.segment || '',
       rating: l.metadata?.rating || null,
+      tier: l.metadata?.tier,
+      priority: l.metadata?.priority,
     },
   })) || [];
 

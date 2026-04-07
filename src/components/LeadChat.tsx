@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Zap, Send, User, Bot, Loader2, X } from 'lucide-react'
+import { getScorePresentation } from '@/lib/leads/score-presentation'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -18,14 +19,25 @@ interface LeadChatProps {
     name: string
     score?: number
     reasoning?: string
+    metadata?: { tier?: string; priority?: string }
   }
   onClose: () => void
 }
 
 export default function LeadChat({ lead, onClose }: LeadChatProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: `Olá! Sou o seu Agente de Prospecção. Analisei o lead **${lead.name}** (Score: ${lead.score}). Como posso te ajudar a abordar essa empresa hoje?` }
-  ])
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const sc = lead.score ?? 0
+    const pres = getScorePresentation(sc, {
+      tier: lead.metadata?.tier,
+      priority: lead.metadata?.priority,
+    })
+    return [
+      {
+        role: 'assistant',
+        content: `Olá! Sou o seu Agente de Prospecção. Analisei o lead **${lead.name}** (score **${sc}** — ${pres.shortLabel}). Como posso te ajudar a abordar essa empresa hoje?`,
+      },
+    ]
+  })
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
