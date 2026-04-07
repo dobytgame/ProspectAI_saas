@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -73,11 +74,11 @@ export default function CreateCampaignDialog({
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Criar Nova Campanha</DialogTitle>
             <DialogDescription>
-              Preencha as informações da sua nova campanha de prospecção.
+              Defina nome, canal e qual base de conhecimento a IA deve usar ao gerar mensagens nesta campanha.
             </DialogDescription>
           </DialogHeader>
 
@@ -110,29 +111,67 @@ export default function CreateCampaignDialog({
               />
             </div>
 
-            {knowledgeProfiles.length > 0 && (
+            <div className="space-y-3 rounded-xl border border-border/50 bg-muted/30 p-4">
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Base de conhecimento nesta campanha
+                </p>
+                <ul className="mt-2 text-xs text-muted-foreground space-y-1.5 list-disc pl-4 leading-relaxed">
+                  <li>
+                    <span className="font-medium text-foreground/90">Padrão da conta:</span> ICP e fontes gerais
+                    que você cadastrou em{' '}
+                    <Link
+                      href="/conhecimento"
+                      className="text-primary font-semibold underline-offset-2 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Base de conhecimento
+                    </Link>
+                    .
+                  </li>
+                  <li>
+                    <span className="font-medium text-foreground/90">Perfil de campanha:</span> use quando esta
+                    sequência for para outro produto, tom ou público — a IA prioriza o briefing desse perfil nas
+                    mensagens.
+                  </li>
+                </ul>
+              </div>
               <div className="space-y-2">
-                <label htmlFor="knowledge_profile_id" className="text-sm font-medium">
-                  Perfil de conhecimento (opcional)
+                <label htmlFor="knowledge_profile_id" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Escolha a base
                 </label>
                 <select
                   id="knowledge_profile_id"
                   name="knowledge_profile_id"
                   defaultValue=""
-                  className="w-full px-3 py-2 rounded-lg border border-border/60 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                  className="w-full px-3 py-2.5 rounded-lg border border-border/60 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                 >
-                  <option value="">Nenhum — usar só o ICP do negócio</option>
+                  <option value="">Padrão da conta (ICP + fontes gerais)</option>
                   {knowledgeProfiles.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.name}
+                      Perfil: {p.name}
                     </option>
                   ))}
                 </select>
-                <p className="text-xs text-muted-foreground">
-                  Mensagens geradas usarão o briefing deste perfil quando houver.
-                </p>
+                {knowledgeProfiles.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum perfil extra ainda.{' '}
+                    <Link
+                      href="/conhecimento#perfis-campanha"
+                      className="text-primary font-semibold underline-offset-2 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Criar perfil para campanha
+                    </Link>{' '}
+                    — opcional; o padrão da conta já funciona.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Perfis são criados em Base de conhecimento e só aparecem aqui quando o status está concluído.
+                  </p>
+                )}
               </div>
-            )}
+            </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Canal</label>

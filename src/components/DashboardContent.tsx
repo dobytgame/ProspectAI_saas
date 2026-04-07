@@ -230,7 +230,8 @@ export default function DashboardContent({ leads, segment, pipelineStats = {}, r
 
         {/* Right Column: Map */}
         <div
-          className="lg:col-span-3 rounded-2xl overflow-hidden relative flex flex-col min-h-[420px] md:min-h-0"
+          id="buscar-prospects"
+          className="lg:col-span-3 rounded-2xl overflow-hidden relative flex flex-col min-h-[420px] md:min-h-0 scroll-mt-24"
           style={{
             background: "var(--background-2)",
             border: "1px solid var(--border)",

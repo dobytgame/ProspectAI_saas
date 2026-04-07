@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { createClient } from "@/utils/supabase/server";
 import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
+import {
+  formatProspectingVoiceForPrompt,
+  prospectingVoiceFromBusinessMetadata,
+} from "@/lib/voice/prospecting-voice";
 
 export async function POST(req: Request) {
   try {
@@ -18,6 +22,8 @@ export async function POST(req: Request) {
 
     const business = lead.business;
     const agentConfig = business?.agents?.[0]?.config || {};
+    const voice = prospectingVoiceFromBusinessMetadata(business?.metadata);
+    const voiceBlock = formatProspectingVoiceForPrompt(voice, business.name);
 
     const systemPrompt = `
       Você é o Agente Capturo, um assessor comercial altamente experiente.
@@ -26,10 +32,12 @@ export async function POST(req: Request) {
       CONTEXTO DO SEU TRABALHO:
       - Empresa do Usuário: ${business.name}
       - Nicho: ${business.segment}
-      - Tom de Voz: ${business.tone}
+      - Tom de Voz (legado): ${business.tone}
       - Persona de Vendas: ${JSON.stringify(agentConfig.sales_persona || {})}
       - ICP Completo: ${JSON.stringify(agentConfig.icp || {})}
       - Objeções Mapeadas: ${JSON.stringify(agentConfig.objection_handling || {})}
+
+      ${voiceBlock}
       
       DADOS DO LEAD:
       - Nome: ${lead.name}
@@ -39,7 +47,7 @@ export async function POST(req: Request) {
       - Avaliação: ${lead.metadata?.rating || "N/A"} estrelas
       
       INSTRUÇÕES:
-      - Seja consultivo, direto e profissional conforme o tom de voz.
+      - Ao sugerir textos para o usuário enviar ao lead, siga o "TOM DE VOZ DA CONTA" acima.
       - Ajude o usuário a criar o script perfeito para o primeiro contato.
       - Sugira abordagens baseadas nos gatilhos de compra e pontos fracos (pain points).
     `;

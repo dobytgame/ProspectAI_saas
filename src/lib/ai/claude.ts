@@ -1,5 +1,9 @@
 // Nome histórico do arquivo (imports em actions); motor: OpenAI.
 import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
+import {
+  formatProspectingVoiceForPrompt,
+  prospectingVoiceFromBusinessMetadata,
+} from "@/lib/voice/prospecting-voice";
 
 // Helper para extrair JSON limpo do response
 function parseJSON(text: string): any {
@@ -142,16 +146,22 @@ export async function generateOutreachMessage(
           : "")
       : "";
 
+  const voiceSettings = prospectingVoiceFromBusinessMetadata(business?.metadata);
+  const voiceBlock = formatProspectingVoiceForPrompt(voiceSettings, business.name);
+
   const systemPrompt = `Você é ${persona.name || business.name}, ${persona.role || 'Consultor de Vendas'}.
 Sua personalidade: ${persona.personality || business.tone}.
 Você representa: ${business.name} — ${business.segment}.
+
+${voiceBlock}
 
 REGRAS DE OURO da sua comunicação:
 ${neverSay.map((s: string, i: number) => `${i+1}. NUNCA diga: "${s}"`).join('\n')}
 - NUNCA mencione automação, robô ou IA
 - NUNCA use linguagem corporativa genérica
 - SEMPRE soe como uma pessoa real que pesquisou o lead
-- SEMPRE foque no resultado para o lead, não nas features do produto`;
+- SEMPRE foque no resultado para o lead, não nas features do produto
+- O bloco "TOM DE VOZ DA CONTA" acima tem prioridade sobre estilo genérico quando houver conflito`;
 
   const userPrompt = `Escreva UMA mensagem de primeiro contato para o lead abaixo.
 
@@ -177,7 +187,7 @@ ${business.icp?.solution_value || ''}
 
 ${isWhatsApp ? `FORMATO WHATSAPP:
 - Máximo 3 parágrafos CURTOS (cada um com no máximo 2 linhas)
-- Tom conversacional, direto, sem formalidades excessivas
+- Tom alinhado ao "TOM DE VOZ DA CONTA" (acima); ainda conversacional para o canal, sem formalidades excessivas onde não fizer sentido
 - Sem formatação markdown (sem **, sem -, sem listas)
 - Terminar com UMA pergunta aberta simples
 - Assinatura: ${persona.name || business.name}` : `FORMATO EMAIL:

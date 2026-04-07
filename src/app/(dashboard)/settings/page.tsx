@@ -8,10 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Building2, Sparkles, Save, ShieldCheck, Globe, Info, AlertTriangle } from "lucide-react";
+import Link from "next/link";
+import { User, Building2, BookOpen, Save, ShieldCheck, Globe, Info, AlertTriangle, ArrowRight, Mic } from "lucide-react";
 import { getPlanUsage, PlanType } from "@/utils/plan-limits";
-import KnowledgeBaseManager from "./KnowledgeBaseManager";
-import KnowledgeProfilesManager from "./KnowledgeProfilesManager";
+import {
+  prospectingVoiceFromBusinessMetadata,
+  PV_STYLE_OPTIONS,
+  PV_ADDRESSING_OPTIONS,
+} from "@/lib/voice/prospecting-voice";
 import {
   BusinessSettingsForm,
   ProfileSettingsForm,
@@ -36,18 +40,6 @@ export default async function SettingsPage() {
     redirect("/onboarding");
   }
 
-  const { data: knowledgeItems } = await supabase
-    .from("knowledge_bases")
-    .select("id, type, source, ai_feedback, status, metadata")
-    .eq("business_id", business.id)
-    .order("created_at", { ascending: false });
-
-  const { data: knowledgeProfiles } = await supabase
-    .from("knowledge_profiles")
-    .select("id, name, status, source_summary, ai_feedback, created_at")
-    .eq("business_id", business.id)
-    .order("created_at", { ascending: false });
-
   const usage = await getPlanUsage(supabase, business.id, (business.plan || 'free') as PlanType);
 
   const fullName = user.user_metadata?.full_name || "";
@@ -68,6 +60,11 @@ export default async function SettingsPage() {
     }
     return JSON.stringify(icp, null, 2);
   };
+
+  const prospectingVoice = prospectingVoiceFromBusinessMetadata(business.metadata);
+
+  const selectClass =
+    "w-full h-12 px-3 rounded-xl border border-border/40 bg-muted/20 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40";
 
   return (
     <div className="flex h-screen bg-[#020817] font-sans text-foreground overflow-hidden">
@@ -99,7 +96,7 @@ export default async function SettingsPage() {
             <div className="w-full flex justify-center md:justify-start">
               <TabsList className="bg-muted/40 p-1.5 rounded-2xl flex w-max border-none h-auto items-center">
                 <TabsTrigger value="business" className="rounded-xl px-4 md:px-6 py-2.5 md:py-3 gap-2 font-black tracking-wide data-[state=active]:bg-primary data-[state=active]:text-black data-[state=active]:shadow-md transition-all text-xs md:text-sm">
-                  <Building2 className="h-4 w-4 shrink-0" /> Negócio & IA
+                  <Building2 className="h-4 w-4 shrink-0" /> Negócio
                 </TabsTrigger>
                 <TabsTrigger value="profile" className="rounded-xl px-4 md:px-6 py-2.5 md:py-3 gap-2 font-black tracking-wide data-[state=active]:bg-primary data-[state=active]:text-black data-[state=active]:shadow-md transition-all text-xs md:text-sm">
                   <User className="h-4 w-4 shrink-0" /> Perfil
@@ -116,11 +113,17 @@ export default async function SettingsPage() {
                 <CardHeader className="pb-8">
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-[0_0_20px_rgba(0,229,255,0.15)]">
-                      <Sparkles className="h-6 w-6 fill-primary/20" />
+                      <Building2 className="h-6 w-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl font-black italic tracking-tighter uppercase">Cérebro da IA</CardTitle>
-                      <CardDescription className="text-muted-foreground font-medium">Defina como nossa IA deve agir e quem ela deve prospectar.</CardDescription>
+                      <CardTitle className="text-2xl font-black tracking-tight">Negócio e ICP</CardTitle>
+                      <CardDescription className="text-muted-foreground font-medium max-w-2xl">
+                        Identidade da empresa e cliente ideal. Sites, PDFs e perfis extras por campanha ficam em{" "}
+                        <Link href="/conhecimento" className="text-primary font-bold underline-offset-4 hover:underline">
+                          Base de conhecimento
+                        </Link>{" "}
+                        no menu.
+                      </CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -145,18 +148,21 @@ export default async function SettingsPage() {
                     </div>
 
                     <div className="space-y-4 p-6 rounded-2xl bg-primary/5 border border-primary/20 relative group overflow-hidden">
-                      <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Sparkles className="h-24 w-24 text-primary" />
-                      </div>
-                      
                       <div className="flex items-center justify-between relative z-10">
                         <Label htmlFor="icp" className="text-sm font-black text-primary flex items-center gap-2 uppercase tracking-wide">
-                          Personalidade do Cliente Ideal (ICP)
+                          Para quem você prospecta (ICP)
                         </Label>
-                        <Badge className="bg-primary/20 text-primary border-primary/20 text-[10px] font-black uppercase translate-y-[-2px]">Motor Inteligente</Badge>
+                        <Badge className="bg-primary/20 text-primary border-primary/20 text-[10px] font-black uppercase translate-y-[-2px]">
+                          Lead score
+                        </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground font-medium relative z-10 max-w-2xl leading-relaxed">
-                        Descreva detalhadamente quem você quer atingir. Informe dores, regiões, tamanhos de empresa e diferenciais que você oferece. Nossa IA usará isso para dar <span className="text-primary font-bold">notas (Lead Score)</span> a cada prospecção.
+                        Quem é o cliente ideal, dores, região e porte. A IA combina isso com as{" "}
+                        <Link href="/conhecimento" className="text-primary font-bold underline-offset-4 hover:underline">
+                          fontes gerais
+                        </Link>{" "}
+                        e, se você escolher, com um perfil específico na campanha — para dar{" "}
+                        <span className="text-primary font-bold">nota</span> aos leads e escrever com contexto.
                       </p>
                       <Textarea 
                         id="icp" 
@@ -169,13 +175,75 @@ export default async function SettingsPage() {
                       />
                     </div>
 
-                    <KnowledgeBaseManager businessId={business.id} initialItems={knowledgeItems || []} />
+                    <div className="space-y-5 p-6 rounded-2xl bg-muted/15 border border-border/40">
+                      <div className="flex flex-wrap items-start gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-secondary/15 border border-secondary/25 flex items-center justify-center text-secondary shrink-0">
+                          <Mic className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <Label className="text-sm font-black uppercase tracking-wide text-foreground">
+                            Tom de voz da prospecção
+                          </Label>
+                          <p className="text-xs text-muted-foreground font-medium leading-relaxed max-w-2xl">
+                            Define como a IA escreve mensagens de primeiro contato, follow-ups e sugestões no chat
+                            do lead. É salvo na conta e combinado com o agente e a base de conhecimento.
+                          </p>
+                        </div>
+                      </div>
 
-                    <KnowledgeProfilesManager
-                      businessId={business.id}
-                      plan={(business.plan || "free") as PlanType}
-                      initialProfiles={knowledgeProfiles || []}
-                    />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="pv_style" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                            Estilo
+                          </Label>
+                          <select
+                            id="pv_style"
+                            name="pv_style"
+                            defaultValue={prospectingVoice.style}
+                            className={selectClass}
+                          >
+                            {PV_STYLE_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="pv_addressing" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                            Quem fala na mensagem
+                          </Label>
+                          <select
+                            id="pv_addressing"
+                            name="pv_addressing"
+                            defaultValue={prospectingVoice.addressing}
+                            className={selectClass}
+                          >
+                            {PV_ADDRESSING_OPTIONS.map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="pv_extra" className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                          Observações extras (opcional)
+                        </Label>
+                        <Textarea
+                          id="pv_extra"
+                          name="pv_extra"
+                          defaultValue={prospectingVoice.extra}
+                          rows={3}
+                          maxLength={500}
+                          placeholder="Ex.: evitar gírias; mencionar que atendemos só SP; não usar emojis…"
+                          className="bg-muted/20 border-border/40 focus:border-primary/40 rounded-xl text-sm font-medium resize-none"
+                        />
+                        <p className="text-[10px] text-muted-foreground font-medium">Máximo 500 caracteres.</p>
+                      </div>
+                    </div>
                   </CardContent>
                   <CardFooter className="p-8 bg-muted/20 border-t border-border/40 backdrop-blur-md flex justify-end">
                     <SettingsSubmitButton
@@ -183,10 +251,35 @@ export default async function SettingsPage() {
                       pendingLabel="SALVANDO…"
                       className="h-12 bg-secondary hover:bg-secondary/90 text-white gap-3 px-10 rounded-xl font-black shadow-2xl shadow-secondary/20 transition-all hover:scale-[1.02] active:scale-95"
                     >
-                      <Save className="h-5 w-5" /> ATUALIZAR INFORMAÇÕES BÁSICAS
+                      <Save className="h-5 w-5" /> Salvar negócio, ICP e tom de voz
                     </SettingsSubmitButton>
                   </CardFooter>
                 </BusinessSettingsForm>
+                <CardContent className="border-t border-border/40 pt-8 pb-10">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-primary/25 bg-primary/5 p-5 sm:p-6">
+                    <div className="flex gap-4 min-w-0">
+                      <div className="h-11 w-11 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary shrink-0">
+                        <BookOpen className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-sm font-black text-foreground">Base de conhecimento</p>
+                        <p className="text-xs text-muted-foreground font-medium leading-relaxed max-w-xl">
+                          Adicione fontes (site, arquivos) e crie perfis opcionais para campanhas com outro foco.
+                          Na hora de criar uma campanha, você escolhe se usa só o padrão da conta ou um desses perfis.
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      asChild
+                      className="shrink-0 h-11 font-black gap-2 rounded-xl bg-secondary hover:bg-secondary/90 text-white"
+                    >
+                      <Link href="/conhecimento">
+                        Abrir Base de conhecimento
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
               </Card>
             </TabsContent>
 

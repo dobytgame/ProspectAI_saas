@@ -7,6 +7,7 @@ import {
   LayoutDashboard, 
   Columns3, 
   MessageSquare, 
+  BookOpen,
   Settings, 
   LogOut, 
   ChevronLeft, 
@@ -18,11 +19,12 @@ import { signOut } from "@/app/(auth)/actions";
 import SidebarUsage from "./SidebarUsage";
 
 const navItems = [
-  { href: "/dashboard",  label: "Dashboard",      icon: LayoutDashboard },
-  { href: "/pipeline",   label: "Pipeline",        icon: Columns3 },
-  { href: "/leads",      label: "Leads",           icon: Users },
-  { href: "/campanhas",  label: "Campanhas",       icon: MessageSquare },
-  { href: "/settings",   label: "Configurações",   icon: Settings },
+  { href: "/dashboard",   label: "Dashboard",           icon: LayoutDashboard },
+  { href: "/pipeline",    label: "Pipeline",            icon: Columns3 },
+  { href: "/leads",       label: "Leads",               icon: Users },
+  { href: "/campanhas",   label: "Campanhas",           icon: MessageSquare },
+  { href: "/conhecimento", label: "Base de conhecimento", icon: BookOpen },
+  { href: "/settings",    label: "Configurações",       icon: Settings },
 ];
 
 export default function Sidebar({ 

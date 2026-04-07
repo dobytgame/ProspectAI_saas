@@ -4,6 +4,10 @@ import { openai, OPENAI_MODEL_FLAGSHIP } from "@/lib/ai/openai-client";
 import { sendWhatsAppMessage } from "@/lib/whatsapp/evolution";
 import { sendEmail } from "@/lib/emails/resend";
 import { assertCronAuthorized } from "@/lib/cron/verify-cron-request";
+import {
+  formatProspectingVoiceForPrompt,
+  prospectingVoiceFromBusinessMetadata,
+} from "@/lib/voice/prospecting-voice";
 
 export async function GET(req: Request) {
   const denied = assertCronAuthorized(req);
@@ -48,6 +52,9 @@ export async function GET(req: Request) {
       if (followupsSent >= maxFollowups) continue;
 
       // 3. Generate Follow-up Message
+      const voice = prospectingVoiceFromBusinessMetadata(campaign.business?.metadata);
+      const voiceBlock = formatProspectingVoiceForPrompt(voice, campaign.business.name);
+
       const systemPrompt = `
         Você é um assistente de vendas persistente, mas extremamente educado.
         Seu objetivo é fazer um follow-up com o lead: ${lead.name}.
@@ -55,10 +62,12 @@ export async function GET(req: Request) {
         
         CONTEXTO DO NEGÓCIO:
         ${campaign.business.name} - ${campaign.business.segment}
+
+        ${voiceBlock}
         
         INSTRUÇÕES:
         - Seja breve (máximo 30 palavras).
-        - No WhatsApp, use um tom amigável. No Email, seja profissional.
+        - Alinhe tom e pessoa gramatical ao "TOM DE VOZ DA CONTA" acima; adapte levemente ao canal (${campaign.channel}).
         - Tente entender se eles tiveram tempo de ver a mensagem anterior.
         - Proponha um próximo passo simples (ex: uma call de 5 min).
       `;

@@ -1,16 +1,25 @@
+import {
+  formatProspectingVoiceForPrompt,
+  prospectingVoiceFromBusinessMetadata,
+} from "@/lib/voice/prospecting-voice";
+
 export const getSystemPrompt = (plan: string, business: any, lead: any) => {
-  const agentConfig = business?.agents?.[0]?.config || {}
-  
+  const agentConfig = business?.agents?.[0]?.config || {};
+  const voice = prospectingVoiceFromBusinessMetadata(business?.metadata);
+  const voiceBlock = formatProspectingVoiceForPrompt(voice, business?.name || "sua empresa");
+
   const commonContext = `
     Business Name: ${business.name}
     Segment: ${business.segment}
-    Tone: ${business.tone || 'Professional'}
+    Tone (legado / agente): ${business.tone || "Professional"}
     Value Proposition: ${business.description}
     Lead Name: ${lead.name}
     Lead Segment: ${lead.segment}
     Lead Score: ${lead.score}/100
-    Reasoning: ${lead.metadata?.reasoning || 'N/A'}
-  `
+    Reasoning: ${lead.metadata?.reasoning || "N/A"}
+
+    ${voiceBlock}
+  `;
 
   switch (plan?.toLowerCase()) {
     case 'starter':
@@ -24,7 +33,7 @@ export const getSystemPrompt = (plan: string, business: any, lead: any) => {
         DIRETRIZES:
         - Use técnicas de copywriting (AIDA, PAS).
         - Seja direto e foque no benefício principal.
-        - O tom deve ser ${business.tone}.
+        - Siga o bloco "TOM DE VOZ DA CONTA" no contexto acima; use ${business.tone || "Professional"} só como referência secundária.
         - Máximo de 2 parágrafos curtos.
       `
     case 'pro':
@@ -40,6 +49,7 @@ export const getSystemPrompt = (plan: string, business: any, lead: any) => {
     Objeções: ${JSON.stringify(agentConfig.objection_handling || {})}
     
     INSTRUÇÕES:
+    - Siga rigorosamente o "TOM DE VOZ DA CONTA" no contexto acima.
     - Utilize os "Learned Insights" para focar nos argumentos vencedores (${business.metadata?.learned_icp?.winning_arguments?.join(', ') || 'N/A'}).
     - Utilize o "Reasoning" (${lead.metadata?.reasoning}) para mostrar que você conhece o problema deles.
         - Proponha uma solução específica baseada na proposta do ${business.name}.
@@ -53,7 +63,7 @@ export const getSystemPrompt = (plan: string, business: any, lead: any) => {
         CONTEXTO:
         Minha empresa: ${business.name} (${business.segment})
         
-        Seja amigável e profissional.
+        Siga o "TOM DE VOZ DA CONTA" no contexto acima; mantenha mensagens curtas.
       `
   }
 }

@@ -24,10 +24,12 @@ export default function KnowledgeProfilesManager({
   businessId,
   plan,
   initialProfiles,
+  variant = "standalone",
 }: {
   businessId: string;
   plan: PlanType;
   initialProfiles: KnowledgeProfileRow[];
+  variant?: "standalone" | "embedded";
 }) {
   const [profiles, setProfiles] = useState(initialProfiles);
   const [name, setName] = useState("");
@@ -100,8 +102,10 @@ export default function KnowledgeProfilesManager({
     });
   }
 
+  const isEmbedded = variant === "embedded";
+
   return (
-    <div className="space-y-6 p-6 rounded-2xl bg-muted/10 border border-border/40">
+    <div className={isEmbedded ? "space-y-5" : "space-y-6 p-6 rounded-2xl bg-muted/10 border border-border/40"}>
       <UpgradeModal
         isOpen={showUpgrade}
         onClose={() => setShowUpgrade(false)}
@@ -110,27 +114,42 @@ export default function KnowledgeProfilesManager({
         description="Você atingiu o máximo de perfis de conhecimento para campanhas neste plano. Faça upgrade para criar mais perfis e personalizar mais campanhas."
       />
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-            <BookOpen className="h-5 w-5" />
+      {!isEmbedded && (
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wide text-foreground">
+                Perfis de conhecimento para campanhas
+              </h3>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5 max-w-xl">
+                Combine texto livre, URL do site e até 3 arquivos (PDF ou .txt). A IA analisa e gera um briefing
+                usado ao gerar mensagens nas campanhas que você vincular.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="text-sm font-black uppercase tracking-wide text-foreground">
-              Perfis de conhecimento para campanhas
-            </h3>
-            <p className="text-xs text-muted-foreground font-medium mt-0.5 max-w-xl">
-              Combine texto livre, URL do site e até 3 arquivos (PDF ou .txt). A IA analisa e gera um briefing
-              usado ao gerar mensagens nas campanhas que você vincular.
-            </p>
-          </div>
+          <Badge variant="outline" className="text-[10px] font-black uppercase shrink-0">
+            {maxP === -1
+              ? "Perfis ilimitados neste plano"
+              : `Até ${maxP} perfis · ${profiles.length}/${maxP} usados`}
+          </Badge>
         </div>
-        <Badge variant="outline" className="text-[10px] font-black uppercase shrink-0">
-          {maxP === -1
-            ? "Perfis ilimitados neste plano"
-            : `Até ${maxP} perfis · ${profiles.length}/${maxP} usados`}
-        </Badge>
-      </div>
+      )}
+
+      {isEmbedded && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wide">
+            Limite do plano
+          </span>
+          <Badge variant="outline" className="text-[10px] font-black uppercase shrink-0">
+            {maxP === -1
+              ? "Ilimitados"
+              : `${profiles.length}/${maxP} perfis usados`}
+          </Badge>
+        </div>
+      )}
 
       {atLimit && (
         <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 font-medium">

@@ -7,7 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Globe, FileText, Sparkles, Loader2, CheckCircle2, Trash2, BrainCircuit } from "lucide-react";
 import { removeKnowledgeBaseItem } from "./actions";
 
-export default function KnowledgeBaseManager({ businessId, initialItems }: { businessId: string, initialItems: any[] }) {
+type Variant = "standalone" | "embedded";
+
+export default function KnowledgeBaseManager({
+  businessId,
+  initialItems,
+  variant = "standalone",
+}: {
+  businessId: string;
+  initialItems: any[];
+  variant?: Variant;
+}) {
   const [urlInput, setUrlInput] = useState("");
   const [fileInput, setFileInput] = useState<File | null>(null);
   const [kbItems, setKbItems] = useState<any[]>(initialItems || []);
@@ -91,16 +101,26 @@ export default function KnowledgeBaseManager({ businessId, initialItems }: { bus
     }
   };
 
+  const isEmbedded = variant === "embedded";
+
   return (
-    <div className="space-y-8 mt-8 border-t border-border/40 pt-8 relative">
-      <div>
-        <h3 className="text-xl font-black text-primary flex items-center gap-2 uppercase tracking-wide">
-          <BrainCircuit className="h-5 w-5" /> Base de Conhecimento Ativa
-        </h3>
-        <p className="text-xs text-muted-foreground font-medium mt-1">
-          Envie PDF ou .txt (mesmo fluxo do onboarding). O arquivo fica no Storage do Supabase; depois clique em Retreinar.
-        </p>
-      </div>
+    <div
+      className={
+        isEmbedded
+          ? "space-y-6 relative"
+          : "space-y-8 mt-8 border-t border-border/40 pt-8 relative"
+      }
+    >
+      {!isEmbedded && (
+        <div>
+          <h3 className="text-xl font-black text-primary flex items-center gap-2 uppercase tracking-wide">
+            <BrainCircuit className="h-5 w-5" /> Fontes de conhecimento
+          </h3>
+          <p className="text-xs text-muted-foreground font-medium mt-1">
+            PDF ou .txt; URLs do site. Depois de adicionar fontes, atualize o ICP para a IA incorporar tudo.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* URL Input */}
@@ -211,7 +231,7 @@ export default function KnowledgeBaseManager({ businessId, initialItems }: { bus
             className="h-12 bg-secondary hover:bg-secondary/90 text-white gap-3 px-8 rounded-xl font-black shadow-xl transition-all"
           >
             {isSynthesizing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
-            {isSynthesizing ? "TREINANDO..." : "SINTETIZAR & ATUALIZAR ICP"}
+            {isSynthesizing ? "Atualizando…" : "Atualizar ICP com as fontes"}
           </Button>
         </div>
       )}

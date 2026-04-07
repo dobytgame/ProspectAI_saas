@@ -5,6 +5,8 @@ import DashboardContent from "@/components/DashboardContent";
 import Sidebar from "@/components/Sidebar";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { getPlanUsage, PlanType } from "@/utils/plan-limits";
+import { getGettingStartedProgress } from "@/lib/onboarding/getting-started";
+import GettingStartedGuide from "@/components/GettingStartedGuide";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -66,6 +68,12 @@ export default async function DashboardPage() {
 
   const usage = await getPlanUsage(supabase, business.id, (business.plan || 'free') as PlanType);
 
+  const gettingStarted = await getGettingStartedProgress(
+    supabase,
+    business.id,
+    business.metadata
+  );
+
   return (
     <div className="flex h-screen bg-muted/30">
       <Sidebar userEmail={user.email} usage={usage} />
@@ -87,18 +95,23 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        <DashboardContent 
-          leads={allLeads} 
-          segment={business.segment || ''} 
-          pipelineStats={pipelineData || {}}
-          recentActivity={recentActivity || []}
-          currentPlan={business.plan || 'free'}
-          showIcpBasicBanner={
-            typeof business.metadata === 'object' &&
-            business.metadata !== null &&
-            (business.metadata as Record<string, unknown>).onboarding_kb_skipped === true
-          }
-        />
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+          <div className="shrink-0 px-3 sm:px-6 pt-3 sm:pt-4 space-y-3">
+            <GettingStartedGuide progress={gettingStarted} />
+          </div>
+          <DashboardContent
+            leads={allLeads}
+            segment={business.segment || ""}
+            pipelineStats={pipelineData || {}}
+            recentActivity={recentActivity || []}
+            currentPlan={business.plan || "free"}
+            showIcpBasicBanner={
+              typeof business.metadata === "object" &&
+              business.metadata !== null &&
+              (business.metadata as Record<string, unknown>).onboarding_kb_skipped === true
+            }
+          />
+        </div>
       </main>
       <MobileBottomNav />
     </div>

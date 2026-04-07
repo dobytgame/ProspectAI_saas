@@ -189,15 +189,15 @@ export default function OnboardingMultiStep() {
           
           <div className={`flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full transition-all ${step >= 1 ? 'text-primary ring-1 ring-primary/30' : 'text-muted-foreground'}`}>
             <div className={`h-2 w-2 rounded-full ${step >= 1 ? 'bg-primary shadow-[0_0_8px_rgba(0,229,255,0.8)]' : 'bg-muted-foreground'}`} />
-            <span className="hidden sm:inline">1. Perfil Inicial</span>
+            <span className="hidden sm:inline">1. Seu negócio</span>
           </div>
           <div className={`flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full transition-all ${step >= 2 ? 'text-primary ring-1 ring-primary/30' : 'text-muted-foreground'}`}>
             <div className={`h-2 w-2 rounded-full ${step >= 2 ? 'bg-primary shadow-[0_0_8px_rgba(0,229,255,0.8)]' : 'bg-muted-foreground'}`} />
-            <span className="hidden sm:inline">2. Cérebro da IA</span>
+            <span className="hidden sm:inline">2. Memória da IA</span>
           </div>
           <div className={`flex items-center gap-2 bg-muted/30 px-4 py-2 rounded-full transition-all ${step >= 3 ? 'text-primary ring-1 ring-primary/30' : 'text-muted-foreground'}`}>
             <div className={`h-2 w-2 rounded-full ${step >= 3 ? 'bg-primary shadow-[0_0_8px_rgba(0,229,255,0.8)]' : 'bg-muted-foreground'}`} />
-            <span className="hidden sm:inline">3. Plano & Ativação</span>
+            <span className="hidden sm:inline">3. Plano e começar</span>
           </div>
         </div>
 
@@ -283,7 +283,9 @@ export default function OnboardingMultiStep() {
                     <BrainCircuit className="h-8 w-8 text-primary" /> Alimente sua IA
                   </CardTitle>
                   <CardDescription className="text-base font-medium mt-2 max-w-lg">
-                    Adicione site, PDF ou uma descrição em texto. Sem isso, você pode <strong>pular</strong> — a IA monta um perfil básico só com o nome e o tom da empresa (dá para enriquecer depois nas configurações).
+                    Adicione site, PDF ou uma descrição em texto. Sem isso, você pode <strong>pular</strong> — a IA
+                    monta um perfil básico só com o nome e o tom da empresa. Depois você complementa em{" "}
+                    <strong>Configurações</strong> e acompanha um guia rápido no <strong>Dashboard</strong>.
                   </CardDescription>
                 </div>
               </div>
@@ -472,8 +474,15 @@ export default function OnboardingMultiStep() {
                 <CheckCircle2 className="h-8 w-8 text-green-500" />
               </div>
               <CardTitle className="text-3xl font-black tracking-tight">IA Treinada com Sucesso</CardTitle>
-              <CardDescription className="text-base font-medium mt-2">
-                O Cérebro da IA gerou o seu Master ICP. Agora, escolha o tamanho da sua operação e ative o Capturo.
+              <CardDescription className="text-base font-medium mt-2 space-y-2 block">
+                <span className="block">
+                  O Cérebro da IA gerou o seu Master ICP. Agora, escolha o tamanho da sua operação e ative o Capturo.
+                </span>
+                <span className="block text-sm text-muted-foreground font-medium leading-relaxed">
+                  No painel você verá um <strong className="text-foreground/90">passo a passo</strong> para criar
+                  campanha, buscar empresas no mapa e gerar as primeiras mensagens — tudo marcado automaticamente
+                  conforme você avança.
+                </span>
               </CardDescription>
             </CardHeader>
             <CardContent>

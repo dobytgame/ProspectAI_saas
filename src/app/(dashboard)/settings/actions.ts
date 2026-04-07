@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import { createServiceRoleClient } from "@/utils/supabase/service-role";
 import { removeKnowledgeStoragePaths } from "@/lib/knowledge/storage-upload";
 import { revalidatePath } from "next/cache";
+import { prospectingVoiceFromFormData } from "@/lib/voice/prospecting-voice";
 
 export type SettingsSaveState =
   | null
@@ -67,8 +68,11 @@ export async function saveBusinessSettings(
     ? currentBusiness.metadata
     : {}) as Record<string, unknown>;
 
+  const prospecting_voice = prospectingVoiceFromFormData(formData);
+
   const updatedMetadata = {
     ...metadata,
+    prospecting_voice,
     integrations: {
       evolution: {
         url: evolution_url,
